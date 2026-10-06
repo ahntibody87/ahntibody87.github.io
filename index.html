@@ -1,100 +1,26 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="ATLL - AhnTibody's Lifescience Lab">
-  <title>ATLL | AhnTibody's Lifescience Lab</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #17322b;
-      --muted: #60736d;
-      --line: #dce7e2;
-      --paper: #f6faf8;
-      --accent: #2f7663;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      font-family: Inter, "Noto Sans KR", system-ui, -apple-system, sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 15% 20%, #e0f1e9 0, transparent 30%),
-        radial-gradient(circle at 85% 80%, #e7efe9 0, transparent 28%),
-        var(--paper);
-    }
-    main {
-      width: min(760px, calc(100% - 40px));
-      padding: 64px 48px;
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.88);
-      box-shadow: 0 24px 70px rgba(28, 65, 54, 0.10);
-    }
-    .eyebrow {
-      margin: 0 0 18px;
-      color: var(--accent);
-      font-size: 0.82rem;
-      font-weight: 750;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(3.2rem, 10vw, 6.7rem);
-      line-height: 0.92;
-      letter-spacing: -0.055em;
-    }
-    h2 {
-      margin: 24px 0 0;
-      font-size: clamp(1.15rem, 3vw, 1.65rem);
-      font-weight: 620;
-      letter-spacing: -0.025em;
-    }
-    p {
-      max-width: 560px;
-      margin: 28px 0 0;
-      color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.75;
-    }
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      margin-top: 34px;
-      padding: 10px 14px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
-      font-size: 0.88rem;
-      font-weight: 650;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 5px #e5f1ed;
-    }
-    @media (max-width: 560px) {
-      main { padding: 48px 28px; border-radius: 22px; }
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Ahntibody의 고급생명과학 수업 포털. 수업 안내와 탐구 활동을 한곳에서 찾아보세요.">
+<title>고급생명과학 | Ahntibody’s Advanced Lifescience Lab</title>
+<link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script>
 </head>
 <body>
-  <main>
-    <p class="eyebrow">Life Science Learning Portal</p>
-    <h1>ATLL</h1>
-    <h2>AhnTibody's Lifescience Lab</h2>
-    <p>생명과학 수업에서 활용하는 탐구 활동과 인터랙티브 시뮬레이션을 하나씩 모아 가는 공간입니다.</p>
-    <div class="status"><span class="dot" aria-hidden="true"></span>콘텐츠 준비 중</div>
-    <p><a href="https://advanced-lifescience-lab.vercel.app/" style="display:inline-block;padding:12px 20px;border:1px solid var(--accent);border-radius:12px;color:var(--accent);font-weight:700;text-decoration:none;">고급생명과학 수업실 · Ahntibody’s Advanced Lifescience Lab</a></p>
-  </main>
-</body>
-</html>
+<a class="skip" href="#main">본문 바로가기</a>
+<aside class="sidebar">
+<a class="brand" href="./"><span class="brand-mark">A<span>·</span></span><span>AHNTIBODY’S LAB<small>생명과학 수업 포털</small></span></a>
+<button class="menu-toggle" aria-expanded="false" aria-controls="navigation">메뉴 열기</button>
+<nav id="navigation" aria-label="수업 메뉴"><p class="nav-label">2026 · 고급생명과학</p><a href="#about">수업 안내</a><a href="#activities">탐구 · 실험</a><a href="#materials">수업 자료</a><a href="#guide">이용 안내</a></nav>
+<div class="sidebar-foot">관찰에서 질문으로,<br>증거에서 설명으로.<span>Ahntibody’s Lifescience Lab</span></div>
+</aside>
+<div class="page">
+<header class="topbar"><span>고급생명과학 <span class="separator">/</span> 수업 홈</span><a href="https://github.com/ahntibody87/ahntibody87.github.io">GitHub ↗</a></header>
+<main id="main">
+<section class="hero" id="about"><p class="eyebrow">ADVANCED LIFESCIENCE · 2026</p><h1>생명현상을 탐구하고,<br><em>근거로 설명하는 수업.</em></h1><p class="lab-name">Ahntibody’s Advanced Lifescience Lab</p><p class="intro">고급생명과학 수업의 탐구 활동과 자료를 모으는 공간입니다.<br class="desktop"> 수업에서 생긴 질문을 실험으로 살펴보고, 관찰한 결과를 자신의 언어로 설명해 보세요.</p><a class="button" href="#activities">탐구 활동 찾아보기 <span>↓</span></a><div class="hero-art" aria-hidden="true"><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div><span class="nucleus"></span><span class="particle p1"></span><span class="particle p2"></span><span class="particle p3"></span></div></section>
+<section id="activities" class="section"><div class="section-title"><div><p class="eyebrow">EXPLORE</p><h2>탐구 · 실험</h2></div></div><div class="notice"><span class="notice-icon" aria-hidden="true">↳</span><div><h3>아직 등록된 탐구 활동이 없습니다.</h3><p>수업에서 사용할 활동을 정한 뒤 이곳에 추가합니다.</p></div></div></section>
+<section id="materials" class="section"><div class="section-title"><div><p class="eyebrow">RESOURCES</p><h2>수업 자료</h2></div></div><div class="notice"><span class="notice-icon" aria-hidden="true">↳</span><div><h3>아직 등록된 수업 자료가 없습니다.</h3><p>교사가 공개하기로 정한 자료만 이곳에서 안내합니다.</p></div></div></section>
+<section id="guide" class="section"><div class="section-title"><div><p class="eyebrow">HOW TO USE</p><h2>이용 안내</h2></div></div><div class="guide-grid"><article><span class="step">01</span><h3>수업의 출발점</h3><p>고급생명과학 수업의 자료와 탐구 활동을 한곳에서 찾는 홈페이지입니다.</p></article><article><span class="step">02</span><h3>간편하게 접속</h3><p>별도의 가입 없이 PC와 휴대전화에서 홈페이지를 볼 수 있습니다.</p></article><article><span class="step">03</span><h3>수업에 맞춰 추가</h3><p>자료와 활동은 수업 진행에 맞춰 등록됩니다. 등록된 항목은 각 목록에서 확인하세요.</p></article></div></section><footer><span>Ahntibody’s Advanced Lifescience Lab</span><span>고급생명과학 · GitHub Pages</span></footer>
+</main></div>
+</body></html>
 
