@@ -44,5 +44,25 @@ export const MISSIONS = [
     target: '(((((....)))))....(((((....)))))',
     locked: [5, 6, 7, 8],
     maxChanges: 6
+  },
+  {
+    id: 'ribozyme',
+    kind: 'ribozyme',
+    title: '05. 처음부터 설계하는 RNA 가위',
+    description: '54자리의 빈 설계판에서 해머헤드 자가절단 RNA를 설계하세요. 문헌의 보존 염기만 주어집니다. 나머지 38자리를 직접 채워 세 줄기가 핵심 부위를 배치하게 만드세요.',
+    hint: '설계도를 보며 줄기 III의 바깥쪽부터 맞은편 짝을 배치해 보세요. 줄기 I·II도 각각 완성한 뒤 예측하세요. 루프끼리나 다른 줄기 사이에 새 결합이 생기면 경쟁하는 짝을 줄이세요. 보존 염기도 모두 짝이 없는 것은 아닙니다.',
+    // PLMVd type III topology and 15 conserved sites + C8, from Dotu et al.
+    // N is an unassigned design position, never sent to the folding engine.
+    start: [...Array(54)].map((_, i) => ({5:'G',6:'U',7:'C',21:'C',22:'U',23:'G',24:'A',26:'G',27:'A',28:'G',43:'C',44:'G',45:'A',46:'A',47:'A',48:'C'}[i] || 'N')).join(''),
+    target: '.((((((.(((((...))))).......((((........))))...)))))).',
+    locked: [5,6,7,21,22,23,24,26,27,28,43,44,45,46,47,48],
+    maxChanges: null,
+    cleavageAfter: 7,
+    stems: [
+      {name:'줄기 III', pairs:[[1,52],[2,51],[3,50],[4,49],[5,48],[6,47]]},
+      {name:'줄기 I', pairs:[[8,20],[9,19],[10,18],[11,17],[12,16]]},
+      {name:'줄기 II', pairs:[[28,43],[29,42],[30,41],[31,40]]}
+    ],
+    source: 'https://doi.org/10.1093/nar/gku740'
   }
 ];

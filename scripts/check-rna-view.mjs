@@ -65,4 +65,10 @@ const settled=framePoints(view);view.selection(4,[],[]);assert.deepEqual(view.po
 view.show({sequence:'AGGGAAAACCCC',structure:'..((....))..',selected:0});
 assert.equal(svg.dataset.animating,'false');assert.deepEqual(view.points,settled);
 view.reduced={matches:true};view.show(first);assert.equal(svg.dataset.animating,'false');assert.equal(frames.size,0);
+const scaffold='NNNNNGUCNNNNNNNNNNNNNCUGANGAGNNNNNNNNNNNNNNCGAAACNNNNN';
+view.show({sequence:scaffold,structure:'.((((((.(((((...))))).......((((........))))...)))))).',selected:0,cleavageAfter:7});
+assert.equal(view.nodes.filter(node=>node.label.textContent==='?').length,38);
+assert.equal(view.links.length,53);assert.equal(view.edges.size,15);assert.equal(view.cutLayer.attrs.display,'');
+assert.ok(view.points.every(p=>Object.values(p).every(Number.isFinite)));
+view.show(first);assert.equal(view.cutLayer.attrs.display,'none');assert.equal(view.nodes.length,12);
 console.log('RNA 분자 표시 검사 통과: 결합·계열, 유효 좌표, 연속 이동, 빠른 재수정, 노드 유지, 감소된 움직임');

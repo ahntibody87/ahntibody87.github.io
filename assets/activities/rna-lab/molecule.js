@@ -4,7 +4,8 @@ export const BASES={
   A:{name:'아데닌',family:'퓨린',rings:2,color:'#ba955a'},
   U:{name:'유라실',family:'피리미딘',rings:1,color:'#aa7974'},
   G:{name:'구아닌',family:'퓨린',rings:2,color:'#66889f'},
-  C:{name:'사이토신',family:'피리미딘',rings:1,color:'#70917c'}
+  C:{name:'사이토신',family:'피리미딘',rings:1,color:'#70917c'},
+  N:{name:'아직 정하지 않은 염기',family:'설계할 자리',rings:0,color:'#8a969c'}
 };
 export function pairInfo(a,b){
   const key=[a,b].sort().join('');
@@ -116,7 +117,9 @@ export class MoleculeView{
     this.pairLayer=element('g',{'aria-hidden':true,class:'molecular-pairs'});
     this.nodeLayer=element('g',{class:'molecular-nodes'});
     this.endLayer=element('g',{'aria-hidden':true});
-    svg.replaceChildren(defs,this.backbone,this.pairLayer,this.nodeLayer,this.endLayer);
+    this.cutLayer=element('g',{'aria-hidden':true,class:'cleavage-marker',display:'none'});
+    this.cutLabel=element('text',{},'절단 8 | 9');this.cutLayer.append(this.cutLabel);
+    svg.replaceChildren(defs,this.backbone,this.pairLayer,this.nodeLayer,this.endLayer,this.cutLayer);
   }
   ensureNodes(count){
     if(this.nodes.length===count)return;
@@ -151,10 +154,12 @@ export class MoleculeView{
     this.nodes.forEach((node,i)=>{
       const base=this.sequence[i],info=BASES[base];
       node.g.dataset.nucleotideBase=base;node.g.style.setProperty('--base-color',info.color);
+      node.g.classList.toggle('unassigned',base==='N');
       node.ring1.setAttribute('points',info.rings===2?hex:pyr);node.ring2.hidden=info.rings!==2;
       node.ring2.setAttribute('display',info.rings===2?'':'none');
       node.rings.setAttribute('transform',`translate(${info.rings===2?42:31},0)`);
-      node.label.textContent=base;node.number.textContent=(i+1)%5===0?String(i+1):'';
+      node.rings.setAttribute('display',base==='N'?'none':'');
+      node.label.textContent=base==='N'?'?':base;node.number.textContent=(i+1)%5===0?String(i+1):'';
     });
   }
   selection(selected,locked=[],mismatches=[]){
@@ -170,7 +175,9 @@ export class MoleculeView{
     });
     this.draw();
   }
-  show({sequence,structure,selected,locked=[],mismatches=[]}){
+  show({sequence,structure,selected,locked=[],mismatches=[],cleavageAfter=null}){
+    this.cleavageAfter=cleavageAfter;
+    this.cutLayer.setAttribute('display',cleavageAfter===null?'none':'');
     const unchanged=this.structure===structure&&this.nodes.length===sequence.length;
     this.ensureNodes(sequence.length);this.sequence=sequence;this.pair=partners(structure);this.structure=structure;
     this.paintBases();this.selection(selected,locked,mismatches);
@@ -230,6 +237,7 @@ export class MoleculeView{
       link.p.setAttribute('cx',mx);link.p.setAttribute('cy',my);
       link.b.setAttribute('marker-end',i%5===2?'url(#rna-direction)':'');
       link.g.classList.toggle('selected-backbone',i===this.selected||i+1===this.selected);
+      link.g.classList.toggle('cleavage-bond',i===this.cleavageAfter);
     });
     for(const edge of this.edges.values()){
       const a=this.points[edge.i],b=this.points[edge.j],extentA=BASES[this.sequence[edge.i]].rings===2?61:46,extentB=BASES[this.sequence[edge.j]].rings===2?61:46;
@@ -250,6 +258,10 @@ export class MoleculeView{
     const first=this.points[0],last=this.points.at(-1);
     for(const [label,p]of [[this.firstLabel,first],[this.lastLabel,last]]){
       label.setAttribute('x',p.x-Math.cos(p.angle)*37);label.setAttribute('y',p.y-Math.sin(p.angle)*37);
+    }
+    if(this.cleavageAfter!==null){
+      const a=this.points[this.cleavageAfter],b=this.points[this.cleavageAfter+1];
+      if(a&&b){this.cutLabel.setAttribute('x',(a.x+b.x)/2-22);this.cutLabel.setAttribute('y',(a.y+b.y)/2-16);}
     }
   }
   fit(){

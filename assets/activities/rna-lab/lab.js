@@ -1,5 +1,6 @@
-import {PRESETS, MISSIONS} from './missions.js';
-import {MoleculeView, BASES, pairInfo, partners} from './molecule.js?v=2';
+import {PRESETS, MISSIONS} from './missions.js?v=3';
+import {MoleculeView, BASES, pairInfo, partners} from './molecule.js?v=3';
+import {gradeMission} from './grading.js?v=3';
 
 const $ = id => document.getElementById(id);
 const storage = {
@@ -23,7 +24,12 @@ let requestId = 0;
 let pending = false;
 let toastTimer;
 let foldTimer;
+let successTimer;
+const announcedSolutions=new Set();
 const completed = new Set(storage.read('completed', []).filter(id => MISSIONS.some(m => m.id === id)));
+const isRibozyme=()=>mission?.kind==='ribozyme';
+const hasBlanks=()=>isRibozyme()&&sequence.includes('N');
+function cancelSuccess(){clearTimeout(successTimer);if($('mission-success').open)$('mission-success').close();}
 
 function toast(message) {
   $('rna-toast').textContent = message;
@@ -46,14 +52,17 @@ function setZoom(next) {
 }
 function renderInspector() {
   const base=sequence[selected],info=BASES[base];
-  $('base-detail').textContent=`${selected+1}번 ${base} · ${info.name}`;
-  $('base-family').textContent=`${info.family} · 고리 ${info.rings}개 · 리보스의 1′ 탄소에 연결`;
-  const structure=view==='target'&&mission?mission.target:result?.sequence===sequence?result.structure:null;
+  const region=isRibozyme()?mission.stems.find(stem=>stem.pairs.some(pair=>pair.includes(selected)))?.name:null;
+  $('base-detail').textContent=base==='N'?`${selected+1}번 · 아직 비어 있는 자리`:`${selected+1}번 ${base} · ${info.name}`;
+  $('base-family').textContent=base==='N'?`${region||'루프·연결 구간'} · A, U, G, C 중 하나를 선택하세요.`:`${info.family} · 고리 ${info.rings}개${region?` · ${region}`:''} · 리보스의 1′ 탄소에 연결`;
+  const guide=hasBlanks()||view==='target';
+  const structure=guide&&mission?mission.target:result?.sequence===sequence?result.structure:null;
   const mate=structure?partners(structure)[selected]:-1;
   const bond=mate>=0?pairInfo(base,sequence[mate]):null;
-  $('pair-detail').textContent=!structure?'새 서열의 결합 상대를 계산하고 있습니다.':mate<0?`${view==='target'?'목표':'현재 예측'} 구조에서 짝 없음`:`${mate+1}번 ${sequence[mate]}와 짝 · ${bond?.name||'비상보적 배치'}${bond?.wobble?' 흔들림 염기쌍':''}`;
-  $('bond-detail').textContent=bond?`대표적인 수소 결합 ${bond.count}개 · 점선으로 표시`:view==='target'&&mate>=0?'염기를 수정해 목표의 결합 관계를 만들어 보세요.':'인산은 이웃한 리보스 사이의 골격을 연결합니다.';
-  $('detail-base-letter').textContent=base;
+  $('pair-detail').textContent=!structure?'새 서열의 결합 상대를 계산하고 있습니다.':mate<0?`${guide?'설계도':'현재 예측'}에서 짝 없음`:`${guide?'설계도: ':''}${mate+1}번 ${sequence[mate]==='N'?'미정':sequence[mate]}와 짝 · ${bond?.name||(base==='N'||sequence[mate]==='N'?'염기 선택 필요':'비상보적 배치')}${bond?.wobble?' 흔들림 염기쌍':''}`;
+  $('bond-detail').textContent=isRibozyme()&&selected===7?'절단 자리 C8 · 이 염기 다음의 8 | 9 골격 결합이 반응 자리입니다.':bond?`대표적인 수소 결합 ${bond.count}개 · ${guide?'목표 배치의 모식도':'점선으로 표시'}`:guide&&mate>=0?'설계도의 결합 관계입니다. 예측 결과는 모든 자리를 채운 뒤 확인합니다.':'인산은 이웃한 리보스 사이의 골격을 연결합니다.';
+  $('nucleotide-sketch').classList.toggle('unassigned-sketch',base==='N');
+  $('detail-base-letter').textContent=base==='N'?'?':base;
   $('detail-base-ring').setAttribute('points',info.rings===2?'195,47 207,40 219,47 219,61 207,68 195,61':'190,47 202,40 214,47 214,61 202,68 190,61');
   $('detail-base-pent').setAttribute('display',info.rings===2?'':'none');
   $('detail-base-letter').setAttribute('x',info.rings===2?'207':'202');
@@ -61,18 +70,21 @@ function renderInspector() {
   $('detail-rings').style.setProperty('--base-color',info.color);
 }
 function renderStructure() {
-  if(!result || result.sequence!==sequence) return;
-  const structure=view==='target'&&mission?mission.target:result.structure;
-  const current=partners(result.structure),target=mission?partners(mission.target):null;
-  const mismatches=target&&view==='current'?current.flatMap((mate,i)=>mate!==target[i]?[i]:[]):[];
-  molecule.show({sequence,structure,selected,locked:mission?.locked||[],mismatches});
-  $('structure-heading').textContent=view==='target'?'목표 RNA의 결합 관계':'현재 RNA의 예측 2차 구조';
-  $('stage-extra').textContent=mission?'작은 자물쇠: 고정 염기 · 붉은 윤곽: 목표와 다른 자리':'화살표: 5′ → 3′';
+  const blank=hasBlanks(),hasResult=result?.sequence===sequence;
+  if(!blank&&!hasResult)return;
+  const guide=blank||view==='target';
+  const structure=guide&&mission?mission.target:result.structure;
+  const grade=mission?gradeMission(mission,sequence,hasResult?result.structure:null):null;
+  const mismatches=guide?[]:grade?.mismatches||[];
+  molecule.show({sequence,structure,selected,locked:mission?.locked||[],mismatches,cleavageAfter:isRibozyme()?mission.cleavageAfter:null});
+  molecule.nodes.forEach((node,i)=>node.g.classList.toggle('conserved-base',!!isRibozyme()&&mission.locked.includes(i)));
+  $('structure-heading').textContent=blank?'리보자임 설계도 · 물음표 자리를 채우세요':guide?'목표 RNA의 결합 관계':'현재 RNA의 예측 2차 구조';
+  $('stage-extra').textContent=isRibozyme()?`${guide?'설계도 점선: 목표 결합 위치 · ':''}자물쇠: 보존 염기 · 주황색 골격: 8 | 9 절단 자리`:mission?'작은 자물쇠: 고정 염기 · 붉은 윤곽: 목표와 다른 자리':'화살표: 5′ → 3′';
   renderInspector();
 }
 function selectBase(index) {
   selected=Math.max(0,Math.min(sequence.length-1,index));
-  if(view==='target') {
+  if(view==='target'&&!hasBlanks()) {
     view='current';
     document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
   }
@@ -80,12 +92,14 @@ function selectBase(index) {
 }
 function renderSelection() {
   const locked=mission?.locked.includes(selected);
-  $('selected-label').textContent=`${selected+1}번 · ${sequence[selected]}${locked?' · 고정되어 있습니다':''}`;
+  $('selected-label').textContent=`${selected+1}번 · ${sequence[selected]==='N'?'미정 자리':sequence[selected]}${locked?' · 고정되어 있습니다':''}`;
   document.querySelectorAll('button[data-base]').forEach(button=>{
     button.disabled=!ready || !!locked;
     button.setAttribute('aria-pressed',String(button.dataset.base===sequence[selected]));
   });
   $('undo').disabled=!history.length || !ready;
+  $('clear-base').disabled=!ready||!!locked||sequence[selected]==='N';
+  $('next-blank').disabled=!hasBlanks();
   if(molecule.nodes.length) molecule.selection(selected,mission?.locked||[],molecule.mismatches||[]);
   renderInspector();
 }
@@ -103,39 +117,52 @@ function setSequence(next,{remember=true}={}) {
 function changeBase(base) {
   if(!ready || mission?.locked.includes(selected) || sequence[selected]===base)return;
   const next=sequence.slice(0,selected)+base+sequence.slice(selected+1);
-  setSequence(next);
+  const wasBlank=sequence[selected]==='N';setSequence(next);
+  if(wasBlank&&hasBlanks())nextBlank();
+}
+function nextBlank(){
+  for(let offset=1;offset<=sequence.length;offset++){
+    const i=(selected+offset)%sequence.length;if(sequence[i]==='N'){selectBase(i);return;}
+  }
 }
 function requestFold() {
+  cancelSuccess();clearTimeout(foldTimer);
+  if(hasBlanks()){
+    ++requestId;pending=false;view='target';syncViewButtons();
+    $('energy').textContent='—';$('pairs').textContent='—';
+    $('fold-status').textContent='빈 자리의 염기를 모두 정하면 구조를 예측합니다. 현재 그림은 설계도입니다.';
+    renderStructure();renderMetrics();return;
+  }
   if(!valid(sequence))return;
   const id=++requestId;pending=true;
   $('fold-status').textContent='새 서열의 구조를 계산하고 있습니다…';
   $('energy').textContent='…';$('pairs').textContent='…';
   $('mission-feedback').hidden=true;
-  clearTimeout(foldTimer);
+  if(mission)renderMissionGrade(gradeMission(mission,sequence));
   foldTimer=setTimeout(()=>{
     if(pending){$('fold-status').textContent='계산이 지연됩니다. 서열 적용을 다시 누르거나 페이지를 새로고침해 주세요.';error('계산 결과를 받지 못했습니다. 다시 시도해 주세요.');pending=false;}
   },20000);
   worker.postMessage({type:'fold',id,sequence});
 }
 function renderMetrics() {
+  if(hasBlanks()){
+    const grade=gradeMission(mission,sequence);$('third-label').textContent='내가 채운 자리';
+    $('third-value').textContent=`${grade.assigned-mission.locked.length} / ${sequence.length-mission.locked.length}`;
+    $('third-help').textContent='모두 채우면 접힘을 자동 계산합니다.';
+    renderMissionGrade(grade);return;
+  }
+  if(!result||result.sequence!==sequence)return;
   $('energy').textContent=result.energy.toFixed(2);
   $('pairs').textContent=String((result.structure.match(/\(/g)||[]).length);
   if(mission) {
-    const current=partners(result.structure),target=partners(mission.target);
-    const correct=current.filter((partner,i)=>partner===target[i]).length;
+    const grade=gradeMission(mission,sequence,result.structure),{correct}=grade;
     $('third-label').textContent='목표 구조 일치';
     $('third-value').textContent=`${Math.round(correct/sequence.length*100)}%`;
     $('third-help').textContent=`결합 상대가 같은 자리 ${correct} / ${sequence.length}`;
-    const changes=[...sequence].filter((base,i)=>base!==mission.start[i]).length;
-    const budgetOk=!mission.maxChanges || changes<=mission.maxChanges;
-    const solved=result.structure===mission.target && budgetOk;
-    $('mission-rules').textContent=`${mission.locked.length?`고정 염기 ${mission.locked.length}개 · `:''}${mission.maxChanges?`처음 서열과 다른 자리 ${changes} / ${mission.maxChanges}개`:'변경 횟수 제한 없음'} · 37 °C`;
-    const feedback=$('mission-feedback');feedback.hidden=false;feedback.classList.toggle('success',solved);
-    if(solved){
-      feedback.textContent='✓ 목표 구조를 만들었습니다! 어떤 결합을 유도하고 어떤 결합을 막았는지 설명해 보세요.';
-      completed.add(mission.id);storage.write('completed',[...completed]);renderMissionList();
-    } else if(!budgetOk)feedback.textContent=`목표 구조와 변경 조건을 함께 맞춰야 합니다. 처음 서열과 다른 자리를 ${mission.maxChanges}개 이내로 줄여 보세요.`;
-    else feedback.textContent=`아직 목표와 다른 자리가 ${sequence.length-correct}개 있습니다. ‘목표 구조’에서 결합 상대를 비교해 보세요.`;
+    renderMissionGrade(grade);
+    if(grade.solved){
+      completed.add(mission.id);storage.write('completed',[...completed]);renderMissionList();announceSuccess(grade);
+    }
   } else {
     $('third-label').textContent='GC 비율';
     $('third-value').textContent=`${Math.round((sequence.match(/[GC]/g)||[]).length/sequence.length*100)}%`;
@@ -143,17 +170,56 @@ function renderMetrics() {
     $('mission-feedback').hidden=true;
   }
 }
+function renderMissionGrade(grade){
+  const summary=$('mission-summary'),feedback=$('mission-feedback');
+  summary.classList.toggle('solved',grade.solved);summary.dataset.solved=String(grade.solved);
+  $('mission-state').textContent=grade.solved?'✓ 미션 성공':!grade.complete?'빈 자리 채우기':pending?'접힘 계산 중':'자동 채점';
+  $('grading-title').textContent=grade.solved?(isRibozyme()?'리보자임 후보의 설계 조건을 충족했습니다.':'목표의 결합 관계를 만들었습니다!'):!grade.complete?`아직 ${sequence.length-grade.assigned}자리가 비어 있습니다.`:pending?'현재 서열의 구조를 확인하고 있습니다.':`목표 결합 ${grade.targetPairs.length-grade.missing.length} / ${grade.targetPairs.length}개 · 추가 결합 ${grade.extra.length}개`;
+  const message=grade.solved?(isRibozyme()?'구조 조건을 만족하는 리보자임 후보 설계 완료. 아래에서 절단 원리를 살펴보세요. 실제 활성 확인에는 실험이 필요합니다.':'서열이 달라도 결합 상대와 짝 없는 자리가 모두 같으면 성공입니다. 어떤 결합을 만들고 막았는지 설명해 보세요.'):!grade.complete?'빈 자리에는 A·U·G·C를 선택하세요. 완성 전 그림은 목표 배치이며, 접힘 예측이 아닙니다.':pending?'서열의 정답을 비교하지 않고, 예측된 각 염기의 결합 상대와 미션 조건을 확인합니다.':!grade.budgetOk?`구조와 변경 조건을 함께 맞춰야 합니다. 처음 서열과 다른 자리를 ${mission.maxChanges}개 이내로 줄여 보세요.`:grade.extra.length?`목표에 없는 결합 ${grade.extra.length}개가 생겼습니다. 붉은 자리와 ‘목표 구조’를 비교해 경쟁하는 결합을 줄여 보세요.`:`목표와 결합 상대가 다른 자리가 ${sequence.length-grade.correct}개입니다. ‘목표 구조’에서 맞은편 짝을 확인하세요.`;
+  $('grading-detail').textContent=message;feedback.textContent=message;feedback.hidden=!grade.hasPrediction;feedback.classList.toggle('success',grade.solved);
+  $('grading-progress').value=!grade.complete?(grade.assigned-mission.locked.length)/(sequence.length-mission.locked.length)*100:grade.hasPrediction?grade.correct/sequence.length*100:0;
+  $('grading-checks').replaceChildren();
+  const checks=[{ok:grade.complete,text:`염기 선택 ${grade.assigned} / ${sequence.length}`},{ok:grade.lockedOk,text:`고정 염기 ${mission.locked.length}개 유지`}];
+  if(isRibozyme()){
+    const current=grade.hasPrediction?partners(result.structure):null;
+    mission.stems.forEach(stem=>checks.push({ok:!!current&&stem.pairs.every(([i,j])=>current[i]===j),text:stem.name}));
+  }
+  checks.push({ok:grade.structureOk,text:'결합·짝 없는 자리 일치'});
+  if(mission.maxChanges)checks.push({ok:grade.budgetOk,text:`변경 ${grade.changes} / ${mission.maxChanges}개`});
+  for(const check of checks){const li=document.createElement('li');li.classList.toggle('passed',check.ok);li.textContent=`${check.ok?'✓':'○'} ${check.text}`;$('grading-checks').append(li);}
+  $('mission-rules').textContent=isRibozyme()?'54자리 · 보존 염기 16개 · 줄기 I 5쌍 / II 4쌍 / III 6쌍 · 37 °C':`${mission.locked.length?`고정 염기 ${mission.locked.length}개 · `:''}${mission.maxChanges?`처음 서열과 다른 자리 ${grade.changes} / ${mission.maxChanges}개`:'변경 횟수 제한 없음'} · 37 °C`;
+  $('reaction-toggle').disabled=!grade.solved;
+  $('reaction-toggle').textContent=grade.solved?'절단 원리 보기':'설계 조건 통과 후 절단 원리 보기';
+  if(!grade.solved){$('reaction-principle').hidden=true;$('reaction-toggle').setAttribute('aria-expanded','false');}
+}
+function announceSuccess(grade){
+  const item=mission,seq=sequence,key=`${item.id}:${seq}`;
+  if(announcedSolutions.has(key)||mode!=='mission')return;
+  clearTimeout(successTimer);
+  successTimer=setTimeout(()=>{
+    if(mode!=='mission'||mission!==item||sequence!==seq||pending||!grade.solved)return;
+    announcedSolutions.add(key);
+    $('success-title').textContent='미션 성공!';$('success-mission').textContent=item.title;
+    $('success-detail').textContent=isRibozyme()?'구조 조건을 만족하는 리보자임 후보를 직접 설계했습니다. 실제 효소 활성은 실험으로 확인해야 합니다.':'예측 구조의 모든 결합 상대와 짝 없는 자리가 목표와 일치하고, 미션 조건도 통과했습니다. 같은 구조를 만드는 다른 서열도 정답입니다.';
+    $('success-proof').textContent=`목표 구조 100% 일치 · ${grade.targetPairs.length}개 염기쌍 · ${result.energy.toFixed(2)} kcal/mol`;
+    $('success-next').textContent=isRibozyme()?'절단 원리 살펴보기 →':'다음 미션 →';
+    $('mission-success').showModal();
+  },850);
+}
+function syncViewButtons(){document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));}
 function showWorkspace() {
+  cancelSuccess();
   $('mission-room').hidden=true;$('workspace').hidden=false;
   $('workspace').setAttribute('aria-labelledby',mission?'tab-missions':'tab-free');
   $('tab-missions').setAttribute('aria-controls',mission?'workspace':'mission-room');
   $('tab-free').setAttribute('aria-selected',String(!mission));
   $('tab-missions').setAttribute('aria-selected',String(!!mission));
   $('mission-brief').hidden=!mission;$('free-options').hidden=!!mission;
+  $('mission-summary').hidden=!mission;$('ribozyme-guide').hidden=!isRibozyme();$('ribozyme-reaction').hidden=!isRibozyme();$('blank-tools').hidden=!isRibozyme();
   $('hint-area').hidden=!mission;$('structure-toggle').hidden=!mission;
-  $('sequence').readOnly=!!mission;
-  $('fold-button').hidden=!!mission;
-  $('sequence-help').textContent=mission?'미션에서는 구조도의 염기를 눌러 바꿉니다. 자물쇠 표시 염기는 고정입니다.':'A, U, G, C로 8~120개 염기를 입력하세요.';
+  $('sequence').readOnly=!!mission&&!isRibozyme();
+  $('fold-button').hidden=!!mission&&!isRibozyme();
+  $('sequence-help').textContent=isRibozyme()?'54자리를 직접 입력해도 됩니다. N은 미정 자리이며, 자물쇠 표시 16자리는 유지하세요. 전부 채우면 예측합니다.':mission?'미션에서는 구조도의 염기를 눌러 바꿉니다. 자물쇠 표시 염기는 고정입니다.':'A, U, G, C로 8~120개 염기를 입력하세요.';
   $('hint').hidden=true;$('hint-button').setAttribute('aria-expanded','false');$('hint-button').textContent='힌트 보기';
   view='current';document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
   if(mission){
@@ -161,14 +227,21 @@ function showWorkspace() {
     $('mission-title').textContent=mission.title;$('mission-description').textContent=mission.description;
     $('hint').textContent=mission.hint;
   }
+  $('stem-navigation').replaceChildren();
+  if(isRibozyme()){
+    for(const stem of mission.stems){const button=document.createElement('button');button.textContent=`${stem.name} · ${stem.pairs.length}쌍`;button.addEventListener('click',()=>{view='target';syncViewButtons();selected=stem.pairs[0][0];renderSelection();renderStructure();$('rna-stage').scrollIntoView({behavior:'smooth',block:'center'});});$('stem-navigation').append(button);}
+    const cut=document.createElement('button');cut.textContent='절단 자리 · 8 | 9';cut.addEventListener('click',()=>{selectBase(7);$('rna-stage').scrollIntoView({behavior:'smooth',block:'center'});});$('stem-navigation').append(cut);
+  }
   setZoom(zoom);
 }
 function openMission(item, sharedSequence) {
+  announcedSolutions.clear();
   mode='mission';mission=item;history=[];selected=0;startSequence=mission.start;
   showWorkspace();
-  const shareValid=valid(sharedSequence) && sharedSequence.length===mission.start.length && mission.locked.every(i=>sharedSequence[i]===mission.start[i]);
+  const shareValid=typeof sharedSequence==='string'&&(isRibozyme()?/^[ACGUN]+$/.test(sharedSequence):valid(sharedSequence)) && sharedSequence.length===mission.start.length && mission.locked.every(i=>sharedSequence[i]===mission.start[i]);
   setSequence(shareValid?sharedSequence:mission.start,{remember:false});
   if(result?.sequence===sequence){renderMetrics();renderStructure();}
+  $('mission-brief').scrollIntoView({block:'start'});
 }
 function openFree() {
   mode='free';mission=null;history=[];selected=0;startSequence=freeSequence;
@@ -189,6 +262,7 @@ function renderMissionList() {
   $('mission-progress').textContent=`${completed.size} / ${MISSIONS.length} 완료`;
 }
 function openRoom() {
+  cancelSuccess();
   mode='room';$('mission-room').hidden=false;$('workspace').hidden=true;
   $('tab-free').setAttribute('aria-selected','false');$('tab-missions').setAttribute('aria-selected','true');
   $('tab-missions').setAttribute('aria-controls','mission-room');renderMissionList();
@@ -206,7 +280,10 @@ $('preset').addEventListener('change',()=>{startSequence=PRESETS[$('preset').val
 $('fold-button').addEventListener('click',()=>{
   const raw=$('sequence').value.trim().toUpperCase().replace(/\s+/g,'');
   const normalized=raw.replace(/T/g,'U');
-  if(!valid(normalized)){error('A·U·G·C로 8~120개 염기를 입력하세요. 공백과 줄바꿈은 생략할 수 있습니다.');return;}
+  if(isRibozyme()){
+    if(!/^[ACGUN]{54}$/.test(normalized)){error('A·U·G·C 또는 미정 자리 N으로 정확히 54자리를 입력하세요.');return;}
+    if(!mission.locked.every(i=>normalized[i]===mission.start[i])){error('보존 염기와 절단 자리 16개는 바꿀 수 없습니다. 자물쇠 표시 자리를 유지하세요.');return;}
+  }else if(!valid(normalized)){error('A·U·G·C로 8~120개 염기를 입력하세요. 공백과 줄바꿈은 생략할 수 있습니다.');return;}
   if(raw.includes('T'))toast('RNA 서열에 맞게 T를 U로 바꿨습니다.');
   if(normalized===sequence)requestFold();else setSequence(normalized);
 });
@@ -221,15 +298,28 @@ $('zoom-out').addEventListener('click',()=>setZoom(zoom-.5));
 $('zoom-fit').addEventListener('click',()=>setZoom(1));
 window.addEventListener('resize',()=>setZoom(zoom));
 $('undo').addEventListener('click',()=>{const previous=history.pop();if(previous)setSequence(previous,{remember:false});});
-$('reset').addEventListener('click',()=>setSequence(startSequence));
+$('reset').addEventListener('click',()=>{announcedSolutions.clear();setSequence(startSequence);});
+$('next-blank').addEventListener('click',nextBlank);
+$('clear-base').addEventListener('click',()=>{if(isRibozyme()&&!mission.locked.includes(selected))setSequence(sequence.slice(0,selected)+'N'+sequence.slice(selected+1));});
+$('success-next').addEventListener('click',()=>{
+  $('mission-success').close();
+  if(isRibozyme()){$('reaction-toggle').click();$('ribozyme-reaction').scrollIntoView({behavior:'smooth',block:'center'});}
+  else openMission(MISSIONS[MISSIONS.indexOf(mission)+1]);
+});
+$('reaction-toggle').addEventListener('click',()=>{
+  if($('reaction-toggle').disabled)return;
+  const expanded=$('reaction-principle').hidden;$('reaction-principle').hidden=!expanded;
+  $('reaction-toggle').setAttribute('aria-expanded',String(expanded));$('reaction-toggle').textContent=expanded?'절단 원리 접기':'절단 원리 보기';
+});
 document.addEventListener('keydown',event=>{
-  if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('textarea,input,select')||$('workspace').hidden)return;
+  if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('textarea,input,select')||$('workspace').hidden||$('mission-success').open)return;
   const key=event.key.toUpperCase();
   if(/^[ACGU]$/.test(key)){event.preventDefault();changeBase(key);}
   else if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();selectBase(selected+(event.key==='ArrowLeft'?-1:1));}
 });
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
-  view=button.dataset.view;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));renderStructure();
+  if(button.dataset.view==='current'&&hasBlanks()){toast('빈 자리를 모두 채우면 예측 구조를 볼 수 있습니다.');return;}
+  view=button.dataset.view;syncViewButtons();renderStructure();
 }));
 $('detail-toggle').addEventListener('click',()=>{
   const expanded=$('nucleotide-sketch').classList.toggle('expanded');
@@ -247,7 +337,8 @@ $('share').addEventListener('click',async()=>{
 });
 $('download').addEventListener('click',()=>{
   if(!result||result.sequence!==sequence||pending){toast('계산이 끝난 뒤 결과를 저장해 주세요.');return;}
-  const text=['RNA 설계 실험실',mission?`미션: ${mission.title}`:'자유 실험실',`염기서열 (5′ → 3′): ${sequence}`,`예측 2차 구조: ${result.structure}`,`최소 자유에너지: ${result.energy.toFixed(2)} kcal/mol`,`모형: RibossFold 0.0.5, Turner 2004, 37 °C`,mission?`목표 구조: ${mission.target}`:'','이 결과는 2차 구조의 계산상 예측이며 촉매 활성의 검증이 아닙니다.'].filter(Boolean).join('\n');
+  const grade=mission?gradeMission(mission,sequence,result.structure):null;
+  const text=['RNA 설계 실험실',mission?`미션: ${mission.title}`:'자유 실험실',`염기서열 (5′ → 3′): ${sequence}`,`예측 2차 구조: ${result.structure}`,`최소 자유에너지: ${result.energy.toFixed(2)} kcal/mol`,`모형: RibossFold 0.0.5, Turner 2004, 37 °C`,mission?`목표 구조: ${mission.target}`:'',grade?`자동 채점: ${grade.solved?'설계 조건 통과':'수정 필요'} · 결합 상대 일치 ${grade.correct}/${sequence.length}`:'',isRibozyme()?'해머헤드 자가절단 후보 · 절단 자리 8|9 · 예상 절단 시 조각 길이 8nt + 46nt':'',isRibozyme()?`설계 근거: ${mission.source}`:'','이 결과는 2차 구조의 계산상 예측이며 촉매 활성의 검증이 아닙니다.'].filter(Boolean).join('\n');
   const url=URL.createObjectURL(new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='RNA-설계-결과.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('설계 결과를 저장했습니다.');
 });
 
@@ -260,7 +351,7 @@ worker.addEventListener('message',({data})=>{
   } else if(data.id===requestId){
     clearTimeout(foldTimer);pending=false;
     if(data.type==='error'){error(data.error);$('fold-status').textContent='계산하지 못했습니다. 서열을 확인해 주세요.';return;}
-    result=data;renderStructure();renderMetrics();renderSelection();
+    result=data;if(isRibozyme()){view='current';syncViewButtons();}renderStructure();renderMetrics();renderSelection();
     $('fold-status').textContent='계산 완료 · 염기를 눌러 다른 결합을 탐색하세요.';
   }
 });
