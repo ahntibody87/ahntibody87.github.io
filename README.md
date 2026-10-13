@@ -28,6 +28,9 @@
 - 주소: `/advanced-life-science/gene-expression/rna-lab/`
 - 자유 실험실: 8~120 nt 입력, 염기 선택·수정, 되돌리기, 설계 링크 공유, 결과 파일 저장
 - 미션방: 목표 구조 비교, 고정 염기, 변경 자리 수 조건, 기기 안에 완료 상태 저장
+- 구조 표시: 리보스·인산 골격, 퓨린·피리미딘 고리, 수소 결합 수, 5′→3′ 방향, 선택한 뉴클레오타이드의 확대 설명
+- 전환: 염기 문자·색 즉시 반영, 약 0.76초 좌표 보간, 결합선 전환, 빠른 연속 수정 시 현재 위치에서 재시작. 움직임 감소 설정에서는 즉시 표시합니다. 애니메이션은 실제 접힘 경로나 속도의 시뮬레이션이 아닙니다.
+- 표시 검사: `node scripts/check-rna-view.mjs`
 - 계산: RibossFold `ribossfold-wasm@0.0.5` (MIT), Turner 2004, 37 °C, dangles=2, 유사매듭 없는 최소 자유에너지 2차 구조
 - 계산기 파일을 저장소에 포함하고 Web Worker에서 실행합니다. CDN, 외부 API, 학생 계정, 서버 저장이 필요 없습니다.
 - 출처: https://github.com/mirditalab/RibossFold. 라이선스: `assets/activities/rna-lab/vendor/LICENSE-ribossfold.txt`.

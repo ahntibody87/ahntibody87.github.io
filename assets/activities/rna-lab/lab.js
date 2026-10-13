@@ -1,8 +1,7 @@
 import {PRESETS, MISSIONS} from './missions.js';
+import {MoleculeView, BASES, pairInfo, partners} from './molecule.js?v=2';
 
 const $ = id => document.getElementById(id);
-const NS = 'http://www.w3.org/2000/svg';
-const colors = {A:'#f4c86a', U:'#e89980', G:'#8bb9c8', C:'#b2c7a0'};
 const storage = {
   read(key, fallback) {try {return JSON.parse(localStorage.getItem(`rna-lab-v1-${key}`)) ?? fallback;} catch {return fallback;}},
   write(key, value) {try {localStorage.setItem(`rna-lab-v1-${key}`, JSON.stringify(value));} catch {/* Private browsing can disable storage. */}}
@@ -36,127 +35,40 @@ function error(message = '') {
   $('input-error').textContent = message;
   $('input-error').hidden = !message;
 }
-function partners(structure) {
-  const pairs = Array(structure.length).fill(-1), stack = [];
-  for (let i=0; i<structure.length; i++) {
-    if (structure[i] === '(') stack.push(i);
-    else if (structure[i] === ')') {
-      const j = stack.pop();
-      if (j === undefined) throw new Error('잘못된 구조 표기');
-      pairs[i]=j; pairs[j]=i;
-    }
-  }
-  if (stack.length) throw new Error('잘못된 구조 표기');
-  return pairs;
-}
-
-// Draw stems and their loops from the pairing tree. This layout only displays
-// the computed structure; it does not participate in the folding prediction.
-export function layout(structure) {
-  const pair = partners(structure), points = Array(structure.length);
-  const gap=29, rise=25;
-  function stem(i,j,x,y,angle) {
-    const dx=Math.cos(angle),dy=Math.sin(angle),px=-dy,py=dx;
-    let k=0;
-    while(i+k<j-k && pair[i+k]===j-k) {
-      points[i+k]={x:x+dx*rise*k-px*gap/2,y:y+dy*rise*k-py*gap/2};
-      points[j-k]={x:x+dx*rise*k+px*gap/2,y:y+dy*rise*k+py*gap/2};
-      k++;
-    }
-    const left=i+k-1,right=j-k+1;
-    const tokens=[];
-    for(let n=left+1;n<right;n++) {
-      if(pair[n]>n) {tokens.push({index:n,child:pair[n]},{index:pair[n]});n=pair[n];}
-      else tokens.push({index:n});
-    }
-    const count=tokens.length+2;
-    const radius=gap/(2*Math.sin(Math.PI/count));
-    const offset=Math.sqrt(Math.max(0,radius*radius-gap*gap/4));
-    const baseX=x+dx*rise*(k-1),baseY=y+dy*rise*(k-1);
-    const cx=baseX+dx*offset,cy=baseY+dy*offset;
-    const first=angle-Math.PI+Math.PI/count;
-    tokens.forEach((token,t)=>{
-      const a=first+(t+1)*2*Math.PI/count;
-      points[token.index]={x:cx+radius*Math.cos(a),y:cy+radius*Math.sin(a)};
-    });
-    for(const token of tokens) if(token.child) {
-      const a=points[token.index],b=points[token.child],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
-      stem(token.index,token.child,mx,my,Math.atan2(my-cy,mx-cx));
-    }
-  }
-  let cursor=0;
-  for(let i=0;i<structure.length;i++) {
-    if(pair[i]>i) {
-      const j=pair[i];stem(i,j,0,0,-Math.PI/2);
-      const group=points.slice(i,j+1),xs=group.map(p=>p.x);
-      const min=Math.min(...xs),max=Math.max(...xs);
-      group.forEach(p=>p.x+=cursor-min+15);
-      cursor+=max-min+55;i=j;
-    } else {points[i]={x:cursor,y:0};cursor+=gap;}
-  }
-  return points;
-}
-function svgNode(tag, attrs={}, text) {
-  const element=document.createElementNS(NS,tag);
-  for(const [key,value] of Object.entries(attrs)) element.setAttribute(key,String(value));
-  if(text!==undefined) element.textContent=text;
-  return element;
-}
+const molecule = new MoleculeView($('rna-structure'), selectBase);
 function setZoom(next) {
-  zoom=Math.max(1,Math.min(4,next));
+  zoom=Math.max(1,Math.min(4,next));molecule.zoom=zoom;
   const svg=$('rna-structure'),viewport=$('rna-viewport');
-  svg.style.width=`${zoom*100}%`;svg.style.height=`${viewport.clientHeight*zoom}px`;
+  svg.style.width=`${zoom*100}%`;if(viewport.clientHeight)svg.style.height=`${viewport.clientHeight*zoom}px`;
   $('zoom-out').disabled=zoom<=1;$('zoom-in').disabled=zoom>=4;
-  if(zoom===1){viewport.scrollLeft=0;viewport.scrollTop=0;}
+  if(zoom===1){viewport.scrollLeft=0;viewport.scrollTop=0;molecule.fit();}
   else{const node=svg.querySelector('.selected');if(node)node.scrollIntoView({block:'nearest',inline:'nearest'});}
+}
+function renderInspector() {
+  const base=sequence[selected],info=BASES[base];
+  $('base-detail').textContent=`${selected+1}번 ${base} · ${info.name}`;
+  $('base-family').textContent=`${info.family} · 고리 ${info.rings}개 · 리보스의 1′ 탄소에 연결`;
+  const structure=view==='target'&&mission?mission.target:result?.sequence===sequence?result.structure:null;
+  const mate=structure?partners(structure)[selected]:-1;
+  const bond=mate>=0?pairInfo(base,sequence[mate]):null;
+  $('pair-detail').textContent=!structure?'새 서열의 결합 상대를 계산하고 있습니다.':mate<0?`${view==='target'?'목표':'현재 예측'} 구조에서 짝 없음`:`${mate+1}번 ${sequence[mate]}와 짝 · ${bond?.name||'비상보적 배치'}${bond?.wobble?' 흔들림 염기쌍':''}`;
+  $('bond-detail').textContent=bond?`대표적인 수소 결합 ${bond.count}개 · 점선으로 표시`:view==='target'&&mate>=0?'염기를 수정해 목표의 결합 관계를 만들어 보세요.':'인산은 이웃한 리보스 사이의 골격을 연결합니다.';
+  $('detail-base-letter').textContent=base;
+  $('detail-base-ring').setAttribute('points',info.rings===2?'195,47 207,40 219,47 219,61 207,68 195,61':'190,47 202,40 214,47 214,61 202,68 190,61');
+  $('detail-base-pent').setAttribute('display',info.rings===2?'':'none');
+  $('detail-base-letter').setAttribute('x',info.rings===2?'207':'202');
+  $('detail-glyco').setAttribute('x2',info.rings===2?'177':'190');
+  $('detail-rings').style.setProperty('--base-color',info.color);
 }
 function renderStructure() {
   if(!result || result.sequence!==sequence) return;
-  const structure=view==='target' && mission ? mission.target : result.structure;
-  const pair=partners(structure),current=partners(result.structure),target=mission?partners(mission.target):null;
-  const positions=layout(structure),svg=$('rna-structure');
-  svg.replaceChildren();
-  const xs=positions.map(p=>p.x),ys=positions.map(p=>p.y);
-  const minX=Math.min(...xs)-36,minY=Math.min(...ys)-36;
-  const width=Math.max(...xs)-minX+36,height=Math.max(...ys)-minY+40;
-  // A minimum viewBox size prevents huge bases for very short examples.
-  const w=Math.max(width,220),h=Math.max(height,210);
-  svg.setAttribute('viewBox',`${minX-(w-width)/2} ${minY-(h-height)/2} ${w} ${h}`);
-  const backbone=svgNode('g');
-  positions.forEach((p,i)=>{
-    if(i) backbone.append(svgNode('line',{x1:positions[i-1].x,y1:positions[i-1].y,x2:p.x,y2:p.y,class:'backbone'}));
-    if(pair[i]>i) backbone.append(svgNode('line',{x1:p.x,y1:p.y,x2:positions[pair[i]].x,y2:positions[pair[i]].y,class:'pair'}));
-  });
-  svg.append(backbone);
-  positions.forEach((p,i)=>{
-    const locked=mission?.locked.includes(i);
-    const mismatch=target && view==='current' && current[i]!==target[i];
-    const node=svgNode('g',{class:`base-node${selected===i?' selected':''}${locked?' locked':''}${mismatch?' mismatch':''}`,transform:`translate(${p.x},${p.y})`,tabindex:i===selected?'0':'-1',role:'button','aria-label':`${i+1}번 ${sequence[i]}${locked?' 고정 염기':''}${pair[i]>=0?`, ${pair[i]+1}번과 결합`: ', 결합하지 않음'}`,'data-index':i});
-    node.append(svgNode('circle',{r:12,fill:colors[sequence[i]]}));
-    node.append(svgNode('text',{},sequence[i]));
-    if(locked)node.append(svgNode('circle',{cx:9,cy:-9,r:3.8,class:'lock-dot'}));
-    if((i+1)%5===0) {
-      let nx,ny;
-      if(pair[i]>=0){nx=p.x-positions[pair[i]].x;ny=p.y-positions[pair[i]].y;}
-      else {
-        const before=positions[Math.max(0,i-1)],after=positions[Math.min(positions.length-1,i+1)];
-        nx=after.y-before.y;ny=before.x-after.x;
-        const centerX=(Math.min(...xs)+Math.max(...xs))/2,centerY=(Math.min(...ys)+Math.max(...ys))/2;
-        if(nx*(p.x-centerX)+ny*(p.y-centerY)<0){nx=-nx;ny=-ny;}
-      }
-      const distance=Math.hypot(nx,ny)||1;
-      node.append(svgNode('text',{x:nx/distance*22,y:ny/distance*22,class:'base-number'},String(i+1)));
-    }
-    node.addEventListener('click',()=>selectBase(i));
-    node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectBase(i);}});
-    svg.append(node);
-  });
-  const first=positions[0],last=positions.at(-1);
-  svg.append(svgNode('text',{x:first.x-26,y:first.y+5,class:'end-label'},'5′'));
-  svg.append(svgNode('text',{x:last.x+16,y:last.y+5,class:'end-label'},'3′'));
-  setZoom(zoom);
-  $('structure-heading').textContent=view==='target'?'도전할 목표 구조':'지금 이 RNA의 예측 구조';
-  $('stage-extra').textContent=mission ? '● 고정 염기 · 점선 테두리: 목표와 다른 자리' : '37 °C 기준';
+  const structure=view==='target'&&mission?mission.target:result.structure;
+  const current=partners(result.structure),target=mission?partners(mission.target):null;
+  const mismatches=target&&view==='current'?current.flatMap((mate,i)=>mate!==target[i]?[i]:[]):[];
+  molecule.show({sequence,structure,selected,locked:mission?.locked||[],mismatches});
+  $('structure-heading').textContent=view==='target'?'목표 RNA의 결합 관계':'현재 RNA의 예측 2차 구조';
+  $('stage-extra').textContent=mission?'작은 자물쇠: 고정 염기 · 붉은 윤곽: 목표와 다른 자리':'화살표: 5′ → 3′';
+  renderInspector();
 }
 function selectBase(index) {
   selected=Math.max(0,Math.min(sequence.length-1,index));
@@ -169,11 +81,13 @@ function selectBase(index) {
 function renderSelection() {
   const locked=mission?.locked.includes(selected);
   $('selected-label').textContent=`${selected+1}번 · ${sequence[selected]}${locked?' · 고정되어 있습니다':''}`;
-  document.querySelectorAll('[data-base]').forEach(button=>{
+  document.querySelectorAll('button[data-base]').forEach(button=>{
     button.disabled=!ready || !!locked;
     button.setAttribute('aria-pressed',String(button.dataset.base===sequence[selected]));
   });
   $('undo').disabled=!history.length || !ready;
+  if(molecule.nodes.length) molecule.selection(selected,mission?.locked||[],molecule.mismatches||[]);
+  renderInspector();
 }
 function setSequence(next,{remember=true}={}) {
   if(next===sequence && result?.sequence===sequence) return;
@@ -183,6 +97,7 @@ function setSequence(next,{remember=true}={}) {
   selected=Math.min(selected,sequence.length-1);
   $('sequence').value=sequence;
   $('sequence-length').textContent=`${sequence.length} nt`;
+  molecule.updateSequence(sequence);
   renderSelection(); error(); requestFold();
 }
 function changeBase(base) {
@@ -214,7 +129,7 @@ function renderMetrics() {
     const changes=[...sequence].filter((base,i)=>base!==mission.start[i]).length;
     const budgetOk=!mission.maxChanges || changes<=mission.maxChanges;
     const solved=result.structure===mission.target && budgetOk;
-    $('mission-rules').textContent=`${mission.locked.length?`● 표시 ${mission.locked.length}개 염기 고정 · `:''}${mission.maxChanges?`처음 서열과 다른 자리 ${changes} / ${mission.maxChanges}개`:'변경 횟수 제한 없음'} · 37 °C`;
+    $('mission-rules').textContent=`${mission.locked.length?`고정 염기 ${mission.locked.length}개 · `:''}${mission.maxChanges?`처음 서열과 다른 자리 ${changes} / ${mission.maxChanges}개`:'변경 횟수 제한 없음'} · 37 °C`;
     const feedback=$('mission-feedback');feedback.hidden=false;feedback.classList.toggle('success',solved);
     if(solved){
       feedback.textContent='✓ 목표 구조를 만들었습니다! 어떤 결합을 유도하고 어떤 결합을 막았는지 설명해 보세요.';
@@ -238,7 +153,7 @@ function showWorkspace() {
   $('hint-area').hidden=!mission;$('structure-toggle').hidden=!mission;
   $('sequence').readOnly=!!mission;
   $('fold-button').hidden=!!mission;
-  $('sequence-help').textContent=mission?'미션에서는 그림의 염기를 눌러 바꿉니다. ● 표시 염기는 고정입니다.':'A, U, G, C로 8~120개 염기를 입력하세요.';
+  $('sequence-help').textContent=mission?'미션에서는 구조도의 염기를 눌러 바꿉니다. 자물쇠 표시 염기는 고정입니다.':'A, U, G, C로 8~120개 염기를 입력하세요.';
   $('hint').hidden=true;$('hint-button').setAttribute('aria-expanded','false');$('hint-button').textContent='힌트 보기';
   view='current';document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
   if(mission){
@@ -246,6 +161,7 @@ function showWorkspace() {
     $('mission-title').textContent=mission.title;$('mission-description').textContent=mission.description;
     $('hint').textContent=mission.hint;
   }
+  setZoom(zoom);
 }
 function openMission(item, sharedSequence) {
   mode='mission';mission=item;history=[];selected=0;startSequence=mission.start;
@@ -297,7 +213,7 @@ $('fold-button').addEventListener('click',()=>{
 $('sequence').addEventListener('input',()=>{
   if(!$('sequence').readOnly)$('sequence-length').textContent=`${$('sequence').value.replace(/\s+/g,'').length} nt · 적용 전`;
 });
-document.querySelectorAll('[data-base]').forEach(b=>b.addEventListener('click',()=>changeBase(b.dataset.base)));
+document.querySelectorAll('button[data-base]').forEach(b=>b.addEventListener('click',()=>changeBase(b.dataset.base)));
 $('previous-base').addEventListener('click',()=>selectBase(selected-1));
 $('next-base').addEventListener('click',()=>selectBase(selected+1));
 $('zoom-in').addEventListener('click',()=>setZoom(zoom+.5));
@@ -307,7 +223,7 @@ window.addEventListener('resize',()=>setZoom(zoom));
 $('undo').addEventListener('click',()=>{const previous=history.pop();if(previous)setSequence(previous,{remember:false});});
 $('reset').addEventListener('click',()=>setSequence(startSequence));
 document.addEventListener('keydown',event=>{
-  if(event.ctrlKey||event.metaKey||event.altKey||event.target.closest('textarea,input,select')||$('workspace').hidden)return;
+  if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('textarea,input,select')||$('workspace').hidden)return;
   const key=event.key.toUpperCase();
   if(/^[ACGU]$/.test(key)){event.preventDefault();changeBase(key);}
   else if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();selectBase(selected+(event.key==='ArrowLeft'?-1:1));}
@@ -315,6 +231,11 @@ document.addEventListener('keydown',event=>{
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
   view=button.dataset.view;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));renderStructure();
 }));
+$('detail-toggle').addEventListener('click',()=>{
+  const expanded=$('nucleotide-sketch').classList.toggle('expanded');
+  $('detail-toggle').setAttribute('aria-expanded',String(expanded));
+  $('detail-toggle').textContent=expanded?'확대 설명 접기':'뉴클레오타이드 확대 보기';
+});
 $('hint-button').addEventListener('click',()=>{
   $('hint').hidden=!$('hint').hidden;$('hint-button').setAttribute('aria-expanded',String(!$('hint').hidden));
   $('hint-button').textContent=$('hint').hidden?'힌트 보기':'힌트 접기';
