@@ -135,7 +135,18 @@ function renderStructure() {
     node.append(svgNode('circle',{r:12,fill:colors[sequence[i]]}));
     node.append(svgNode('text',{},sequence[i]));
     if(locked)node.append(svgNode('circle',{cx:9,cy:-9,r:3.8,class:'lock-dot'}));
-    if((i+1)%5===0) node.append(svgNode('text',{x:0,y:21,class:'base-number'},String(i+1)));
+    if((i+1)%5===0) {
+      let nx,ny;
+      if(pair[i]>=0){nx=p.x-positions[pair[i]].x;ny=p.y-positions[pair[i]].y;}
+      else {
+        const before=positions[Math.max(0,i-1)],after=positions[Math.min(positions.length-1,i+1)];
+        nx=after.y-before.y;ny=before.x-after.x;
+        const centerX=(Math.min(...xs)+Math.max(...xs))/2,centerY=(Math.min(...ys)+Math.max(...ys))/2;
+        if(nx*(p.x-centerX)+ny*(p.y-centerY)<0){nx=-nx;ny=-ny;}
+      }
+      const distance=Math.hypot(nx,ny)||1;
+      node.append(svgNode('text',{x:nx/distance*22,y:ny/distance*22,class:'base-number'},String(i+1)));
+    }
     node.addEventListener('click',()=>selectBase(i));
     node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectBase(i);}});
     svg.append(node);
