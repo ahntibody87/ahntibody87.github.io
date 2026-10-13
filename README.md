@@ -5,7 +5,7 @@
 - 홈페이지: https://ahntibody87.github.io/
 - 저장소: https://github.com/ahntibody87/ahntibody87.github.io
 - GitHub Pages: **main 브랜치 / (root)**. 기존 게시 방식 유지.
-- 백엔드, DB, 로그인, 외부 라이브러리 없이 작동합니다.
+- 백엔드, DB, 로그인 없이 작동합니다. RNA 실험실의 접힘 계산기는 저장소에 포함된 WebAssembly 라이브러리를 사용합니다.
 - 생성된 HTML을 함께 커밋하므로 배포 서버의 Node.js나 별도 빌드 설정이 필요 없습니다.
 
 ## URL 구조
@@ -21,7 +21,18 @@
 | 3단원 · 유전자의 구조와 발현 | `/advanced-life-science/gene-expression/` |
 | 4단원 · 생명 공학의 기술과 응용 | `/advanced-life-science/biotechnology/` |
 
-각 경로에 실제 `index.html`이 있어 직접 접속과 새로고침을 지원합니다. 현재 모든 단원 활동은 비어 있으며, 통합과학과 생물의 유전은 준비 중입니다. 학생 화면에 예시 활동을 게시하지 않습니다.
+각 경로에 실제 `index.html`이 있어 직접 접속과 새로고침을 지원합니다. 고급생명과학 3단원에는 RNA 설계 실험실이 등록되어 있으며, 통합과학과 생물의 유전은 준비 중입니다.
+
+## RNA 설계 실험실
+
+- 주소: `/advanced-life-science/gene-expression/rna-lab/`
+- 자유 실험실: 8~120 nt 입력, 염기 선택·수정, 되돌리기, 설계 링크 공유, 결과 파일 저장
+- 미션방: 목표 구조 비교, 고정 염기, 변경 자리 수 조건, 기기 안에 완료 상태 저장
+- 계산: RibossFold `ribossfold-wasm@0.0.5` (MIT), Turner 2004, 37 °C, dangles=2, 유사매듭 없는 최소 자유에너지 2차 구조
+- 계산기 파일을 저장소에 포함하고 Web Worker에서 실행합니다. CDN, 외부 API, 학생 계정, 서버 저장이 필요 없습니다.
+- 출처: https://github.com/mirditalab/RibossFold. 라이선스: `assets/activities/rna-lab/vendor/LICENSE-ribossfold.txt`.
+- 이 도구는 구조의 계산상 예측을 표시하며, 3차 구조나 리보자임 촉매 활성을 검증하지 않습니다.
+- 활동 본문은 `content/advanced-life-science/gene-expression/rna-lab.html`, 기능·미션·스타일은 `assets/activities/rna-lab/`에서 관리합니다.
 
 ## 파일과 수정 위치
 
