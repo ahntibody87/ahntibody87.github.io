@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {gradeMission, pairing} from '../assets/activities/rna-lab/grading.js';
+import {gradeMission, pairing, shape} from '../assets/activities/rna-lab/grading.js';
 import {MISSIONS} from '../assets/activities/rna-lab/missions.js';
 
 // Small fixtures independent of classroom missions; no mission answers here.
@@ -7,7 +7,15 @@ const fixture={start:'AAAAAAAAAAAA',target:'((....))....',locked:[],maxChanges:n
 assert.ok(gradeMission(fixture,'GCAAAAGCAAAA',fixture.target).solved);
 assert.ok(gradeMission(fixture,'GCUUUUGCUUUU',fixture.target).solved);
 const shifted=gradeMission(fixture,'AAAAGCAAAAGC','....((....))');
-assert.equal(shifted.solved,false);assert.equal(shifted.extra.length,2);assert.equal(shifted.missing.length,2);
+assert.equal(shifted.solved,true);assert.equal(shifted.shapePercent,100);
+assert.equal(shifted.extra.length,0);assert.equal(shifted.missing.length,0);assert.deepEqual(shifted.mismatches,[]);
+assert.equal(shape('.......((((((....)))))).......').text,shape('............((((((....))))))..').text);
+assert.equal(shape('((...))..((....))').text,shape('...((...)).....((....))...').text);
+assert.notEqual(shape('((...))').text,shape('((....))').text);
+assert.notEqual(shape('((....))').text,shape('(((....)))').text);
+assert.notEqual(shape('((...))((...))').text,shape('((.((...)).))').text);
+assert.notEqual(shape('(((....)))').text,shape('((.(....)))').text);
+assert.equal(gradeMission(fixture,'GCAAAAGCAAAA','((.....))...').solved,false);
 assert.equal(gradeMission(fixture,'GCAAAAGCAAAA','((....))(..)').solved,false);
 assert.equal(gradeMission({...fixture,locked:[0]},'GCAAAAGCAAAA',fixture.target).solved,false);
 const limited=gradeMission({...fixture,maxChanges:2},'GCAAAAGCAAAA',fixture.target);
@@ -31,4 +39,4 @@ for(const mission of MISSIONS){
     assert.equal(gradeMission(mission,mission.start.replaceAll('N','A'),'.'.repeat(54)).solved,false);
   }
 }
-console.log('RNA 채점 검사 통과: 다양한 서열, 다른 결합 상대·추가 결합, 변경 제한, 고정 염기, 미정 자리, 해머헤드 3줄기·절단 자리');
+console.log('RNA 채점 검사 통과: 서열·위치가 다른 같은 모양 인정, 루프·줄기·가지·벌지 차이 구분, 추가 구조 거부, 변경 제한, 미정 자리');

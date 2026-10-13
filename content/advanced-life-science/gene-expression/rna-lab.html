@@ -1,11 +1,11 @@
-<link rel="stylesheet" href="/assets/activities/rna-lab/lab.css?v=3">
-<link rel="stylesheet" href="/assets/activities/rna-lab/molecule.css?v=3">
-<link rel="stylesheet" href="/assets/activities/rna-lab/missions.css?v=3">
+<link rel="stylesheet" href="/assets/activities/rna-lab/lab.css?v=4">
+<link rel="stylesheet" href="/assets/activities/rna-lab/molecule.css?v=4">
+<link rel="stylesheet" href="/assets/activities/rna-lab/missions.css?v=4">
 <div class="rna-lab" id="rna-lab">
   <div class="rna-topline"><span class="rna-wordmark">RNA <span class="wordmark-divider">/</span> STRUCTURE LAB</span><span class="engine-state" id="engine-state" role="status">접힘 계산기 준비 중…</span></div>
   <div class="rna-tabs" role="tablist" aria-label="실험실 선택"><button id="tab-free" role="tab" aria-selected="true" aria-controls="workspace">자유 실험실 <span>직접 바꾸고 관찰하기</span></button><button id="tab-missions" role="tab" aria-selected="false" aria-controls="mission-room">미션방 <span>목표 구조에 도전하기</span></button></div>
   <section id="mission-room" role="tabpanel" aria-labelledby="tab-missions" hidden>
-    <div class="room-heading"><div><p class="rna-kicker">DESIGN CHALLENGES</p><h2>어떤 모양으로 접히게 할까요?</h2><p>서로 다른 서열도 목표의 결합 관계를 만들면 성공입니다. 마지막에는 빈 자리부터 자가절단 RNA를 설계해 보세요.</p></div><span id="mission-progress">0 / 5 완료</span></div>
+    <div class="room-heading"><div><p class="rna-kicker">DESIGN CHALLENGES</p><h2>어떤 모양으로 접히게 할까요?</h2><p>서열과 염기 번호가 달라도 줄기 길이·루프 크기·가지 배치가 같으면 정답입니다. 양 끝의 꼬리와 독립된 헤어핀 사이 연결 구간의 길이는 무관합니다.</p></div><span id="mission-progress">0 / 5 완료</span></div>
     <div class="mission-list" id="mission-list"></div>
   </section>
   <section id="workspace" role="tabpanel" aria-labelledby="tab-free">
@@ -15,7 +15,7 @@
       <div><p class="rna-kicker">BUILD A SELF-CLEAVING RNA · 15–30 MIN</p><h3>RNA 자체가 RNA의 결합을 자를 수 있습니다.</h3><p>이 미션의 해머헤드는 <strong>한 가닥이 자기 자신의 골격을 자르는 자가절단 RNA</strong>입니다. 줄기 I·II·III가 핵심 부위를 모으는 2차 구조를 설계합니다. <strong>물음표는 미정 자리</strong>입니다. 고정된 16자리는 문헌의 보존 염기 15개와 절단 자리 C8입니다.</p></div>
       <ol><li><strong>01 · 조립</strong><span>설계도에서 마주 보는 염기를 고르고, 비어 있는 38자리를 채우세요.</span></li><li><strong>02 · 예측과 수정</strong><span>전부 채우면 접힘을 자동 계산합니다. 세 줄기와 핵심 부위가 유지되도록 수정하세요.</span></li><li><strong>03 · 원리와 다음 단계</strong><span>조건을 통과하면 절단 원리를 살펴보고, 구조 예측 뒤에 필요한 검증을 정리하세요.</span></li></ol>
       <div id="stem-navigation" class="stem-navigation" aria-label="설계할 구간 선택"></div>
-      <p class="ribozyme-scope">채점 범위: 54자리 완성 · 보존 서열 유지 · 목표의 결합 관계. 실제 절단 활성은 3차 구조, 이온 조건과 실험으로 확인해야 합니다. <a href="https://doi.org/10.1093/nar/gku740" target="_blank" rel="noopener noreferrer">설계의 근거가 된 연구 ↗</a></p>
+      <p class="ribozyme-scope">채점 범위: 54자리 완성 · 보존 서열 유지 · 목표 모양. 염기 번호가 옮겨진 모양도 인정합니다. 실제 리보자임 기능에는 촉매 핵과 절단 자리의 정확한 배치, 3차 구조와 실험 검증이 필요합니다. <a href="https://doi.org/10.1093/nar/gku740" target="_blank" rel="noopener noreferrer">설계의 근거가 된 연구 ↗</a></p>
     </section>
     <div class="rna-workbench">
       <aside class="rna-controls" aria-label="RNA 조작">
@@ -58,4 +58,4 @@
   <p class="rna-toast" id="rna-toast" role="status" hidden></p>
   <dialog id="mission-success" class="mission-success" aria-labelledby="success-title" aria-describedby="success-detail"><form method="dialog"><p class="rna-kicker">DESIGN COMPLETE</p><div class="success-mark" aria-hidden="true">✓</div><h2 id="success-title">미션 성공!</h2><h3 id="success-mission"></h3><p id="success-detail"></p><p class="success-proof" id="success-proof"></p><div class="success-actions"><button id="success-close" value="close" autofocus>내 설계 더 살펴보기</button><button id="success-next" type="button" class="rna-primary">다음 미션 →</button></div></form></dialog>
 </div>
-<script type="module" src="/assets/activities/rna-lab/lab.js?v=3"></script>
+<script type="module" src="/assets/activities/rna-lab/lab.js?v=4"></script>

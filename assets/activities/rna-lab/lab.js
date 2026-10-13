@@ -1,6 +1,6 @@
-import {PRESETS, MISSIONS} from './missions.js?v=3';
-import {MoleculeView, BASES, pairInfo, partners} from './molecule.js?v=3';
-import {gradeMission} from './grading.js?v=3';
+import {PRESETS, MISSIONS} from './missions.js?v=4';
+import {MoleculeView, BASES, pairInfo, partners} from './molecule.js?v=4';
+import {gradeMission} from './grading.js?v=4';
 
 const $ = id => document.getElementById(id);
 const storage = {
@@ -56,7 +56,9 @@ function renderInspector() {
   $('base-detail').textContent=base==='N'?`${selected+1}번 · 아직 비어 있는 자리`:`${selected+1}번 ${base} · ${info.name}`;
   $('base-family').textContent=base==='N'?`${region||'루프·연결 구간'} · A, U, G, C 중 하나를 선택하세요.`:`${info.family} · 고리 ${info.rings}개${region?` · ${region}`:''} · 리보스의 1′ 탄소에 연결`;
   const guide=hasBlanks()||view==='target';
-  const structure=guide&&mission?mission.target:result?.sequence===sequence?result.structure:null;
+  const hasResult=result?.sequence===sequence;
+  const alignedTarget=mission&&hasResult&&gradeMission(mission,sequence,result.structure).structureOk?result.structure:mission?.target;
+  const structure=guide&&mission?alignedTarget:hasResult?result.structure:null;
   const mate=structure?partners(structure)[selected]:-1;
   const bond=mate>=0?pairInfo(base,sequence[mate]):null;
   $('pair-detail').textContent=!structure?'새 서열의 결합 상대를 계산하고 있습니다.':mate<0?`${guide?'설계도':'현재 예측'}에서 짝 없음`:`${guide?'설계도: ':''}${mate+1}번 ${sequence[mate]==='N'?'미정':sequence[mate]}와 짝 · ${bond?.name||(base==='N'||sequence[mate]==='N'?'염기 선택 필요':'비상보적 배치')}${bond?.wobble?' 흔들림 염기쌍':''}`;
@@ -73,8 +75,8 @@ function renderStructure() {
   const blank=hasBlanks(),hasResult=result?.sequence===sequence;
   if(!blank&&!hasResult)return;
   const guide=blank||view==='target';
-  const structure=guide&&mission?mission.target:result.structure;
   const grade=mission?gradeMission(mission,sequence,hasResult?result.structure:null):null;
+  const structure=guide&&mission?(grade.structureOk?result.structure:mission.target):result.structure;
   const mismatches=guide?[]:grade?.mismatches||[];
   molecule.show({sequence,structure,selected,locked:mission?.locked||[],mismatches,cleavageAfter:isRibozyme()?mission.cleavageAfter:null});
   molecule.nodes.forEach((node,i)=>node.g.classList.toggle('conserved-base',!!isRibozyme()&&mission.locked.includes(i)));
@@ -155,10 +157,10 @@ function renderMetrics() {
   $('energy').textContent=result.energy.toFixed(2);
   $('pairs').textContent=String((result.structure.match(/\(/g)||[]).length);
   if(mission) {
-    const grade=gradeMission(mission,sequence,result.structure),{correct}=grade;
-    $('third-label').textContent='목표 구조 일치';
-    $('third-value').textContent=`${Math.round(correct/sequence.length*100)}%`;
-    $('third-help').textContent=`결합 상대가 같은 자리 ${correct} / ${sequence.length}`;
+    const grade=gradeMission(mission,sequence,result.structure);
+    $('third-label').textContent='목표 모양 일치';
+    $('third-value').textContent=`${grade.shapePercent}%`;
+    $('third-help').textContent='줄기·루프·가지 배치 비교 · 염기 번호 무관';
     renderMissionGrade(grade);
     if(grade.solved){
       completed.add(mission.id);storage.write('completed',[...completed]);renderMissionList();announceSuccess(grade);
@@ -174,17 +176,17 @@ function renderMissionGrade(grade){
   const summary=$('mission-summary'),feedback=$('mission-feedback');
   summary.classList.toggle('solved',grade.solved);summary.dataset.solved=String(grade.solved);
   $('mission-state').textContent=grade.solved?'✓ 미션 성공':!grade.complete?'빈 자리 채우기':pending?'접힘 계산 중':'자동 채점';
-  $('grading-title').textContent=grade.solved?(isRibozyme()?'리보자임 후보의 설계 조건을 충족했습니다.':'목표의 결합 관계를 만들었습니다!'):!grade.complete?`아직 ${sequence.length-grade.assigned}자리가 비어 있습니다.`:pending?'현재 서열의 구조를 확인하고 있습니다.':`목표 결합 ${grade.targetPairs.length-grade.missing.length} / ${grade.targetPairs.length}개 · 추가 결합 ${grade.extra.length}개`;
-  const message=grade.solved?(isRibozyme()?'구조 조건을 만족하는 리보자임 후보 설계 완료. 아래에서 절단 원리를 살펴보세요. 실제 활성 확인에는 실험이 필요합니다.':'서열이 달라도 결합 상대와 짝 없는 자리가 모두 같으면 성공입니다. 어떤 결합을 만들고 막았는지 설명해 보세요.'):!grade.complete?'빈 자리에는 A·U·G·C를 선택하세요. 완성 전 그림은 목표 배치이며, 접힘 예측이 아닙니다.':pending?'서열의 정답을 비교하지 않고, 예측된 각 염기의 결합 상대와 미션 조건을 확인합니다.':!grade.budgetOk?`구조와 변경 조건을 함께 맞춰야 합니다. 처음 서열과 다른 자리를 ${mission.maxChanges}개 이내로 줄여 보세요.`:grade.extra.length?`목표에 없는 결합 ${grade.extra.length}개가 생겼습니다. 붉은 자리와 ‘목표 구조’를 비교해 경쟁하는 결합을 줄여 보세요.`:`목표와 결합 상대가 다른 자리가 ${sequence.length-grade.correct}개입니다. ‘목표 구조’에서 맞은편 짝을 확인하세요.`;
+  $('grading-title').textContent=grade.solved?'목표와 같은 줄기·루프 모양을 만들었습니다!':!grade.complete?`아직 ${sequence.length-grade.assigned}자리가 비어 있습니다.`:pending?'현재 서열의 구조를 확인하고 있습니다.':`모양 일치 ${grade.shapePercent}% · 대응하는 염기쌍 ${grade.targetPairs.length-grade.missing.length} / ${grade.targetPairs.length}개`;
+  const message=grade.solved?(isRibozyme()?'해머헤드의 목표 모양을 완성했습니다. 실제 리보자임 기능에는 촉매 핵과 절단 자리의 정확한 배치, 3차 구조와 실험 검증이 필요합니다.':'줄기 길이·루프 크기·가지 배치가 목표와 같습니다. 염기서열이나 구조가 놓인 염기 번호가 달라도 정답입니다.'):!grade.complete?'빈 자리에는 A·U·G·C를 선택하세요. 완성 전 그림은 목표 배치이며, 접힘 예측이 아닙니다.':pending?'염기 번호를 맞춰 비교하지 않고, 줄기·루프·가지가 이루는 모양을 확인합니다.':!grade.budgetOk?`모양과 변경 조건을 함께 맞춰야 합니다. 처음 서열과 다른 자리를 ${mission.maxChanges}개 이내로 줄여 보세요.`:'목표 구조와 줄기의 염기쌍 수, 루프의 염기 수, 가지 배치를 비교하세요. 양 끝의 꼬리와 독립된 헤어핀 사이 연결 구간의 길이는 채점하지 않습니다.';
   $('grading-detail').textContent=message;feedback.textContent=message;feedback.hidden=!grade.hasPrediction;feedback.classList.toggle('success',grade.solved);
-  $('grading-progress').value=!grade.complete?(grade.assigned-mission.locked.length)/(sequence.length-mission.locked.length)*100:grade.hasPrediction?grade.correct/sequence.length*100:0;
+  $('grading-progress').value=!grade.complete?(grade.assigned-mission.locked.length)/(sequence.length-mission.locked.length)*100:grade.shapePercent;
   $('grading-checks').replaceChildren();
   const checks=[{ok:grade.complete,text:`염기 선택 ${grade.assigned} / ${sequence.length}`},{ok:grade.lockedOk,text:`고정 염기 ${mission.locked.length}개 유지`}];
   if(isRibozyme()){
     const current=grade.hasPrediction?partners(result.structure):null;
-    mission.stems.forEach(stem=>checks.push({ok:!!current&&stem.pairs.every(([i,j])=>current[i]===j),text:stem.name}));
+    mission.stems.forEach(stem=>checks.push({ok:!!current&&stem.pairs.every(([i,j])=>grade.nodeMap.has(i)&&grade.nodeMap.has(j)&&current[grade.nodeMap.get(i)]===grade.nodeMap.get(j)),text:`${stem.name} 모양`}));
   }
-  checks.push({ok:grade.structureOk,text:'결합·짝 없는 자리 일치'});
+  checks.push({ok:grade.structureOk,text:'줄기·루프·가지 모양 일치'});
   if(mission.maxChanges)checks.push({ok:grade.budgetOk,text:`변경 ${grade.changes} / ${mission.maxChanges}개`});
   for(const check of checks){const li=document.createElement('li');li.classList.toggle('passed',check.ok);li.textContent=`${check.ok?'✓':'○'} ${check.text}`;$('grading-checks').append(li);}
   $('mission-rules').textContent=isRibozyme()?'54자리 · 보존 염기 16개 · 줄기 I 5쌍 / II 4쌍 / III 6쌍 · 37 °C':`${mission.locked.length?`고정 염기 ${mission.locked.length}개 · `:''}${mission.maxChanges?`처음 서열과 다른 자리 ${grade.changes} / ${mission.maxChanges}개`:'변경 횟수 제한 없음'} · 37 °C`;
@@ -200,8 +202,8 @@ function announceSuccess(grade){
     if(mode!=='mission'||mission!==item||sequence!==seq||pending||!grade.solved)return;
     announcedSolutions.add(key);
     $('success-title').textContent='미션 성공!';$('success-mission').textContent=item.title;
-    $('success-detail').textContent=isRibozyme()?'구조 조건을 만족하는 리보자임 후보를 직접 설계했습니다. 실제 효소 활성은 실험으로 확인해야 합니다.':'예측 구조의 모든 결합 상대와 짝 없는 자리가 목표와 일치하고, 미션 조건도 통과했습니다. 같은 구조를 만드는 다른 서열도 정답입니다.';
-    $('success-proof').textContent=`목표 구조 100% 일치 · ${grade.targetPairs.length}개 염기쌍 · ${result.energy.toFixed(2)} kcal/mol`;
+    $('success-detail').textContent=isRibozyme()?'해머헤드의 목표 모양을 직접 설계했습니다. 모양 채점은 촉매 핵의 정확한 배치나 실제 효소 활성을 검증하지 않습니다.':'예측 구조의 줄기 길이·루프 크기·가지 배치가 목표와 같습니다. 서열과 염기 번호가 달라도 같은 모양이면 정답입니다.';
+    $('success-proof').textContent=`목표 모양 100% 일치 · ${grade.targetPairs.length}개 염기쌍 · ${result.energy.toFixed(2)} kcal/mol`;
     $('success-next').textContent=isRibozyme()?'절단 원리 살펴보기 →':'다음 미션 →';
     $('mission-success').showModal();
   },850);
@@ -338,7 +340,7 @@ $('share').addEventListener('click',async()=>{
 $('download').addEventListener('click',()=>{
   if(!result||result.sequence!==sequence||pending){toast('계산이 끝난 뒤 결과를 저장해 주세요.');return;}
   const grade=mission?gradeMission(mission,sequence,result.structure):null;
-  const text=['RNA 설계 실험실',mission?`미션: ${mission.title}`:'자유 실험실',`염기서열 (5′ → 3′): ${sequence}`,`예측 2차 구조: ${result.structure}`,`최소 자유에너지: ${result.energy.toFixed(2)} kcal/mol`,`모형: RibossFold 0.0.5, Turner 2004, 37 °C`,mission?`목표 구조: ${mission.target}`:'',grade?`자동 채점: ${grade.solved?'설계 조건 통과':'수정 필요'} · 결합 상대 일치 ${grade.correct}/${sequence.length}`:'',isRibozyme()?'해머헤드 자가절단 후보 · 절단 자리 8|9 · 예상 절단 시 조각 길이 8nt + 46nt':'',isRibozyme()?`설계 근거: ${mission.source}`:'','이 결과는 2차 구조의 계산상 예측이며 촉매 활성의 검증이 아닙니다.'].filter(Boolean).join('\n');
+  const text=['RNA 설계 실험실',mission?`미션: ${mission.title}`:'자유 실험실',`염기서열 (5′ → 3′): ${sequence}`,`예측 2차 구조: ${result.structure}`,`최소 자유에너지: ${result.energy.toFixed(2)} kcal/mol`,`모형: RibossFold 0.0.5, Turner 2004, 37 °C`,mission?`목표 구조(모양 참고): ${mission.target}`:'',grade?`자동 채점: ${grade.solved?'설계 조건 통과':'수정 필요'} · 목표 모양 일치 ${grade.shapePercent}% · 줄기·루프·가지 배치 비교, 염기 번호 무관`:'',isRibozyme()?'해머헤드 모양 설계 · 참고 설계도의 절단 자리 8|9 · 실제 핵 배치와 절단 활성은 별도 검증 필요':'',isRibozyme()?`설계 근거: ${mission.source}`:'','이 결과는 2차 구조의 계산상 예측이며 촉매 활성의 검증이 아닙니다.'].filter(Boolean).join('\n');
   const url=URL.createObjectURL(new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='RNA-설계-결과.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('설계 결과를 저장했습니다.');
 });
 

@@ -1,4 +1,4 @@
-// Grade pairing relationships, never an answer sequence or drawing coordinates.
+// Compare structural shape, independent of absolute nucleotide positions.
 // A ribozyme pass certifies design constraints, not biochemical activity.
 export function pairing(structure) {
   const mates = Array(structure.length).fill(-1), stack = [];
@@ -14,6 +14,35 @@ export function pairing(structure) {
   return mates;
 }
 
+export function shape(structure) {
+  pairing(structure); // Validate before normalizing.
+  let depth=0;const indices=[];
+  for(let i=0;i<structure.length;i++){
+    const c=structure[i];
+    if(c==='(')depth++;
+    if(c!=='.'||depth>0)indices.push(i);
+    if(c===')')depth--;
+  }
+  // Exterior tails and unpaired spacers can move a motif without changing it.
+  // Interior loops, bulges, stem lengths and branch order remain significant.
+  return {text:indices.map(i=>structure[i]).join(''),indices};
+}
+
+function alignShapes(a,b){
+  const cost=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++)cost[i][0]=i;
+  for(let j=0;j<=b.length;j++)cost[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)
+    cost[i][j]=Math.min(cost[i-1][j]+1,cost[i][j-1]+1,cost[i-1][j-1]+Number(a[i-1]!==b[j-1]));
+  const matches=[];let i=a.length,j=b.length;
+  while(i||j){
+    if(i&&j&&cost[i][j]===cost[i-1][j-1]+Number(a[i-1]!==b[j-1])){
+      if(a[i-1]===b[j-1])matches.push([i-1,j-1]);i--;j--;
+    }else if(i&&cost[i][j]===cost[i-1][j]+1)i--;else j--;
+  }
+  return {matches,distance:cost[a.length][b.length]};
+}
+
 export function gradeMission(mission, sequence, structure = null) {
   const lengthOk = sequence.length === mission.target.length;
   const complete = lengthOk && /^[ACGU]+$/.test(sequence);
@@ -25,12 +54,20 @@ export function gradeMission(mission, sequence, structure = null) {
   const targetPairs = target.flatMap((j, i) => j > i ? [[i, j]] : []);
   const hasPrediction = complete && typeof structure === 'string' && structure.length === sequence.length;
   const current = hasPrediction ? pairing(structure) : null;
-  const mismatches = current ? current.flatMap((j, i) => j !== target[i] ? [i] : []) : [];
-  const missing = current ? targetPairs.filter(([i, j]) => current[i] !== j) : targetPairs;
-  const extra = current ? current.flatMap((j, i) => j > i && target[i] !== j ? [[i, j]] : []) : [];
-  const correct = current ? sequence.length - mismatches.length : 0;
-  const structureOk = hasPrediction && mismatches.length === 0;
+  const wanted=shape(mission.target),actual=hasPrediction?shape(structure):{text:'',indices:[]};
+  const aligned=alignShapes(wanted.text,actual.text);
+  const nodeMap=new Map(aligned.matches.map(([i,j])=>[wanted.indices[i],actual.indices[j]]));
+  const matchedPairs=current?targetPairs.filter(([i,j])=>nodeMap.has(i)&&nodeMap.has(j)&&current[nodeMap.get(i)]===nodeMap.get(j)):[];
+  const missing=targetPairs.filter(pair=>!matchedPairs.includes(pair));
+  const matchedCurrentPairs=new Set(matchedPairs.map(([i,j])=>`${nodeMap.get(i)}-${nodeMap.get(j)}`));
+  const extra=current?current.flatMap((j,i)=>j>i&&!matchedCurrentPairs.has(`${i}-${j}`)?[[i,j]]:[]):[];
+  let mismatches=current?[...new Set([...actual.indices.filter(i=>![...nodeMap.values()].includes(i)),...extra.flat(),...missing.flatMap(pair=>pair.flatMap(i=>nodeMap.has(i)?[nodeMap.get(i)]:[]))])]:[];
+  const total=Math.max(wanted.text.length,actual.text.length,1);
+  const correct=hasPrediction?total-aligned.distance:0;
+  const shapePercent=hasPrediction?Math.round(correct/total*100):0;
+  const structureOk=hasPrediction&&wanted.text===actual.text;
+  if(hasPrediction&&!structureOk&&!mismatches.length)mismatches=[...actual.indices];
   return {complete, assigned, lockedOk, changes, budgetOk, hasPrediction, structureOk,
-    correct, mismatches, missing, extra, targetPairs,
+    correct, total, shapePercent, nodeMap, mismatches, missing, extra, targetPairs,
     solved: structureOk && lockedOk && budgetOk};
 }
