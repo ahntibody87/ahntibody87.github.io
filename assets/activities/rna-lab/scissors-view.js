@@ -1,4 +1,4 @@
-import {MoleculeView,layout} from './molecule.js?v=8';
+import {MoleculeView,layout} from './molecule.js?v=10';
 import {TARGET,CUT_AFTER,LEFT,RIGHT,topology} from './scissors-model.js?v=8';
 const NS='http://www.w3.org/2000/svg';
 const el=(tag,attrs={},text)=>{const e=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v);if(text)e.textContent=text;return e;};
@@ -22,7 +22,7 @@ export function scene(sequence,structure,phase='design'){
  return {sequence:sequence+TARGET,structure:joined.join(''),geometry,breaks:[n-1,...(phase==='cut'?[n+CUT_AFTER]:[])],highlighted:Array.from({length:TARGET.length},(_,i)=>n+i),cleavageAfter:phase==='cut'?null:n+CUT_AFTER,motifs};
 }
 export class ScissorsView extends MoleculeView{
- constructor(svg,onSelect){super(svg,onSelect);this.annotations=el('g',{'aria-hidden':'true',class:'scissors-annotations'});svg.append(this.annotations);}
+ constructor(svg,onSelect){super(svg,onSelect);this.framePadding=96;this.annotations=el('g',{'aria-hidden':'true',class:'scissors-annotations'});svg.append(this.annotations);}
  display(sequence,structure,phase,selected){
   this.designLength=sequence.length;this.phase=phase;this.motifs=topology(structure);const state=scene(sequence,structure,phase);
   this.show({...state,locked:state.highlighted,selected});this.endLayer.setAttribute('display','none');

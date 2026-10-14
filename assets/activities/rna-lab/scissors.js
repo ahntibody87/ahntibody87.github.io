@@ -1,6 +1,6 @@
 import {GOAL,TARGET,TARGET_LENGTH,CUT_AFTER,START,validSequence,gradeScissors,topology} from './scissors-model.js?v=8';
-import {BASES,pairInfo} from './molecule.js?v=8';
-import {ScissorsView} from './scissors-view.js?v=8';
+import {BASES,pairInfo} from './molecule.js?v=10';
+import {ScissorsView} from './scissors-view.js?v=10';
 
 export function createScissors(root,onComplete){
   const displayTarget=[...TARGET].reverse().join('');

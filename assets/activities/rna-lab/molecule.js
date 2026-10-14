@@ -98,9 +98,9 @@ function element(tag,attrs={},text){
   for(const [k,v]of Object.entries(attrs))e.setAttribute(k,String(v));
   if(text!==undefined)e.textContent=text;return e;
 }
-function box(points){
-  const xs=points.map(p=>p.x),ys=points.map(p=>p.y),x=Math.min(...xs)-62,y=Math.min(...ys)-62;
-  const width=Math.max(260,Math.max(...xs)-x+62),height=Math.max(250,Math.max(...ys)-y+62);
+function box(points,padding=62){
+  const xs=points.map(p=>p.x),ys=points.map(p=>p.y),x=Math.min(...xs)-padding,y=Math.min(...ys)-padding;
+  const width=Math.max(260,Math.max(...xs)-x+padding),height=Math.max(250,Math.max(...ys)-y+padding);
   return {x,y,width,height};
 }
 const hex='-7,-7 5,-14 17,-7 17,7 5,14 -7,7';
@@ -189,7 +189,7 @@ export class MoleculeView{
     cancelAnimationFrame(this.frame);
     const next=geometry||alignGeometry(layout(structure),this.points.length?this.points:null);
     const from=this.points.length?this.points.map(p=>({...p})):next;
-    const targetBox=this.zoom>1&&this.camera?{...this.camera}:box(next);
+    const targetBox=this.zoom>1&&this.camera?{...this.camera}:box(next,this.framePadding);
     const fromBox=this.camera?{...this.camera}:targetBox;
     const wanted=new Set();
     this.pair.forEach((j,i)=>{
@@ -273,6 +273,6 @@ export class MoleculeView{
   }
   fit(){
     if(!this.points.length)return;
-    this.camera=box(this.points);this.draw();
+    this.camera=box(this.points,this.framePadding);this.draw();
   }
 }

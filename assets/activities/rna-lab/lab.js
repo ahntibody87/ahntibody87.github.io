@@ -1,7 +1,7 @@
 import {PRESETS,MISSIONS} from './missions.js?v=7';
-import {MoleculeView,BASES,pairInfo,partners} from './molecule.js?v=7';
+import {MoleculeView,BASES,pairInfo,partners} from './molecule.js?v=10';
 import {gradeMission} from './grading.js?v=7';
-import {createScissors} from './scissors.js?v=8';
+import {createScissors} from './scissors.js?v=10';
 const $=id=>document.getElementById(id);
 const storage={read(k,f){try{return JSON.parse(localStorage.getItem(`rna-lab-v1-${k}`))??f;}catch{return f;}},write(k,v){try{localStorage.setItem(`rna-lab-v1-${k}`,JSON.stringify(v));}catch{}}};
 const valid=s=>typeof s==='string'&&/^[ACGU]{8,120}$/.test(s);
