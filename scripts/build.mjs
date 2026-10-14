@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { homePage } from './home.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -6,6 +7,7 @@ import { createHash } from 'node:crypto';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Change the stylesheet URL whenever its content changes, avoiding stale browser caches.
 const styleVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/style.css'), 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
+const homeVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/home.css'), 'utf8').replace(/\r\n/g, '\n')).update(fs.readFileSync(path.join(root, 'assets/home.js'), 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
 const site = JSON.parse(fs.readFileSync(path.join(root, 'data/site.json'), 'utf8'));
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const types = { simulation: '인터랙티브 시뮬레이션', inquiry: '탐구 및 실험 활동', resource: '학습 자료', external: '외부 활동' };
@@ -33,11 +35,11 @@ const pages = new Map();
 function add(options) {
   const file = options.url === '/' ? 'index.html' : `${options.url.slice(1)}index.html`;
   if (pages.has(file)) throw new Error(`중복 페이지: ${file}`);
-  pages.set(file, page(options));
+  pages.set(file, options.url === '/' ? homePage(site, homeVersion) : page(options));
 }
 unique(site.courses);
 const homeCrumb = { title: '홈', url: '/' };
-add({ url: '/', title: '통합 수업 포털', description: '생명과학 교사 Ahntibody의 수업 포털. 통합과학, 생물의 유전, 고급생명과학을 만나보세요.', crumbs: [homeCrumb], content: `<section class="hero" id="about"><p class="eyebrow">AHNTIBODY · SCIENCE EDUCATION</p><p class="portal-name">${esc(site.name)}</p><h1>관찰에서 질문으로,<br><em>증거에서 설명으로.</em></h1><p class="intro">생명과학 교사 Ahntibody의 수업과 탐구를 연결하는 공간입니다.<br class="desktop"> 과목을 선택하고, 생명현상을 탐구하는 다음 질문을 만나보세요.</p><a class="button" href="#courses">과목 선택하기 <span aria-hidden="true">↓</span></a>${art}</section>${section('courses', 'CLASSROOMS', '과목별 수업', `<div class="card-grid courses">${site.courses.map((c, i) => card({ url: courseUrl(c), index: i, english: c.english, title: c.title, description: c.description, label: c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 수업 홈`, theme: `theme-${i % 3}` })).join('')}</div>`, `${String(site.courses.length).padStart(2, '0')} SUBJECTS`)}${section('guide', 'HOW TO EXPLORE', '질문에서 탐구까지', '<div class="guide-grid"><article><span class="step">01 · 과목</span><h3>나의 수업 찾기</h3><p>수강하는 과목의 홈페이지에서 수업을 시작하세요.</p></article><article><span class="step">02 · 단원</span><h3>배우는 주제 살펴보기</h3><p>단원을 선택하면 관련 자료와 탐구 활동을 모아 볼 수 있습니다.</p></article><article><span class="step">03 · 활동</span><h3>탐구 이어가기</h3><p>등록된 활동을 선택해 실습이나 학습 자료로 이동하세요.</p></article></div>')}` });
+add({ url: '/' });
 
 for (const course of site.courses) {
   unique(course.units);

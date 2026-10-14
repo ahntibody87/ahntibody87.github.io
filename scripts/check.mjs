@@ -39,3 +39,10 @@ for (const route of routes) {
   }
 }
 console.log(`${routes.length}개 독립 URL, ${links}개 내부 링크·정적 파일·앵커 검사 통과`);
+
+// Home card artwork is referenced from CSS rather than generated HTML.
+const homeStyles = fs.readFileSync(path.join(root, 'assets/home.css'), 'utf8');
+for (const [, url] of homeStyles.matchAll(/url\(['"]?(\/assets\/[^)'"\s]+)['"]?\)/g)) {
+  assert.ok(fs.existsSync(path.join(root, url)), `메인 배경 이미지 없음: ${url}`);
+}
+console.log('메인 페이지 CSS 배경 이미지 경로 검사 통과');

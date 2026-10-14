@@ -1,0 +1,932 @@
+/* The landing page is isolated from the existing classroom styles. */
+:root {
+  color-scheme:dark;
+  --bg:#030c14;
+  --text:#f0f6fa;
+  --muted:#b3c5d0;
+  --cyan:#42e6f0;
+  --line:rgba(111,198,220,.24);
+  font-family:Inter,"Segoe UI","Noto Sans KR","Malgun Gothic",Arial,sans-serif;
+  font-synthesis:none
+}
+
+* {
+  box-sizing:border-box
+}
+
+html {
+  scroll-behavior:smooth;
+  scroll-padding-top:108px
+}
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased
+}
+
+a {
+  color:inherit;
+  text-decoration:none
+}
+
+button {
+  font:inherit
+}
+
+button,a {
+  -webkit-tap-highlight-color:transparent
+}
+
+a:focus-visible,button:focus-visible {
+  outline:2px solid var(--cyan);
+  outline-offset:6px
+}
+
+svg {
+  width:24px;
+  height:24px;
+  stroke:currentColor;
+  stroke-width:1.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  flex-shrink:0
+}
+
+.sr-only {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap
+}
+
+.skip {
+  position:fixed;
+  left:20px;
+  top:12px;
+  z-index:20;
+  padding:12px 20px;
+  background:var(--cyan);
+  color:#00131b;
+  border-radius:8px;
+  transform:translateY(-160%)
+}
+
+.skip:focus {
+  transform:translateY(0)
+}
+
+.site-header {
+  position:relative;
+  z-index:5;
+  border-bottom:1px solid var(--line);
+  background:rgba(2,10,17,.93)
+}
+
+.header-inner {
+  max-width:1500px;
+  min-height:88px;
+  padding:0 48px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  gap:38px
+}
+
+.wordmark {
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  font-size:40px;
+  font-weight:800;
+  letter-spacing:-2px;
+  background:linear-gradient(170deg,#fff 40%,#8ad5ee 85%,#23d0e7);
+  background-clip:text;
+  -webkit-background-clip:text;
+  color:transparent
+}
+
+.brand-dot {
+  height:5px;
+  width:5px;
+  background:var(--cyan);
+  border-radius:50%
+}
+
+#navigation {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:38px;
+  margin-left:auto;
+  align-self:stretch
+}
+
+#navigation a {
+  position:relative;
+  display:flex;
+  align-items:center;
+  font-size:14px;
+  white-space:nowrap;
+  color:#c4d0d8;
+  transition:color .2s
+}
+
+#navigation a:hover,#navigation .active {
+  color:#fff
+}
+
+#navigation .active:after {
+  content:"";
+  height:2px;
+  background:var(--cyan);
+  position:absolute;
+  bottom:0;
+  left:-10px;
+  right:-10px;
+  box-shadow:0 0 15px #32ddea70
+}
+
+.button {
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  gap:18px;
+  border:1px solid #3e7b8e;
+  min-height:54px;
+  border-radius:999px;
+  font-size:15px;
+  font-weight:600;
+  padding:12px 28px;
+  transition:background .2s,border-color .2s,transform .2s
+}
+
+.button:hover {
+  transform:translateY(-2px);
+  border-color:var(--cyan);
+  background:#0a2935
+}
+
+.header-cta {
+  min-height:44px;
+  border-radius:12px;
+  padding:10px 20px;
+  font-size:13px;
+  margin-left:16px;
+  white-space:nowrap
+}
+
+.header-cta svg {
+  width:21px
+}
+
+.menu-toggle {
+  display:none
+}
+
+main {
+  max-width:1600px;
+  margin:auto
+}
+
+.hero {
+  position:relative;
+  isolation:isolate;
+  min-height:660px;
+  padding:62px max(48px,calc((100% - 1404px)/2)) 46px;
+  display:flex;
+  align-items:center;
+  overflow:hidden
+}
+
+.hero-visual {
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  overflow:hidden
+}
+
+.hero-image {
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 49%;
+  opacity:.96
+}
+
+.hero-visual:after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,#030c14 0%,rgba(3,12,20,.94) 25%,rgba(3,12,20,.55) 46%,transparent 70%),linear-gradient(0deg,var(--bg),transparent 19%)
+}
+
+.hero-content {
+  position:relative;
+  width:min(680px,60%)
+}
+
+.eyebrow {
+  margin:0 0 20px;
+  font-size:10px;
+  line-height:1.7;
+  letter-spacing:2.6px;
+  text-transform:uppercase;
+  color:#a7d5e2;
+  display:flex;
+  align-items:center;
+  gap:20px;
+  white-space:nowrap
+}
+
+.eyebrow span {
+  width:48px;
+  height:1px;
+  background:linear-gradient(90deg,#9ecbd8,transparent)
+}
+
+h1 {
+  font-size:clamp(78px,8vw,120px);
+  line-height:.93;
+  letter-spacing:-5px;
+  margin:0 0 14px;
+  font-weight:800;
+  color:#d5f5ff;
+  background:linear-gradient(180deg,#fff 15%,#e8f8ff 50%,#4bb9dd 100%);
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 15px #41d6f026)
+}
+
+.lab-name {
+  font-size:16px;
+  letter-spacing:4px;
+  font-weight:600;
+  margin:0;
+  line-height:1.5
+}
+
+.accent-line {
+  width:28px;
+  height:3px;
+  background:var(--cyan);
+  margin:23px 0 15px
+}
+
+.hero-copy {
+  font-size:clamp(30px,3.3vw,49px);
+  line-height:1.16;
+  letter-spacing:-1.6px;
+  font-weight:600;
+  margin:0
+}
+
+.hero-copy em {
+  font-style:normal;
+  color:var(--cyan)
+}
+
+.intro {
+  font-size:15px;
+  line-height:1.9;
+  color:#c2d0d9;
+  word-break:keep-all;
+  margin:23px 0 25px
+}
+
+.hero-actions {
+  display:flex;
+  gap:16px
+}
+
+.button-primary {
+  background:var(--cyan);
+  color:#00202b;
+  border-color:var(--cyan);
+  box-shadow:0 4px 30px #2ce3ee18;
+  min-width:212px
+}
+
+.button-primary:hover {
+  background:#83f4f9;
+  color:#00202b
+}
+
+.button-secondary {
+  background:#03111a99;
+  min-width:195px
+}
+
+.button-secondary svg {
+  width:20px
+}
+
+.orbital {
+  position:absolute;
+  right:8%;
+  top:15%;
+  width:39%;
+  height:64%;
+  border:1px solid #60ddec25;
+  border-radius:50%;
+  transform:rotate(-28deg);
+  z-index:1
+}
+
+.orbital-two {
+  right:4%;
+  top:28%;
+  width:48%;
+  height:36%;
+  transform:rotate(24deg);
+  border-color:#60ddec19
+}
+
+.mote {
+  position:absolute;
+  background:#9cffff;
+  border-radius:50%;
+  box-shadow:0 0 14px 4px #38eaf180;
+  z-index:1;
+  animation:drift 4s ease-in-out 1 alternate
+}
+
+.mote-one {
+  right:35%;
+  top:30%;
+  width:3px;
+  height:3px
+}
+
+.mote-two {
+  right:13%;
+  top:56%;
+  width:4px;
+  height:4px;
+  animation-delay:-4s
+}
+
+.mote-three {
+  right:42%;
+  top:74%;
+  width:3px;
+  height:3px;
+  animation-delay:-2s
+}
+
+.specimen-label {
+  position:absolute;
+  right:5.5%;
+  bottom:47px;
+  color:#97c9d5;
+  font:9px/1.8 ui-monospace,Consolas,monospace;
+  letter-spacing:2px;
+  z-index:1;
+  display:flex;
+  gap:10px;
+  align-items:center
+}
+
+.specimen-label span {
+  width:5px;
+  height:5px;
+  background:var(--cyan);
+  border-radius:50%
+}
+
+.specimen-label b {
+  margin-left:20px;
+  color:#819ca8;
+  font-weight:400
+}
+
+@keyframes drift {
+  to {
+    transform:translate3d(8px,-14px,0);
+    opacity:.3
+  }
+}
+
+.courses {
+  padding:0 48px 40px;
+  max-width:1500px;
+  margin:auto
+}
+
+.section-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#7e9cae;
+  font-size:9px;
+  letter-spacing:2px;
+  margin:0 0 18px
+}
+
+.section-heading h2 {
+  font-size:inherit;
+  font-weight:500;
+  margin:0
+}
+
+.section-heading>span {
+  display:flex;
+  align-items:center;
+  gap:12px
+}
+
+.course-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:20px
+}
+
+.course-card {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid #477489;
+  border-radius:16px;
+  background:#071b29;
+  min-height:226px;
+  transition:border-color .25s,transform .25s,box-shadow .25s
+}
+
+.course-card:hover {
+  transform:translateY(-5px);
+  border-color:var(--cyan);
+  box-shadow:0 12px 34px #0006
+}
+
+.card-art {
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  background-image:url('/assets/home/life-science.webp');
+  background-size:auto 155%;
+  background-position:90% 46%;
+  opacity:.8;
+  transition:transform .6s
+}
+
+.integrated-science .card-art {
+  background-image:url('/assets/home/cell.webp');
+  background-size:cover;
+  background-position:center
+}
+
+.advanced-life-science .card-art {
+  background-image:url('/assets/home/neuron.webp');
+  background-size:cover;
+  background-position:center
+}
+
+.course-card:after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:linear-gradient(90deg,rgba(3,15,26,.98),rgba(3,15,26,.9) 35%,rgba(3,15,26,.28)),linear-gradient(0deg,#03101a8c,transparent)
+}
+
+.course-card:hover .card-art {
+  transform:scale(1.045)
+}
+
+.card-content {
+  height:100%;
+  padding:24px 25px;
+  display:flex;
+  flex-direction:column
+}
+
+.card-number {
+  font-size:12px;
+  color:#bdd6e1;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:1px;
+  margin-bottom:16px
+}
+
+.course-card h3 {
+  font-size:22px;
+  line-height:1.25;
+  margin:0 0 4px;
+  font-weight:600;
+  letter-spacing:-.5px
+}
+
+.course-name {
+  font-size:18px;
+  font-weight:600;
+  margin:0 0 12px;
+  letter-spacing:-.4px
+}
+
+.course-description {
+  color:#d1dfe7;
+  font-size:12px;
+  line-height:1.65;
+  margin:0 0 17px;
+  word-break:keep-all;
+  max-width:270px
+}
+
+.card-bottom {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:auto
+}
+
+.circle-arrow {
+  display:grid;
+  place-items:center;
+  width:31px;
+  height:31px;
+  border:1px solid var(--cyan);
+  color:var(--cyan);
+  border-radius:50%
+}
+
+.circle-arrow svg {
+  width:19px
+}
+
+.course-status {
+  font-size:10px;
+  color:#a3bdca
+}
+
+.site-footer {
+  max-width:1404px;
+  border-top:1px solid #122832;
+  padding:23px 0 27px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#829dab;
+  font-size:10px;
+  gap:20px
+}
+
+.site-footer p {
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+
+.footer-dot {
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#4cc8d2
+}
+
+.site-footer>span {
+  font-size:9px;
+  letter-spacing:1.8px
+}
+
+.site-footer a {
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+
+.site-footer svg {
+  width:15px;
+  transform:rotate(-90deg)
+}
+
+@media(min-width:1600px) {
+  .hero {
+    min-height:720px
+  }
+  .hero-copy {
+    font-size:54px
+  }
+  .intro {
+    font-size:17px
+  }
+  .course-card {
+    min-height:245px
+  }
+}
+
+@media(max-width:1200px) {
+  .header-inner {
+    gap:24px;
+    padding-inline:32px
+  }
+  #navigation {
+    gap:24px
+  }
+  .header-cta {
+    margin-left:0
+  }
+  .hero {
+    padding-inline:40px;
+    min-height:650px
+  }
+  .eyebrow {
+    font-size:9px;
+    letter-spacing:1.7px
+  }
+  .lab-name {
+    font-size:13px;
+    letter-spacing:3px
+  }
+  .hero-copy {
+    font-size:42px
+  }
+  .hero-content {
+    width:63%
+  }
+  .courses {
+    padding-inline:32px
+  }
+  .course-card h3 {
+    font-size:19px
+  }
+  .card-content {
+    padding:23px 20px
+  }
+  .site-footer {
+    margin-inline:32px
+  }
+}
+
+@media(max-width:960px) {
+  .header-inner {
+    min-height:76px;
+    flex-wrap:wrap;
+    gap:14px;
+    padding:15px 28px
+  }
+  .wordmark {
+    font-size:32px
+  }
+  .header-cta {
+    margin-left:auto
+  }
+  .menu-toggle:not([hidden]) {
+    display:block;
+    order:3;
+    border:1px solid #355769;
+    background:#081c28;
+    color:#d9eaf2;
+    border-radius:8px;
+    padding:10px 13px;
+    font-size:12px;
+    cursor:pointer
+  }
+  #navigation {
+    order:4;
+    width:100%;
+    justify-content:flex-start;
+    margin:0;
+    gap:26px;
+    padding:14px 0 4px;
+    flex-wrap:wrap
+  }
+  #navigation a {
+    min-height:38px;
+    font-size:13px
+  }
+  .js #navigation {
+    display:none
+  }
+  .js #navigation.open {
+    display:flex
+  }
+  .hero {
+    min-height:630px;
+    padding:48px 32px
+  }
+  .hero-content {
+    width:78%
+  }
+  .hero-image {
+    object-position:62% center;
+    opacity:.7
+  }
+  .hero-visual:after {
+    background:linear-gradient(90deg,#030c14 0%,#030c14c9 45%,#030c1420 100%),linear-gradient(0deg,var(--bg),transparent 25%)
+  }
+  .hero-copy {
+    font-size:44px
+  }
+  .specimen-label {
+    display:none
+  }
+  .course-grid {
+    gap:14px
+  }
+  .card-content {
+    padding:20px 16px
+  }
+  .course-card h3 {
+    font-size:17px
+  }
+  .course-name {
+    font-size:17px
+  }
+  .course-description {
+    font-size:11px
+  }
+  .course-card {
+    min-height:250px
+  }
+  .site-footer>span {
+    display:none
+  }
+}
+
+@media(max-width:680px) {
+  html {
+    scroll-padding-top:24px
+  }
+  .header-inner {
+    padding:14px 20px;
+    gap:12px
+  }
+  .header-cta {
+    font-size:10px;
+    min-height:38px;
+    padding:8px 12px;
+    gap:9px
+  }
+  .header-cta svg {
+    width:16px
+  }
+  .menu-toggle:not([hidden]) {
+    font-size:11px;
+    padding:9px 10px
+  }
+  #navigation {
+    gap:8px 24px
+  }
+  .hero {
+    padding:40px 24px 35px;
+    min-height:650px;
+    align-items:flex-start
+  }
+  .hero-content {
+    width:100%
+  }
+  .eyebrow {
+    font-size:8px;
+    letter-spacing:1.6px;
+    white-space:normal;
+    max-width:290px;
+    margin-bottom:24px
+  }
+  .eyebrow span {
+    display:none
+  }
+  h1 {
+    font-size:88px;
+    margin-bottom:13px
+  }
+  .lab-name {
+    font-size:10px;
+    letter-spacing:2.6px
+  }
+  .accent-line {
+    margin:22px 0 18px
+  }
+  .hero-copy {
+    font-size:clamp(29px,8.2vw,45px);
+    letter-spacing:-1px;
+    line-height:1.22
+  }
+  .intro {
+    font-size:13px;
+    max-width:360px;
+    line-height:1.95;
+    margin:24px 0
+  }
+  .hero-actions {
+    gap:10px;
+    flex-wrap:wrap
+  }
+  .hero-actions .button {
+    min-width:0;
+    padding:12px 17px;
+    font-size:12px;
+    gap:12px;
+    min-height:48px
+  }
+  .hero-image {
+    width:135%;
+    max-width:none;
+    left:-35%;
+    object-position:70% center;
+    opacity:.52
+  }
+  .hero-visual:after {
+    background:linear-gradient(90deg,#030c14ed,#030c14a6 65%,#030c1450),linear-gradient(0deg,var(--bg),transparent 30%)
+  }
+  .orbital {
+    opacity:.35
+  }
+  .courses {
+    padding:0 20px 30px
+  }
+  .section-heading {
+    font-size:8px;
+    letter-spacing:1.4px;
+    margin-bottom:16px
+  }
+  .course-grid {
+    grid-template-columns:1fr;
+    gap:16px
+  }
+  .course-card {
+    min-height:224px
+  }
+  .card-content {
+    padding:23px 25px
+  }
+  .course-card h3 {
+    font-size:24px
+  }
+  .course-name {
+    font-size:19px
+  }
+  .course-description {
+    font-size:13px
+  }
+  .card-number {
+    margin-bottom:13px
+  }
+  .card-art {
+    background-size:auto 200%;
+    background-position:90% 42%
+  }
+  .integrated-science .card-art,.advanced-life-science .card-art {
+    background-size:cover;
+    background-position:center
+  }
+  .site-footer {
+    margin-inline:20px;
+    padding:22px 0;
+    font-size:9px;
+    gap:10px
+  }
+  .site-footer p {
+    max-width:240px;
+    line-height:1.7
+  }
+}
+
+@media(max-width:360px) {
+  .header-inner {
+    padding-inline:16px;
+    gap:8px;
+  }
+  .wordmark {
+    font-size:28px;
+  }
+  .header-cta {
+    font-size:9px;
+    padding:8px 9px;
+    gap:6px;
+  }
+  .menu-toggle:not([hidden]) {
+    font-size:10px;
+    padding:9px 8px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  html {
+    scroll-behavior:auto
+  }
+  *,*:before,*:after {
+    animation:none!important;
+    transition:none!important
+  }
+}
+
+@media(forced-colors:active) {
+  h1,.wordmark {
+    -webkit-text-fill-color:CanvasText;
+    color:CanvasText
+  }
+  .button,.course-card {
+    border:1px solid LinkText
+  }
+  .hero-visual,.card-art {
+    display:none
+  }
+}
+

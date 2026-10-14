@@ -53,6 +53,10 @@
 
 ## 파일과 수정 위치
 
+- `scripts/home.mjs`: ATLL 메인 페이지 전용 템플릿. 히어로, 상단 메뉴, 3개 코스 카드
+- `assets/home.css`, `assets/home.js`: 메인 전용 반응형 디자인과 접근 가능한 모바일 메뉴
+- `assets/home/`: 최적화된 WebP 배경 3개와 이미지 제작 기록
+- `data/site.json`의 과목별 `home`: 메인 카드의 영문 제목, 한글 제목, 설명. 실제 URL과 수업 내용은 기존 항목을 사용
 - `data/site.json`: 과목, 단원, 활동 목록의 단일 원본
 - `scripts/build.mjs`: 공통 페이지 생성기 (헤더, 사이드바, 경로 탐색, 카드, 푸터)
 - `assets/style.css`: 기존 스타일을 확장한 반응형 공통 디자인
@@ -118,6 +122,10 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 
 ## 미리보기와 GitHub Pages 주의 사항
 
+- 메인 리디자인은 별도 설치 없이 `node scripts/build.mjs` → `node scripts/check.mjs`로 생성·검사합니다. 메인 전용 스타일이므로 기존 과목·단원·실습의 공통 디자인은 유지됩니다.
+- 메인의 `Enter the Lab`은 실제 활동이 등록된 `/advanced-life-science/`로, `View Courses`는 `#courses`로 이동합니다. 준비 중인 과목은 카드에 상태를 표시합니다.
+- 메인 이미지 3개 합계는 약 283 KiB이며 로컬 파일로 제공됩니다. 외부 폰트·CDN·3D 라이브러리를 추가하지 않습니다. 설치된 시스템 글꼴을 사용합니다.
+- 장식용 입자는 첫 4초 이내에 멈춥니다. `prefers-reduced-motion`에서는 이동 효과와 부드러운 스크롤을 생략합니다. 자바스크립트가 없어도 메인 메뉴와 코스 링크가 표시됩니다.
 - 파일을 더블클릭하는 `file://` 방식 대신 저장소 루트에서 정적 HTTP 서버를 실행합니다 (예: `python -m http.server 8000`).
 - `/assets/...`와 같은 경로는 현재 사용자 사이트의 루트 배포 기준입니다. 프로젝트 사이트의 `/repo-name/` 하위로 옮길 경우 경로와 canonical URL을 변경해야 합니다.
 - Pages 설정 **main / (root)**를 유지하고 생성된 HTML까지 push합니다. 설정 JSON만 편집해 push하면 화면은 갱신되지 않습니다.
