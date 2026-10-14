@@ -1,14 +1,14 @@
-import {PRESETS,MISSIONS} from './missions.js?v=6';
-import {MoleculeView,BASES,pairInfo,partners} from './molecule.js?v=6';
-import {gradeMission} from './grading.js?v=6';
-import {createScissors} from './scissors.js?v=6';
+import {PRESETS,MISSIONS} from './missions.js?v=7';
+import {MoleculeView,BASES,pairInfo,partners} from './molecule.js?v=7';
+import {gradeMission} from './grading.js?v=7';
+import {createScissors} from './scissors.js?v=7';
 const $=id=>document.getElementById(id);
 const storage={read(k,f){try{return JSON.parse(localStorage.getItem(`rna-lab-v1-${k}`))??f;}catch{return f;}},write(k,v){try{localStorage.setItem(`rna-lab-v1-${k}`,JSON.stringify(v));}catch{}}};
 const valid=s=>typeof s==='string'&&/^[ACGU]{8,120}$/.test(s);
 let freeSequence=storage.read('sequence',PRESETS.hairpin);if(!valid(freeSequence))freeSequence=PRESETS.hairpin;
 let sequence=freeSequence,startSequence=sequence,mission=null,mode='free',view='current',zoom=1,selected=0,history=[],result=null,ready=false,requestId=0,pending=false,toastTimer,foldTimer,successTimer,scissors;
 const completed=new Set(storage.read('completed',[]).filter(id=>MISSIONS.some(m=>m.id===id))),announced=new Set();
-if(storage.read('scissors-revision',0)!==2){completed.delete('scissors');storage.write('completed',[...completed]);storage.write('scissors-revision',2);}
+if(storage.read('scissors-revision',0)!==3){completed.delete('scissors');storage.write('completed',[...completed]);storage.write('scissors-revision',3);}
 const isScissors=()=>mission?.kind==='scissors';
 const molecule=new MoleculeView($('rna-structure'),selectBase);
 function cancelSuccess(){clearTimeout(successTimer);if($('mission-success').open)$('mission-success').close();}
@@ -42,7 +42,7 @@ function renderMissionGrade(grade){
 function announceSuccess(grade){const item=mission,seq=sequence,key=`${item.id}:${seq}`;if(announced.has(key)||mode!=='mission')return;clearTimeout(successTimer);successTimer=setTimeout(()=>{if(mode!=='mission'||mission!==item||sequence!==seq||pending)return;announced.add(key);$('success-title').textContent='미션 성공!';$('success-mission').textContent=item.title;$('success-detail').textContent='예측'+' 구조의 염기쌍 수, 고리 크기, 연결된 모양이 목표와 같습니다. 서열과 위치가 달라도 같은 구조면 정답입니다.';$('success-proof').textContent=`목표 구조 100% 일치 · ${grade.targetPairs.length}개 염기쌍 · ${result.energy.toFixed(2)} kcal/mol`;$('success-next').textContent=MISSIONS[MISSIONS.indexOf(item)+1]?.kind==='scissors'?'표적 RNA 가위 설계하기 →':'다음 미션 →';$('mission-success').showModal();},850);}
 function showWorkspace(){
   cancelSuccess();$('mission-room').hidden=true;$('workspace').hidden=false;$('workspace').classList.toggle('scissors-active',isScissors());$('workspace').setAttribute('aria-labelledby',mission?'tab-missions':'tab-free');$('tab-missions').setAttribute('aria-controls',mission?'workspace':'mission-room');$('tab-free').setAttribute('aria-selected',String(!mission));$('tab-missions').setAttribute('aria-selected',String(!!mission));$('mission-brief').hidden=!mission;$('free-options').hidden=!!mission;$('mission-summary').hidden=!mission||isScissors();$('scissors-workspace').hidden=!isScissors();$('hint-area').hidden=!mission;$('structure-toggle').hidden=!mission;$('sequence').readOnly=!!mission;$('fold-button').hidden=!!mission;$('sequence-help').textContent=mission?'구조도의 염기를 눌러 바꾸세요. 자물쇠 표시 염기는 바꿀 수 없습니다.':'A, U, G, C로 8~120개 염기를 입력하세요.';$('hint').hidden=true;$('hint-button').setAttribute('aria-expanded','false');$('hint-button').textContent='힌트 보기';view='current';syncViewButtons();
-  if(mission){$('mission-number').textContent=`MISSION ${String(MISSIONS.indexOf(mission)+1).padStart(2,'0')}`;$('mission-title').textContent=mission.title;$('mission-description').textContent=mission.description;$('hint').textContent=mission.hint||'';if(isScissors())$('mission-rules').textContent='염기쌍 구간 4개 · 내부 고리 2개 · 주어진 가상 표적 유지';}if(!isScissors())setZoom(zoom);
+  if(mission){$('mission-number').textContent=`MISSION ${String(MISSIONS.indexOf(mission)+1).padStart(2,'0')}`;$('mission-title').textContent=mission.title;$('mission-description').textContent=mission.description;$('hint').textContent=mission.hint||'';if(isScissors())$('mission-rules').textContent='가위 내부 4구간(각 2쌍) · 내부 고리 2개 · 별도 표적 좌우 4쌍씩';}if(!isScissors())setZoom(zoom);
 }
 function openMission(item,sharedSequence,params){scissors?.close();announced.clear();cancelSuccess();++requestId;clearTimeout(foldTimer);pending=false;mode='mission';mission=item;history=[];selected=0;showWorkspace();if(isScissors()){if(!scissors)scissors=createScissors($('scissors-workspace'),()=>{completed.add('scissors');storage.write('completed',[...completed]);renderMissionList();});scissors.open(params);}else{startSequence=mission.start;const acceptable=valid(sharedSequence)&&sharedSequence.length===mission.start.length&&mission.locked.every(i=>sharedSequence[i]===mission.start[i]);setSequence(acceptable?sharedSequence:mission.start,{remember:false});}$('mission-brief').scrollIntoView({block:'start'});}
 function openFree(){scissors?.close();mode='free';mission=null;history=[];selected=0;startSequence=freeSequence;showWorkspace();setSequence(freeSequence,{remember:false});}
