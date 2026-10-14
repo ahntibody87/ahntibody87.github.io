@@ -1,13 +1,13 @@
-<link rel="stylesheet" href="/assets/activities/rna-lab/lab.css?v=5">
-<link rel="stylesheet" href="/assets/activities/rna-lab/molecule.css?v=5">
-<link rel="stylesheet" href="/assets/activities/rna-lab/missions.css?v=5">
-<link rel="stylesheet" href="/assets/activities/rna-lab/scissors.css?v=5">
+<link rel="stylesheet" href="/assets/activities/rna-lab/lab.css?v=6">
+<link rel="stylesheet" href="/assets/activities/rna-lab/molecule.css?v=6">
+<link rel="stylesheet" href="/assets/activities/rna-lab/missions.css?v=6">
+<link rel="stylesheet" href="/assets/activities/rna-lab/scissors.css?v=6">
 <div class="rna-lab" id="rna-lab">
   <div class="rna-topline"><span class="rna-wordmark">RNA <span class="wordmark-divider">/</span> STRUCTURE LAB</span><span class="engine-state" id="engine-state" role="status">접힘 계산기 준비 중…</span></div>
   <div class="rna-tabs" role="tablist" aria-label="실험실 선택"><button id="tab-free" role="tab" aria-selected="true" aria-controls="workspace">자유 실험실 <span>직접 바꾸고 관찰하기</span></button><button id="tab-missions" role="tab" aria-selected="false" aria-controls="mission-room">미션방 <span>목표 구조에 도전하기</span></button></div>
   <details class="rna-vocabulary"><summary>헤어핀 구조란?</summary><p>한 RNA 가닥이 접혀 자기 안의 두 구간끼리 염기쌍을 이루고, 끝부분이 고리처럼 돌아가는 구조입니다. <strong>염기쌍을 이루는 부분을 스템(stem), 끝의 고리 부분을 루프(loop)</strong>라고 부릅니다. 여기서는 염기쌍 수와 고리 부분의 염기 수로 설명합니다.</p></details>
   <section id="mission-room" role="tabpanel" aria-labelledby="tab-missions" hidden>
-    <div class="room-heading"><div><p class="rna-kicker">DESIGN CHALLENGES</p><h2>어떤 모양으로 접히게 할까요?</h2><p>1~4번은 염기쌍과 고리 구조를 만드는 연습입니다. 마지막에는 표적 RNA를 고르고, 그 RNA를 자를 가위의 결합 구간을 설계합니다.</p></div><span id="mission-progress">0 / 5 완료</span></div>
+    <div class="room-heading"><div><p class="rna-kicker">DESIGN CHALLENGES</p><h2>어떤 모양으로 접히게 할까요?</h2><p>1~4번은 염기쌍과 고리 구조를 만드는 연습입니다. 마지막에는 주어진 가상 표적 주변에 네 염기쌍 구간과 두 내부 고리가 있는 구조를 설계합니다.</p></div><span id="mission-progress">0 / 5 완료</span></div>
     <div class="mission-list" id="mission-list"></div>
   </section>
   <section id="workspace" role="tabpanel" aria-labelledby="tab-free">
@@ -43,4 +43,4 @@
   <p class="rna-toast" id="rna-toast" role="status" hidden></p>
   <dialog id="mission-success" class="mission-success" aria-labelledby="success-title" aria-describedby="success-detail"><form method="dialog"><p class="rna-kicker">DESIGN COMPLETE</p><div class="success-mark" aria-hidden="true">✓</div><h2 id="success-title">미션 성공!</h2><h3 id="success-mission"></h3><p id="success-detail"></p><p class="success-proof" id="success-proof"></p><div class="success-actions"><button id="success-close" value="close" autofocus>내 설계 더 살펴보기</button><button id="success-next" type="button" class="rna-primary">다음 미션 →</button></div></form></dialog>
 </div>
-<script type="module" src="/assets/activities/rna-lab/lab.js?v=5"></script>
+<script type="module" src="/assets/activities/rna-lab/lab.js?v=6"></script>

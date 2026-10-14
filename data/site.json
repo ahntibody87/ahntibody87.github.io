@@ -26,7 +26,7 @@
       "units": [
         { "id": "cell-energy", "title": "세포의 에너지", "english": "CELL ENERGY", "activities": [] },
         { "id": "regulation-defense", "title": "생물의 조절과 방어", "english": "REGULATION & DEFENSE", "activities": [] },
-        { "id": "gene-expression", "title": "유전자의 구조와 발현", "english": "GENE EXPRESSION", "activities": [{ "id": "rna-lab", "title": "RNA 설계 실험실", "description": "RNA가 접히는 구조를 탐색하고 헤어핀 만들기에 도전하세요. 마지막에는 표적 RNA를 고르고, 그 RNA를 자르는 가위 리보자임을 설계합니다.", "type": "simulation", "content": "content/advanced-life-science/gene-expression/rna-lab.html" }] },
+        { "id": "gene-expression", "title": "유전자의 구조와 발현", "english": "GENE EXPRESSION", "activities": [{ "id": "rna-lab", "title": "RNA 설계 실험실", "description": "RNA가 접히는 구조를 탐색하고 헤어핀 만들기에 도전하세요. 마지막에는 주어진 가상 표적 주변에 두 내부 고리가 있는 RNA 구조를 설계하고 절단 장면을 관찰합니다.", "type": "simulation", "content": "content/advanced-life-science/gene-expression/rna-lab.html" }] },
         { "id": "biotechnology", "title": "생명 공학의 기술과 응용", "english": "BIOTECHNOLOGY", "activities": [] }
       ]
     }

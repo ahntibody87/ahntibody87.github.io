@@ -1,5 +1,6 @@
 // Display geometry and transitions only. Thermodynamic prediction remains in fold-worker.js.
 const NS='http://www.w3.org/2000/svg';
+let viewId=0;
 export const BASES={
   A:{name:'아데닌',family:'퓨린',rings:2,color:'#ba955a'},
   U:{name:'유라실',family:'피리미딘',rings:1,color:'#aa7974'},
@@ -110,8 +111,9 @@ export class MoleculeView{
   constructor(svg,onSelect){
     this.svg=svg;this.onSelect=onSelect;this.nodes=[];this.links=[];this.edges=new Map();this.points=[];this.frame=0;this.camera=null;this.selected=0;this.zoom=1;
     this.reduced=matchMedia('(prefers-reduced-motion:reduce)');
+    this.directionId=`rna-direction-${++viewId}`;
     const defs=element('defs');
-    const marker=element('marker',{id:'rna-direction',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:4,markerHeight:4,orient:'auto'});
+    const marker=element('marker',{id:this.directionId,viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:4,markerHeight:4,orient:'auto'});
     marker.append(element('path',{d:'M 1 1 L 9 5 L 1 9 Z',fill:'#667b85'}));defs.append(marker);
     this.backbone=element('g',{'aria-hidden':true,class:'molecular-backbone'});
     this.pairLayer=element('g',{'aria-hidden':true,class:'molecular-pairs'});
@@ -175,15 +177,17 @@ export class MoleculeView{
     });
     this.draw();
   }
-  show({sequence,structure,selected,locked=[],mismatches=[],cleavageAfter=null}){
+  show({sequence,structure,selected,locked=[],mismatches=[],cleavageAfter=null,geometry=null,breaks=[],virtualAfter=null,highlighted=[]}){
     this.cleavageAfter=cleavageAfter;
+    this.breaks=breaks;this.virtualAfter=virtualAfter;this.highlighted=highlighted;
+    this.cutLabel.textContent=cleavageAfter===null?'':`절단 ${cleavageAfter+1} | ${cleavageAfter+2}`;
     this.cutLayer.setAttribute('display',cleavageAfter===null?'none':'');
     const unchanged=this.structure===structure&&this.nodes.length===sequence.length;
     this.ensureNodes(sequence.length);this.sequence=sequence;this.pair=partners(structure);this.structure=structure;
     this.paintBases();this.selection(selected,locked,mismatches);
-    if(unchanged&&this.points.length)return;
+    if(unchanged&&this.points.length&&!geometry)return;
     cancelAnimationFrame(this.frame);
-    const next=alignGeometry(layout(structure),this.points.length?this.points:null);
+    const next=geometry||alignGeometry(layout(structure),this.points.length?this.points:null);
     const from=this.points.length?this.points.map(p=>({...p})):next;
     const targetBox=this.zoom>1&&this.camera?{...this.camera}:box(next);
     const fromBox=this.camera?{...this.camera}:targetBox;
@@ -219,6 +223,7 @@ export class MoleculeView{
     const {x,y,width,height}=this.camera;this.svg.setAttribute('viewBox',`${x} ${y} ${width} ${height}`);
     this.nodes.forEach((node,i)=>{
       const p=this.points[i],dx=Math.cos(p.angle),dy=Math.sin(p.angle),info=BASES[this.sequence[i]];
+      node.g.classList.toggle('target-nucleotide',this.highlighted?.includes(i));
       node.g.setAttribute('transform',`translate(${p.x.toFixed(3)},${p.y.toFixed(3)})`);
       node.chemistry.setAttribute('transform',`rotate(${p.angle*180/Math.PI})`);
       const offset=info.rings===2?47:31;
@@ -235,9 +240,11 @@ export class MoleculeView{
       const attrs=(line,x1,y1,x2,y2)=>{line.setAttribute('x1',x1);line.setAttribute('y1',y1);line.setAttribute('x2',x2);line.setAttribute('y2',y2);};
       attrs(link.a,a.x+ux*7,a.y+uy*7,mx-ux*4,my-uy*4);attrs(link.b,mx+ux*4,my+uy*4,b.x-ux*7,b.y-uy*7);
       link.p.setAttribute('cx',mx);link.p.setAttribute('cy',my);
-      link.b.setAttribute('marker-end',i%5===2?'url(#rna-direction)':'');
+      link.b.setAttribute('marker-end',i%5===2?`url(#${this.directionId})`:'');
       link.g.classList.toggle('selected-backbone',i===this.selected||i+1===this.selected);
       link.g.classList.toggle('cleavage-bond',i===this.cleavageAfter);
+      link.g.classList.toggle('virtual-connection',i===this.virtualAfter);
+      link.g.setAttribute('display',this.breaks?.includes(i)?'none':'');
     });
     for(const edge of this.edges.values()){
       const a=this.points[edge.i],b=this.points[edge.j],extentA=BASES[this.sequence[edge.i]].rings===2?61:46,extentB=BASES[this.sequence[edge.j]].rings===2?61:46;

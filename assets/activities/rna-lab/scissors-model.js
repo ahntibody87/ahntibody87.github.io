@@ -1,31 +1,36 @@
-// Minimal trans-cleaving hammerhead teaching scaffold. This checks design
-// constraints, never catalytic activity or a two-strand thermodynamic fold.
-// https://doi.org/10.1038/334585a0
-// https://doi.org/10.1186/1471-2105-8-469
-export const TARGETS = [
-  {id:'signal', name:'신호 단백질의 mRNA', left:'ACAGGU', cut:'C', right:'AUGCUA', purpose:'신호 단백질의 생산을 줄이는 RNA 가위를 구상해 보세요.'},
-  {id:'pigment', name:'색소 합성 효소의 mRNA', left:'UGACGU', cut:'C', right:'CUAGAC', purpose:'색소 합성 효소의 생산을 줄이면 어떤 변화가 생길지 상상해 보세요.'},
-  {id:'reporter', name:'형광 단백질의 mRNA', left:'CAGUGU', cut:'C', right:'GACUAG', purpose:'형광 단백질의 생산을 줄이는 스위치를 구상해 보세요.'}
-];
-export const COMPLEMENT = {A:'U', U:'A', G:'C', C:'G'};
-export const reverseComplement = s => [...s].reverse().map(b=>COMPLEMENT[b] || 'N').join('');
-export const INITIAL_DESIGN = Object.freeze({arm5:'NNNNNN', arm3:'NNNNNN', stem5:'GNNN', stem3:'NNNC'});
-export const HAIRPIN_STRUCTURE = '((((....))))';
-export function hairpinSequence(d){return d.stem5+'GAAA'+d.stem3;}
-export function ribozymeSequence(d){return d.arm5+'CUGAUGA'+hairpinSequence(d)+'GAA'+d.arm3;}
-export function validDesign(d){
-  return !!d && ['arm5','arm3'].every(k=>typeof d[k]==='string'&&/^[ACGUN]{6}$/.test(d[k])) &&
-    /^G[ACGUN]{3}$/.test(d.stem5) && /^[ACGUN]{3}C$/.test(d.stem3);
+// Fictional classroom model: no natural target or catalytic sequence.
+// Predict the entire joined teaching model as ONE chain, not a cofold.
+import {gradeMission, pairing} from './grading.js?v=6';
+export const GOAL='(((..(((....)))..)))....(((..(((....)))..)))';
+export const TARGET='CAUCAGCA';
+export const TARGET_LENGTH=TARGET.length;
+export const CUT_AFTER=3;
+export const START='CAUCAGCAACACUGACAAUAACACUGCCAAUGACACCAACAGAA';
+export const LOCKED=Array.from({length:TARGET_LENGTH},(_,i)=>i);
+export const LOOP_A=[3,4,15,16];
+export const LOOP_B=[27,28,39,40];
+export const validSequence=s=>typeof s==='string'&&s.length===GOAL.length&&/^[ACGU]+$/.test(s)&&s.startsWith(TARGET);
+export function topology(structure){
+  const mates=pairing(structure),stems=[],loops=[];
+  function visit(i,j){
+    const pairs=[];
+    while(i<j&&mates[i]===j){pairs.push([i,j]);i++;j--;}
+    stems.push(pairs);
+    const children=[],unpaired=[];
+    for(let k=i;k<=j;k++){
+      if(mates[k]>k){children.push([k,mates[k]]);k=mates[k];}
+      else unpaired.push(k);
+    }
+    if(children.length===1&&children[0][0]>i&&children[0][1]<j)loops.push(unpaired);
+    children.forEach(([a,b])=>visit(a,b));
+  }
+  for(let i=0;i<mates.length;i++)if(mates[i]>i){visit(i,mates[i]);i=mates[i];}
+  return {stems,loops};
 }
-export function gradeScissors(target,d,prediction=null){
-  const arm5Pairs=[...target.right].map((base,i)=>COMPLEMENT[base]===d.arm5[5-i]);
-  const arm3Pairs=[...target.left].map((base,i)=>COMPLEMENT[base]===d.arm3[5-i]);
-  const stemPairs=[...d.stem5].map((base,i)=>COMPLEMENT[base]===d.stem3[3-i]);
-  const complete=validDesign(d)&&!ribozymeSequence(d).includes('N');
-  const hairpin=hairpinSequence(d);
-  const predicted=prediction?.sequence===hairpin;
-  const hairpinOk=predicted&&prediction.structure===HAIRPIN_STRUCTURE;
-  const leftOk=arm3Pairs.every(Boolean),rightOk=arm5Pairs.every(Boolean),stemOk=stemPairs.every(Boolean);
-  return {complete,leftOk,rightOk,stemOk,hairpinOk,predicted,arm5Pairs,arm3Pairs,stemPairs,
-    solved:complete&&leftOk&&rightOk&&stemOk&&hairpinOk};
+export function gradeScissors(sequence,prediction){
+  const current=prediction?.sequence===sequence?prediction.structure:null;
+  const grade=gradeMission({target:GOAL,start:START,locked:LOCKED},sequence,current);
+  const shape=current?topology(current):{stems:[],loops:[]};
+  const targetOk=grade.structureOk&&LOCKED.every(i=>grade.nodeMap.get(i)===i);
+  return {...grade,...shape,targetOk,solved:validSequence(sequence)&&grade.solved&&targetOk};
 }
