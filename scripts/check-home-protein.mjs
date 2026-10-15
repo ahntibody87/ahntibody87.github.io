@@ -51,8 +51,13 @@ async function setup({ networkFailure = false, gpuFailure = false } = {}) {
     constructor(callback) { intersection = callback; }
     observe() {}
   }
-  const window = { ...events(), IntersectionObserver, requestIdleCallback() {}, $3Dmol: { createViewer: () => viewer } };
+  const window = { ...events(), IntersectionObserver, requestIdleCallback() {}, $3Dmol: { createViewer: (host, config) => {
+    assert.equal(config.backgroundColor, '#030c14');
+    assert.equal(config.backgroundAlpha, 1, 'Opaque background must match the home theme');
+    return viewer;
+  } } };
   vm.runInNewContext(script, {
+    getComputedStyle: () => ({ getPropertyValue: () => '#030c14' }),
     document, window, IntersectionObserver, AbortSignal,
     fetch: async () => ({ ok: !networkFailure, text: async () => pdb }),
     requestIdleCallback: callback => { initialise = callback; },

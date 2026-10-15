@@ -135,3 +135,11 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 - JS가 없어도 모든 페이지·카드·경로 탐색은 정적 HTML로 작동합니다. 작은 화면의 접힌 과목 메뉴만 JS를 사용하며 본문 카드와 돌아가기 링크는 항상 작동합니다.
 - 비밀값, 학생 개인정보, 비공개 평가 정답, 교사용 비공개 자료를 저장소에 넣지 않습니다. 자율 학습용 해설은 공개 콘텐츠입니다. Vercel·Supabase 설정을 추가하지 않습니다.
 - 기존 별도 웹앱과 다른 저장소의 데이터는 변경하거나 삭제하지 않습니다.
+# 공통 디자인
+
+- `scripts/header.mjs`: 모든 생성 페이지의 ATLL 로고와 상단 메뉴. 하위 페이지에서도 소속 과목을 표시합니다.
+- `assets/theme.css`: 다크/라이트 색상, 글꼴, 간격, 고정 헤더와 내부 페이지의 공통 표현. Home은 `data-theme="dark"`, 나머지는 `light`입니다.
+- `assets/navigation.js`: 모바일 메뉴 및 실제 헤더 높이에 맞춘 본문/앵커 여백.
+- `assets/home-protein.js`: 홈 테마의 배경색을 불투명 WebGL 배경으로 사용해 투명 합성 경계를 방지합니다. 실습의 과학적 색상과 어두운 뷰어는 유지합니다.
+- 변경 후 `node scripts/build.mjs`, `node scripts/check.mjs`, `node scripts/check-home-protein.mjs`를 실행합니다. 공통 CSS/JS는 내용 해시로 캐시를 갱신합니다.
+

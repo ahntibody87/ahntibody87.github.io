@@ -1,14 +1,5 @@
 /* The landing page is isolated from the existing classroom styles. */
-:root {
-  color-scheme:dark;
-  --bg:#030c14;
-  --text:#f0f6fa;
-  --muted:#b3c5d0;
-  --cyan:#42e6f0;
-  --line:rgba(111,198,220,.24);
-  font-family:Inter,"Segoe UI","Noto Sans KR","Malgun Gothic",Arial,sans-serif;
-  font-synthesis:none
-}
+
 
 * {
   box-sizing:border-box

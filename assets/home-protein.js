@@ -102,7 +102,8 @@
       if (!pdb.includes('ATOM')) throw new Error('Invalid protein data');
 
       viewer = window.$3Dmol.createViewer(host, {
-        backgroundColor: '#030c14', backgroundAlpha: 0,
+        // Opaque clear avoids GPU/browser alpha-compositing seams against the page.
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#030c14', backgroundAlpha: 1,
         antialias: true, upscale: false, nomouse: true, orthographic: true, disableFog: true,
         cartoonQuality: 6
       });
