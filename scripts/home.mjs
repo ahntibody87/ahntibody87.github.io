@@ -19,7 +19,7 @@ export function homePage(site, version) {
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" as="image" href="/assets/home/hemoglobin-poster.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/home/kinase-poster.webp" fetchpriority="high">
   <link rel="stylesheet" href="/assets/home.css?v=${version}">
   <script src="/assets/home.js?v=${version}" defer></script>
   <script src="/assets/home-protein.js?v=${version}" defer></script>
@@ -40,8 +40,8 @@ export function homePage(site, version) {
     <section class="hero" id="about" aria-labelledby="lab-title">
       <div class="hero-visual" aria-hidden="true">
         <div class="protein-stage">
-          <img class="hero-image" src="/assets/home/hemoglobin-poster.webp" width="1000" height="800" alt="" fetchpriority="high">
-          <div id="protein-view" data-model-src="/assets/home/4hhb-hemoglobin.pdb" data-renderer-src="/assets/home/vendor/3Dmol-2.5.5.min.js"></div>
+          <img class="hero-image" src="/assets/home/kinase-poster.webp" width="1000" height="800" alt="" fetchpriority="high">
+          <div id="protein-view" data-model-src="/assets/home/1atp-kinase.pdb" data-renderer-src="/assets/home/vendor/3Dmol-2.5.5.min.js"></div>
         </div>
       </div>
       <div class="hero-content">

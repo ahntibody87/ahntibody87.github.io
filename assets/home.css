@@ -816,9 +816,9 @@ h1 {
 .hero-visual:after { display:none; }
 .protein-stage {
   position:absolute;
-  width:min(54%,760px);
+  width:min(61%,780px);
   aspect-ratio:5 / 4;
-  right:16px;
+  right:clamp(16px,calc((100vw - 1000px) * .3),140px);
   top:50%;
   transform:translateY(-50%);
   overflow:hidden;

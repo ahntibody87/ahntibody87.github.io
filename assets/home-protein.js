@@ -1,5 +1,5 @@
 /* A local experimental structure, rendered as a rotating ribbon.
- * Source: RCSB PDB 4HHB, four chains and heme. See assets/home/README.md.
+ * Source: RCSB PDB 1ATP, kinase, inhibitor peptide and ATP. See assets/home/README.md.
  * The poster is captured from this renderer at exactly the initial orientation.
  */
 (() => {
@@ -17,10 +17,12 @@
   let lastTime = 0;
   const frameInterval = 1000 / 30;
   const degreesPerSecond = 6; // One full turn per minute, independent of display refresh rate.
+  const axisLength = Math.hypot(0.93, 0.32, 0.18);
+  const rotationAxis = { x: 0.93 / axisLength, y: 0.32 / axisLength, z: 0.18 / axisLength };
 
   function fitModel() {
     const aspect = host.clientWidth / Math.max(1, host.clientHeight);
-    // Full y-axis rotation envelope, plus ribbon/stick thickness and an 8% inset.
+    // Full oblique-axis rotation envelope, ribbon/stick thickness and an 8% inset.
     // 3Dmol 2.5.5 orthographic half-width = distance * tan(fov).
     const halfWidth = Math.max(horizontalRadius + 3, (verticalRadius + 3) * aspect) / 0.92;
     const view = viewer.getView();
@@ -49,7 +51,7 @@
     if (elapsed >= frameInterval) {
       // Avoid a large rotation jump after a long frame or background suspension.
       try {
-        viewer.rotate(degreesPerSecond * Math.min(elapsed, 100) / 1000, 'y');
+        viewer.rotate(degreesPerSecond * Math.min(elapsed, 100) / 1000, rotationAxis);
       } catch {
         showPoster();
         return;
@@ -110,17 +112,27 @@
       viewer.setStyle({ hetflag: false }, {
         cartoon: {
           style: 'oval', arrows: true, thickness: 0.3,
-          colorfunc: atom => ({ A: '#55c9d8', B: '#459cd4', C: '#61d8df', D: '#5baee5' }[atom.chain] || '#55c9d8')
+          colorfunc: atom => atom.chain === 'I' ? '#8da9c9' : atom.ss === 's' ? '#73dedf' : atom.ss === 'h' ? '#50a8d5' : '#4bb9c5'
         }
       });
-      viewer.setStyle({ resn: 'HEM' }, { stick: { radius: 0.23, color: '#d1a363' } });
-      viewer.setStyle({ resn: 'HEM', elem: 'Fe' }, { sphere: { radius: 0.85, color: '#e6bb76' } });
+      viewer.setStyle({ resn: 'ATP' }, { stick: { radius: 0.23, color: '#d1a363' } });
+      viewer.setStyle({ resn: 'MN' }, { sphere: { radius: 0.75, color: '#e6bb76' } });
       viewer.zoomTo();
       const center = viewer.getView().slice(0, 3).map(value => -value);
       const atoms = model.selectedAtoms({});
-      horizontalRadius = Math.max(...atoms.map(atom => Math.hypot(atom.x - center[0], atom.z - center[2])));
-      verticalRadius = Math.max(...atoms.map(atom => Math.abs(atom.y - center[1])));
-      viewer.rotate(20, 'y');
+      // Rodrigues' formula: each projected coordinate is c + a*cos(t) + b*sin(t).
+      // Its analytic maximum is |c| + hypot(a,b), valid for every turn angle.
+      const n = rotationAxis;
+      const envelopes = atoms.map(atom => {
+        const x = atom.x - center[0], y = atom.y - center[1], z = atom.z - center[2];
+        const dot = n.x*x + n.y*y + n.z*z;
+        const cx = n.x*dot, cy = n.y*dot;
+        return [Math.abs(cx) + Math.hypot(x-cx, n.y*z-n.z*y),
+          Math.abs(cy) + Math.hypot(y-cy, n.z*x-n.x*z)];
+      });
+      horizontalRadius = Math.max(...envelopes.map(p => p[0]));
+      verticalRadius = Math.max(...envelopes.map(p => p[1]));
+      viewer.rotate(20, rotationAxis);
       fitModel();
       viewer.render();
       const canvas = host.querySelector('canvas');

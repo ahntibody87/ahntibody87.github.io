@@ -5,12 +5,14 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const script = fs.readFileSync(new URL('../assets/home-protein.js', import.meta.url), 'utf8');
-const pdb = fs.readFileSync(new URL('../assets/home/4hhb-hemoglobin.pdb', import.meta.url), 'utf8');
+const pdb = fs.readFileSync(new URL('../assets/home/1atp-kinase.pdb', import.meta.url), 'utf8');
 const atoms = pdb.split('\n').filter(line => line.startsWith('ATOM'));
-assert.equal(atoms.filter(line => line.slice(12, 16).trim() === 'CA').length, 574);
-assert.deepEqual([...new Set(atoms.map(line => line[21]))].sort(), ['A','B','C','D']);
-assert.equal(pdb.split('\n').filter(line => line.startsWith('HETATM') && line.slice(76,78).trim() === 'FE').length, 4);
+assert.equal(atoms.filter(line => line.slice(12, 16).trim() === 'CA').length, 356);
+assert.deepEqual([...new Set(atoms.map(line => line[21]))].sort(), ['E','I']);
+assert.equal(pdb.split('\n').filter(line => line.startsWith('HETATM') && line.slice(76,78).trim() === 'MN').length, 2);
 assert.match(pdb, /^HELIX /m);
+assert.match(pdb, /^SHEET /m);
+assert.ok(pdb.includes("ATP"));
 const points = pdb.split('\n').filter(line => /^(ATOM  |HETATM)/.test(line)).map(line => ({x:Number(line.slice(30,38)),y:Number(line.slice(38,46)),z:Number(line.slice(46,54)),atom:line.slice(12,16).trim()}));
 
 async function setup({ networkFailure = false, gpuFailure = false } = {}) {
@@ -28,7 +30,7 @@ async function setup({ networkFailure = false, gpuFailure = false } = {}) {
   const canvas = events();
   const host = {
     clientWidth: 1000, clientHeight: 800,
-    dataset: { modelSrc: '/assets/home/4hhb-hemoglobin.pdb' },
+    dataset: { modelSrc: '/assets/home/1atp-kinase.pdb' },
     closest: selector => selector === '.hero-visual' ? visual : {},
     querySelector: () => canvas
   };
@@ -70,12 +72,18 @@ const normal = await setup();
 const fit = normal.view();
 const halfWidth = (150 - fit[3]) * Math.tan(20 * Math.PI / 180);
 const halfHeight = halfWidth / 1.25;
+const n = normal.rotations[0].axis;
+assert.ok(n.x > 0.9 && n.y > 0.3 && n.z > 0.15, 'Axis must be oblique');
+assert.ok(Math.abs(Math.hypot(n.x,n.y,n.z)-1)<1e-9, 'Axis must be normalized');
 for (let degrees = 0; degrees < 360; degrees++) {
   const angle = degrees * Math.PI / 180;
   for (const atom of points) {
     const x = atom.x + fit[0], y = atom.y + fit[1], z = atom.z + fit[2];
-    assert.ok(Math.abs(x*Math.cos(angle)+z*Math.sin(angle))+3 <= halfWidth*0.921, 'Horizontal envelope must fit');
-    assert.ok(Math.abs(y)+3 <= halfHeight*0.921, 'Vertical envelope must fit');
+    const dot = x*n.x+y*n.y+z*n.z, c=Math.cos(angle), sin=Math.sin(angle);
+    const rx = x*c+(n.y*z-n.z*y)*sin+n.x*dot*(1-c);
+    const ry = y*c+(n.z*x-n.x*z)*sin+n.y*dot*(1-c);
+    assert.ok(Math.abs(rx)+3 <= halfWidth*0.921, 'Oblique horizontal envelope must fit');
+    assert.ok(Math.abs(ry)+3 <= halfHeight*0.921, 'Oblique vertical envelope must fit');
   }
 }
 const initialRotations = normal.rotations.length;
@@ -101,4 +109,4 @@ for (const failure of [{ networkFailure: true }, { gpuFailure: true }]) {
   assert.equal(failed.pending.size, 0);
   assert.equal(failed.classes.has('protein-ready'), false, 'A failed renderer must preserve the poster');
 }
-console.log('헤모글로빈 4사슬·4헴·360도 전체 경계·회전 시간·화면 밖/백그라운드·실패 시 정지 이미지 검사 통과');
+console.log('키나아제·알파나선·베타병풍·사선 360도 전체 경계·회전 시간·화면 밖/백그라운드·실패 시 정지 이미지 검사 통과');
