@@ -82,8 +82,8 @@ for (let degrees = 0; degrees < 360; degrees++) {
     const dot = x*n.x+y*n.y+z*n.z, c=Math.cos(angle), sin=Math.sin(angle);
     const rx = x*c+(n.y*z-n.z*y)*sin+n.x*dot*(1-c);
     const ry = y*c+(n.z*x-n.x*z)*sin+n.y*dot*(1-c);
-    assert.ok(Math.abs(rx)+3 <= halfWidth*0.921, 'Oblique horizontal envelope must fit');
-    assert.ok(Math.abs(ry)+3 <= halfHeight*0.921, 'Oblique vertical envelope must fit');
+    assert.ok(Math.abs(rx)+3 <= halfWidth*0.971, 'Oblique horizontal envelope must fit');
+    assert.ok(Math.abs(ry)+3 <= halfHeight*0.971, 'Oblique vertical envelope must fit');
   }
 }
 const initialRotations = normal.rotations.length;

@@ -22,9 +22,9 @@
 
   function fitModel() {
     const aspect = host.clientWidth / Math.max(1, host.clientHeight);
-    // Full oblique-axis rotation envelope, ribbon/stick thickness and an 8% inset.
+    // Full oblique-axis rotation envelope, ribbon/stick thickness and an 3% inset.
     // 3Dmol 2.5.5 orthographic half-width = distance * tan(fov).
-    const halfWidth = Math.max(horizontalRadius + 3, (verticalRadius + 3) * aspect) / 0.92;
+    const halfWidth = Math.max(horizontalRadius + 3, (verticalRadius + 3) * aspect) / 0.97;
     const view = viewer.getView();
     view[3] = 150 - halfWidth / Math.tan(20 * Math.PI / 180);
     viewer.setView(view);
