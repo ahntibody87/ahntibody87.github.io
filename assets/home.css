@@ -812,12 +812,13 @@ h1 {
 .hero-visual:after { display:none; }
 .protein-stage {
   position:absolute;
-  width:min(65%,830px);
+  width:min(65.65%,838.3px);
   max-height:calc(100% - 32px);
   aspect-ratio:5 / 4;
-  right:clamp(16px,calc((100vw - 1000px) * .3),140px);
+  right:clamp(12px,calc((100vw - 1000px) * .18),84px);
   top:50%;
-  transform:translateY(-50%);
+  transform:translateY(-50%) scaleX(1.02);
+  transform-origin:right center;
   overflow:hidden;
   contain:paint;
 }
@@ -835,10 +836,10 @@ h1 {
 .protein-ready #protein-view { opacity:1; }
 .protein-ready .hero-image { opacity:0; }
 @media(max-width:960px) {
-  .hero { padding-bottom:calc(min(80vw - 9.6px,459.2px) + 45px); }
+  .hero { padding-bottom:calc(min(80.8vw - 9.696px,463.792px) + 45px); }
   .hero-content { width:100%; }
   .protein-stage {
-    width:min(calc(100% - 12px),574px);
+    width:min(calc((100% - 12px) * 1.01),579.74px);
     right:50%;
     top:auto;
     bottom:20px;
