@@ -380,32 +380,6 @@ h1 {
   animation-delay:-2s
 }
 
-.specimen-label {
-  position:absolute;
-  right:5.5%;
-  bottom:47px;
-  color:#97c9d5;
-  font:9px/1.8 ui-monospace,Consolas,monospace;
-  letter-spacing:2px;
-  z-index:1;
-  display:flex;
-  gap:10px;
-  align-items:center
-}
-
-.specimen-label span {
-  width:5px;
-  height:5px;
-  background:var(--cyan);
-  border-radius:50%
-}
-
-.specimen-label b {
-  margin-left:20px;
-  color:#819ca8;
-  font-weight:400
-}
-
 @keyframes drift {
   to {
     transform:translate3d(8px,-14px,0);
@@ -433,12 +407,6 @@ h1 {
   font-size:inherit;
   font-weight:500;
   margin:0
-}
-
-.section-heading>span {
-  display:flex;
-  align-items:center;
-  gap:12px
 }
 
 .course-grid {
@@ -504,14 +472,6 @@ h1 {
   padding:24px 25px;
   display:flex;
   flex-direction:column
-}
-
-.card-number {
-  font-size:12px;
-  color:#bdd6e1;
-  font-variant-numeric:tabular-nums;
-  letter-spacing:1px;
-  margin-bottom:16px
 }
 
 .course-card h3 {
@@ -725,9 +685,6 @@ h1 {
   .hero-copy {
     font-size:44px
   }
-  .specimen-label {
-    display:none
-  }
   .course-grid {
     gap:14px
   }
@@ -865,9 +822,6 @@ h1 {
   }
   .course-description {
     font-size:13px
-  }
-  .card-number {
-    margin-bottom:13px
   }
   .card-art {
     background-size:auto 200%;
