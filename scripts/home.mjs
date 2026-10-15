@@ -58,7 +58,7 @@ export function homePage(site, version) {
       </div>
     </section>
     <section class="courses" id="courses" aria-labelledby="courses-title" tabindex="-1">
-      <div class="section-heading"><h2 id="courses-title"><span lang="en">FIND YOUR NEXT QUESTION</span><span class="sr-only"> · 과목별 수업</span></h2></div>
+      <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR COURSE</span><span class="sr-only"> · 과목별 수업</span></h2></div>
       <div class="course-grid">
         ${courses.map(c => `<a class="course-card ${esc(c.id)}" href="/${esc(c.id)}/">
           <div class="card-art" aria-hidden="true"></div>
@@ -72,7 +72,7 @@ export function homePage(site, version) {
       </div>
     </section>
   </main>
-  <footer class="site-footer"><p><span class="footer-dot" aria-hidden="true"></span> 관찰에서 질문으로, 증거에서 설명으로.</p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
+  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-15">Oct 15, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
 </body>
 </html>
 `;
