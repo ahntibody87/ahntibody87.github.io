@@ -5,12 +5,13 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const script = fs.readFileSync(new URL('../assets/home-protein.js', import.meta.url), 'utf8');
-const pdb = fs.readFileSync(new URL('../assets/home/1tim-chain-a.pdb', import.meta.url), 'utf8');
+const pdb = fs.readFileSync(new URL('../assets/home/4hhb-hemoglobin.pdb', import.meta.url), 'utf8');
 const atoms = pdb.split('\n').filter(line => line.startsWith('ATOM'));
-assert.equal(atoms.filter(line => line.slice(12, 16).trim() === 'CA').length, 247);
-assert.ok(atoms.every(line => line[21] === 'A'));
+assert.equal(atoms.filter(line => line.slice(12, 16).trim() === 'CA').length, 574);
+assert.deepEqual([...new Set(atoms.map(line => line[21]))].sort(), ['A','B','C','D']);
+assert.equal(pdb.split('\n').filter(line => line.startsWith('HETATM') && line.slice(76,78).trim() === 'FE').length, 4);
 assert.match(pdb, /^HELIX /m);
-assert.match(pdb, /^SHEET /m);
+const points = pdb.split('\n').filter(line => /^(ATOM  |HETATM)/.test(line)).map(line => ({x:Number(line.slice(30,38)),y:Number(line.slice(38,46)),z:Number(line.slice(46,54)),atom:line.slice(12,16).trim()}));
 
 async function setup({ networkFailure = false, gpuFailure = false } = {}) {
   const pending = new Map();
@@ -26,7 +27,8 @@ async function setup({ networkFailure = false, gpuFailure = false } = {}) {
   const visual = { classList: { add: value => classes.add(value), remove: value => classes.delete(value) } };
   const canvas = events();
   const host = {
-    dataset: { modelSrc: '/assets/home/1tim-chain-a.pdb' },
+    clientWidth: 1000, clientHeight: 800,
+    dataset: { modelSrc: '/assets/home/4hhb-hemoglobin.pdb' },
     closest: selector => selector === '.hero-visual' ? visual : {},
     querySelector: () => canvas
   };
@@ -35,9 +37,11 @@ async function setup({ networkFailure = false, gpuFailure = false } = {}) {
     querySelector: selector => selector === '#protein-view' ? host : null
   };
   const rotations = [];
+  let view = [0,0,0,0,0,0,0,1];
   const viewer = {
-    addModel: () => ({ selectedAtoms: () => [{}] }),
-    setStyle() {}, zoomTo() {}, zoom() {}, resize() {},
+    addModel: () => ({ selectedAtoms: sel => sel.atom ? points.filter(p => p.atom === sel.atom) : points }),
+    getView: () => [...view], setView: value => { view = [...value]; }, setCameraParameters() {},
+    setStyle() {}, zoomTo() { view[0] = -points.reduce((s,p)=>s+p.x,0)/points.length; view[1] = -points.reduce((s,p)=>s+p.y,0)/points.length; view[2] = -points.reduce((s,p)=>s+p.z,0)/points.length; }, resize() {},
     rotate: (degrees, axis) => rotations.push({ degrees, axis }),
     render() { if (gpuFailure) throw new Error('GPU unavailable'); }
   };
@@ -55,13 +59,25 @@ async function setup({ networkFailure = false, gpuFailure = false } = {}) {
   });
   await initialise();
   return {
-    document, canvas, pending, classes, rotations,
+    document, canvas, pending, classes, rotations, view: () => view,
     visible: value => intersection([{ isIntersecting: value }]),
     tick(time) { const callbacks = [...pending.values()]; pending.clear(); callbacks.forEach(callback => callback(time)); }
   };
 }
 
 const normal = await setup();
+// Project every atom over a complete turn into the actual fitted orthographic view.
+const fit = normal.view();
+const halfWidth = (150 - fit[3]) * Math.tan(20 * Math.PI / 180);
+const halfHeight = halfWidth / 1.25;
+for (let degrees = 0; degrees < 360; degrees++) {
+  const angle = degrees * Math.PI / 180;
+  for (const atom of points) {
+    const x = atom.x + fit[0], y = atom.y + fit[1], z = atom.z + fit[2];
+    assert.ok(Math.abs(x*Math.cos(angle)+z*Math.sin(angle))+3 <= halfWidth*0.921, 'Horizontal envelope must fit');
+    assert.ok(Math.abs(y)+3 <= halfHeight*0.921, 'Vertical envelope must fit');
+  }
+}
 const initialRotations = normal.rotations.length;
 normal.tick(100);
 for (let time = 140; time <= 60100; time += 40) normal.tick(time);
@@ -85,4 +101,4 @@ for (const failure of [{ networkFailure: true }, { gpuFailure: true }]) {
   assert.equal(failed.pending.size, 0);
   assert.equal(failed.classes.has('protein-ready'), false, 'A failed renderer must preserve the poster');
 }
-console.log('단백질 구조·360도 회전 시간·화면 밖/백그라운드·실패 시 정지 이미지 검사 통과');
+console.log('헤모글로빈 4사슬·4헴·360도 전체 경계·회전 시간·화면 밖/백그라운드·실패 시 정지 이미지 검사 통과');

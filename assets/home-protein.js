@@ -1,6 +1,6 @@
 /* A local experimental structure, rendered as a rotating ribbon.
- * Source: RCSB PDB 1TIM, chain A. See assets/home/README.md for attribution.
- * The approved illustration remains visible until WebGL has rendered successfully.
+ * Source: RCSB PDB 4HHB, four chains and heme. See assets/home/README.md.
+ * The poster is captured from this renderer at exactly the initial orientation.
  */
 (() => {
   const host = document.querySelector('#protein-view');
@@ -9,12 +9,24 @@
   const visual = host.closest('.hero-visual');
   let inView = true;
   let viewer;
+  let horizontalRadius;
+  let verticalRadius;
   let ready = false;
   let failed = false;
   let frame = 0;
   let lastTime = 0;
   const frameInterval = 1000 / 30;
   const degreesPerSecond = 6; // One full turn per minute, independent of display refresh rate.
+
+  function fitModel() {
+    const aspect = host.clientWidth / Math.max(1, host.clientHeight);
+    // Full y-axis rotation envelope, plus ribbon/stick thickness and an 8% inset.
+    // 3Dmol 2.5.5 orthographic half-width = distance * tan(fov).
+    const halfWidth = Math.max(horizontalRadius + 3, (verticalRadius + 3) * aspect) / 0.92;
+    const view = viewer.getView();
+    view[3] = 150 - halfWidth / Math.tan(20 * Math.PI / 180);
+    viewer.setView(view);
+  }
 
   function stopLoop() {
     cancelAnimationFrame(frame);
@@ -92,18 +104,24 @@
         antialias: true, upscale: false, nomouse: true, orthographic: true, disableFog: true,
         cartoonQuality: 6
       });
+      viewer.setCameraParameters({ fov: 20, z: 150 });
       const model = viewer.addModel(pdb, 'pdb', { keepH: false });
       if (!model.selectedAtoms({ atom: 'CA' }).length) throw new Error('Empty protein model');
-      viewer.setStyle({}, {
+      viewer.setStyle({ hetflag: false }, {
         cartoon: {
           style: 'oval', arrows: true, thickness: 0.3,
-          colorfunc: atom => atom.ss === 'h' ? '#51b8f3' : atom.ss === 's' ? '#6aeaf1' : '#49b7c8'
+          colorfunc: atom => ({ A: '#55c9d8', B: '#459cd4', C: '#61d8df', D: '#5baee5' }[atom.chain] || '#55c9d8')
         }
       });
+      viewer.setStyle({ resn: 'HEM' }, { stick: { radius: 0.23, color: '#d1a363' } });
+      viewer.setStyle({ resn: 'HEM', elem: 'Fe' }, { sphere: { radius: 0.85, color: '#e6bb76' } });
       viewer.zoomTo();
-      viewer.zoom(1.45);
-      viewer.rotate(30, 'x');
-      viewer.rotate(-25, 'z');
+      const center = viewer.getView().slice(0, 3).map(value => -value);
+      const atoms = model.selectedAtoms({});
+      horizontalRadius = Math.max(...atoms.map(atom => Math.hypot(atom.x - center[0], atom.z - center[2])));
+      verticalRadius = Math.max(...atoms.map(atom => Math.abs(atom.y - center[1])));
+      viewer.rotate(20, 'y');
+      fitModel();
       viewer.render();
       const canvas = host.querySelector('canvas');
       if (!canvas) throw new Error('No WebGL canvas');
@@ -117,7 +135,7 @@
       if ('ResizeObserver' in window) {
         new ResizeObserver(() => {
           if (!failed) {
-            try { viewer.resize(); } catch { showPoster(); }
+            try { viewer.resize(); fitModel(); } catch { showPoster(); }
           }
         }).observe(host);
       }

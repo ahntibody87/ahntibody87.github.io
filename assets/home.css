@@ -812,28 +812,39 @@ h1 {
 }
 
 
-/* Protein is a true 3D ribbon, isolated from the unchanged course artwork. */
-#protein-view {
+/* A fixed-ratio stage keeps poster and WebGL framing identical at every size. */
+.hero-visual:after { display:none; }
+.protein-stage {
   position:absolute;
-  right:0;
-  top:0;
-  width:59%;
-  height:100%;
-  opacity:0;
-  pointer-events:none;
-  transition:opacity .4s ease;
+  width:min(54%,760px);
+  aspect-ratio:5 / 4;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+  overflow:hidden;
+  contain:paint;
 }
+.protein-stage .hero-image,#protein-view {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+}
+#protein-view { opacity:0; pointer-events:none; }
+/* Swap identical initial frames without ghosting between two protein shapes. */
+.protein-stage .hero-image { transition:none; }
 .protein-ready #protein-view { opacity:1; }
 .protein-ready .hero-image { opacity:0; }
 @media(max-width:960px) {
-  #protein-view { width:70%; right:-7%; }
-}
-@media(max-width:680px) {
-  .hero { min-height:0; padding-bottom:390px; }
-  #protein-view { width:100%; height:340px; right:0; top:auto; bottom:44px; }
-  .hero-image { width:200%; height:340px; max-width:none; left:auto; right:30px; top:auto; bottom:44px; }
-  .hero-visual:after { background:linear-gradient(0deg,var(--bg),transparent 10%); }
-}
-@media(prefers-reduced-motion:reduce) {
-  #protein-view,.hero-image { transition:none; }
+  .hero { min-height:0; padding-bottom:calc(min(80vw - 19.2px,432px) + 45px); }
+  .hero-content { width:100%; }
+  .protein-stage {
+    width:min(calc(100% - 24px),540px);
+    right:50%;
+    top:auto;
+    bottom:20px;
+    transform:translateX(50%);
+  }
 }
