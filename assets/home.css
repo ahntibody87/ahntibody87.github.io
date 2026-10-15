@@ -825,32 +825,14 @@ h1 {
 }
 .protein-ready #protein-view { opacity:1; }
 .protein-ready .hero-image { opacity:0; }
-.protein-motion {
-  position:absolute;
-  right:48px;
-  bottom:24px;
-  z-index:2;
-  min-height:38px;
-  padding:8px 16px;
-  border:1px solid #33586b;
-  border-radius:999px;
-  background:#06131ed9;
-  color:#c3dbe5;
-  cursor:pointer;
-  font-size:11px;
-}
-.protein-motion:hover { border-color:var(--cyan); color:var(--cyan); }
-.protein-motion[hidden] { display:none; }
 @media(max-width:960px) {
   #protein-view { width:70%; right:-7%; }
-  .protein-motion { right:32px; bottom:18px; }
 }
 @media(max-width:680px) {
   .hero { min-height:0; padding-bottom:390px; }
   #protein-view { width:100%; height:340px; right:0; top:auto; bottom:44px; }
   .hero-image { width:200%; height:340px; max-width:none; left:auto; right:30px; top:auto; bottom:44px; }
   .hero-visual:after { background:linear-gradient(0deg,var(--bg),transparent 10%); }
-  .protein-motion { right:24px; bottom:22px; }
 }
 @media(prefers-reduced-motion:reduce) {
   #protein-view,.hero-image { transition:none; }

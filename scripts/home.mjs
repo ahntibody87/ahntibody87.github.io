@@ -34,7 +34,6 @@ export function homePage(site, version) {
         <a class="active" href="/" aria-current="page" lang="en">Home</a>
         ${courses.map(c => `<a href="/${esc(c.id)}/" lang="en">${esc(c.display.english)}</a>`).join('')}
       </nav>
-      <a class="button header-cta" href="${lab}" lang="en">Enter the Lab ${arrow}</a>
     </div>
   </header>
   <main id="main" tabindex="-1">
@@ -55,7 +54,6 @@ export function homePage(site, version) {
           <a class="button button-secondary" href="#courses" lang="en">${book} View Courses</a>
         </div>
       </div>
-      <button class="protein-motion" type="button" aria-label="단백질 입체 회전 멈춤" hidden>회전 멈춤</button>
     </section>
     <section class="courses" id="courses" aria-labelledby="courses-title" tabindex="-1">
       <div class="section-heading"><h2 id="courses-title"><span lang="en">FIND YOUR NEXT QUESTION</span><span class="sr-only"> · 과목별 수업</span></h2></div>

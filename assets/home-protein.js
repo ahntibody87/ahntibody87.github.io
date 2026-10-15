@@ -4,12 +4,9 @@
  */
 (() => {
   const host = document.querySelector('#protein-view');
-  const button = document.querySelector('.protein-motion');
-  if (!host || !button) return;
+  if (!host) return;
 
   const visual = host.closest('.hero-visual');
-  const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
-  let wantsMotion = !motionPreference.matches;
   let inView = true;
   let viewer;
   let ready = false;
@@ -30,12 +27,11 @@
     ready = false;
     stopLoop();
     visual.classList.remove('protein-ready');
-    button.hidden = true;
   }
 
   function tick(time) {
     frame = 0;
-    if (!ready || !wantsMotion || !inView || document.hidden) return;
+    if (!ready || !inView || document.hidden) return;
     if (!lastTime) lastTime = time;
     const elapsed = time - lastTime;
     if (elapsed >= frameInterval) {
@@ -53,21 +49,11 @@
 
   function syncMotion() {
     stopLoop();
-    button.textContent = wantsMotion ? '회전 멈춤' : '회전 시작';
-    button.setAttribute('aria-label', `단백질 입체 ${button.textContent}`);
-    if (ready && wantsMotion && inView && !document.hidden) {
+    if (ready && inView && !document.hidden) {
       frame = requestAnimationFrame(tick);
     }
   }
 
-  button.addEventListener('click', () => {
-    wantsMotion = !wantsMotion;
-    syncMotion();
-  });
-  motionPreference.addEventListener('change', () => {
-    wantsMotion = !motionPreference.matches;
-    syncMotion();
-  });
   document.addEventListener('visibilitychange', syncMotion);
   window.addEventListener('pagehide', stopLoop);
   window.addEventListener('pageshow', syncMotion);
@@ -126,7 +112,6 @@
 
       ready = true;
       visual.classList.add('protein-ready');
-      button.hidden = false;
       syncMotion();
 
       if ('ResizeObserver' in window) {

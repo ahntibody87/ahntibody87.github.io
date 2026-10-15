@@ -55,7 +55,7 @@
 
 - `scripts/home.mjs`: ATLL 메인 페이지 전용 템플릿. 히어로, 상단 메뉴, 3개 코스 카드
 - `assets/home.css`, `assets/home.js`: 메인 전용 반응형 디자인과 접근 가능한 모바일 메뉴
-- `assets/home-protein.js`: 실제 단백질 리본의 입체 회전, 정지·재시작, 화면 밖·움직임 감소 처리와 정지 이미지 대체
+- `assets/home-protein.js`: 실제 단백질 리본의 자동 입체 회전, 화면 밖 처리와 정지 이미지 대체
 - `assets/home/`: 최적화된 WebP 배경 3개와 이미지 제작 기록
 - `data/site.json`의 과목별 `home`: 메인 카드의 영문 제목, 한글 제목, 설명. 실제 URL과 수업 내용은 기존 항목을 사용
 - `data/site.json`: 과목, 단원, 활동 목록의 단일 원본
@@ -126,8 +126,8 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 - 메인 리디자인은 별도 설치 없이 `node scripts/build.mjs` → `node scripts/check.mjs`로 생성·검사합니다. 메인 전용 스타일이므로 기존 과목·단원·실습의 공통 디자인은 유지됩니다.
 - 메인의 `Enter the Lab`은 실제 활동이 등록된 `/advanced-life-science/`로, `View Courses`는 `#courses`로 이동합니다. 준비 중인 과목은 카드에 상태를 표시합니다.
 - 메인 히어로는 승인된 단백질 도안을 먼저 표시한 뒤, 로컬 3Dmol.js 2.5.5와 RCSB PDB 1TIM의 A 사슬로 실제 리본 구조를 렌더링합니다. 고정 버전 라이브러리와 라이선스를 저장소에 포함했으며 npm 설치는 필요 없습니다. 출처와 데이터 가공 방식은 `assets/home/README.md`를 확인하세요.
-- 회전은 1분에 한 바퀴, 약 30fps이며 버튼으로 정지·재시작할 수 있습니다. 화면 밖·숨긴 탭에서는 멈추고, `prefers-reduced-motion`에서는 정지 상태로 시작합니다. WebGL 사용이 어려우면 정지 도안을 유지합니다. 자바스크립트가 없어도 메인 메뉴와 코스 링크가 표시됩니다.
-- `node scripts/check-home-protein.mjs`로 구조 데이터, 회전 시간, 정지·재시작, 화면 밖·백그라운드, 움직임 감소 및 렌더링 실패 처리를 검사합니다.
+- 회전은 1분에 한 바퀴, 약 30fps이며 화면에 보이는 동안 자동으로 계속 회전합니다. 화면 밖·숨긴 탭에서는 쉬었다가 다시 보이면 회전을 이어갑니다. WebGL 사용이 어려우면 정지 도안을 유지합니다. 자바스크립트가 없어도 메인 메뉴와 코스 링크가 표시됩니다.
+- `node scripts/check-home-protein.mjs`로 구조 데이터, 회전 시간, 화면 밖·백그라운드 및 렌더링 실패 처리를 검사합니다.
 - 파일을 더블클릭하는 `file://` 방식 대신 저장소 루트에서 정적 HTTP 서버를 실행합니다 (예: `python -m http.server 8000`).
 - `/assets/...`와 같은 경로는 현재 사용자 사이트의 루트 배포 기준입니다. 프로젝트 사이트의 `/repo-name/` 하위로 옮길 경우 경로와 canonical URL을 변경해야 합니다.
 - Pages 설정 **main / (root)**를 유지하고 생성된 HTML까지 push합니다. 설정 JSON만 편집해 push하면 화면은 갱신되지 않습니다.
