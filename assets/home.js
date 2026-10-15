@@ -1,3 +1,13 @@
+// Include the actual header height, including wrapped or expanded navigation.
+const header = document.querySelector('.site-header');
+if (header) {
+  const updateHeaderHeight = () => {
+    document.documentElement.style.setProperty('--header-height', `${header.getBoundingClientRect().height}px`);
+  };
+  updateHeaderHeight();
+  new ResizeObserver(updateHeaderHeight).observe(header);
+}
+
 // Navigation remains fully visible without JavaScript.
 const toggle = document.querySelector('.menu-toggle');
 const navigation = document.querySelector('#navigation');

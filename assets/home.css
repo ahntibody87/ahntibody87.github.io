@@ -16,7 +16,7 @@
 
 html {
   scroll-behavior:smooth;
-  scroll-padding-top:108px
+  scroll-padding-top:24px
 }
 
 body {
@@ -195,7 +195,9 @@ main {
 .hero {
   position:relative;
   isolation:isolate;
-  min-height:660px;
+  min-height:calc(100vh - var(--header-height,89px));
+  min-height:calc(100svh - var(--header-height,89px));
+  min-height:calc(100dvh - var(--header-height,89px));
   padding:62px max(48px,calc((100% - 1404px)/2)) 46px;
   display:flex;
   align-items:center;
@@ -509,9 +511,6 @@ h1 {
 }
 
 @media(min-width:1600px) {
-  .hero {
-    min-height:720px
-  }
   .hero-copy {
     font-size:54px
   }
@@ -535,8 +534,7 @@ h1 {
     margin-left:0
   }
   .hero {
-    padding-inline:40px;
-    min-height:650px
+    padding-inline:40px
   }
   .eyebrow {
     font-size:9px;
@@ -610,7 +608,6 @@ h1 {
     display:flex
   }
   .hero {
-    min-height:630px;
     padding:48px 32px
   }
   .hero-content {
@@ -671,7 +668,6 @@ h1 {
   }
   .hero {
     padding:40px 24px 35px;
-    min-height:650px;
     align-items:flex-start
   }
   .hero-content {
@@ -838,7 +834,7 @@ h1 {
 .protein-ready #protein-view { opacity:1; }
 .protein-ready .hero-image { opacity:0; }
 @media(max-width:960px) {
-  .hero { min-height:0; padding-bottom:calc(min(80vw - 19.2px,432px) + 45px); }
+  .hero { padding-bottom:calc(min(80vw - 19.2px,432px) + 45px); }
   .hero-content { width:100%; }
   .protein-stage {
     width:min(calc(100% - 24px),540px);
