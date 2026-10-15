@@ -1,4 +1,5 @@
 import { siteHeader } from './header.mjs';
+import { faviconLinks } from './favicon.mjs';
 // Home-only presentation; all course destinations come from the existing catalog.
 export function homePage(site, version, sharedVersion) {
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,7 +20,7 @@ export function homePage(site, version, sharedVersion) {
   <meta name="description" content="고등학교 생명과학 학습을 위한 시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼. Ahntibody’s Lifescience Lab에서 생명과학을 탐구하세요.">
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  ${faviconLinks}
   <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=${version}" fetchpriority="high">
   <link rel="stylesheet" href="/assets/home.css?v=${version}">
   <link rel="stylesheet" href="/assets/theme.css?v=${sharedVersion}">
