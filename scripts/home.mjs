@@ -19,9 +19,10 @@ export function homePage(site, version) {
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" as="image" href="/assets/home/life-science.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/home/protein-poster.webp" fetchpriority="high">
   <link rel="stylesheet" href="/assets/home.css?v=${version}">
   <script src="/assets/home.js?v=${version}" defer></script>
+  <script src="/assets/home-protein.js?v=${version}" defer></script>
 </head>
 <body id="top">
   <a class="skip" href="#main">본문 바로가기</a>
@@ -39,9 +40,8 @@ export function homePage(site, version) {
   <main id="main" tabindex="-1">
     <section class="hero" id="about" aria-labelledby="lab-title">
       <div class="hero-visual" aria-hidden="true">
-        <img class="hero-image" src="/assets/home/life-science.webp" width="1536" height="1024" alt="" fetchpriority="high">
-        <div class="orbital orbital-one"></div><div class="orbital orbital-two"></div>
-        <span class="mote mote-one"></span><span class="mote mote-two"></span><span class="mote mote-three"></span>
+        <img class="hero-image" src="/assets/home/protein-poster.webp" width="1536" height="1024" alt="" fetchpriority="high">
+        <div id="protein-view" data-model-src="/assets/home/1tim-chain-a.pdb" data-renderer-src="/assets/home/vendor/3Dmol-2.5.5.min.js"></div>
       </div>
       <div class="hero-content">
         <p class="eyebrow" lang="en">Interactive Lifescience Education Platform<span aria-hidden="true"></span></p>
@@ -55,6 +55,7 @@ export function homePage(site, version) {
           <a class="button button-secondary" href="#courses" lang="en">${book} View Courses</a>
         </div>
       </div>
+      <button class="protein-motion" type="button" aria-label="단백질 입체 회전 멈춤" hidden>회전 멈춤</button>
     </section>
     <section class="courses" id="courses" aria-labelledby="courses-title" tabindex="-1">
       <div class="section-heading"><h2 id="courses-title"><span lang="en">FIND YOUR NEXT QUESTION</span><span class="sr-only"> · 과목별 수업</span></h2></div>

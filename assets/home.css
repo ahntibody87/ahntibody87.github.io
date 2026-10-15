@@ -214,9 +214,10 @@ main {
   position:absolute;
   width:100%;
   height:100%;
-  object-fit:cover;
-  object-position:center 49%;
-  opacity:.96
+  object-fit:contain;
+  object-position:right center;
+  opacity:1;
+  transition:opacity .4s ease
 }
 
 .hero-visual:after {
@@ -325,66 +326,6 @@ h1 {
 
 .button-secondary svg {
   width:20px
-}
-
-.orbital {
-  position:absolute;
-  right:8%;
-  top:15%;
-  width:39%;
-  height:64%;
-  border:1px solid #60ddec25;
-  border-radius:50%;
-  transform:rotate(-28deg);
-  z-index:1
-}
-
-.orbital-two {
-  right:4%;
-  top:28%;
-  width:48%;
-  height:36%;
-  transform:rotate(24deg);
-  border-color:#60ddec19
-}
-
-.mote {
-  position:absolute;
-  background:#9cffff;
-  border-radius:50%;
-  box-shadow:0 0 14px 4px #38eaf180;
-  z-index:1;
-  animation:drift 4s ease-in-out 1 alternate
-}
-
-.mote-one {
-  right:35%;
-  top:30%;
-  width:3px;
-  height:3px
-}
-
-.mote-two {
-  right:13%;
-  top:56%;
-  width:4px;
-  height:4px;
-  animation-delay:-4s
-}
-
-.mote-three {
-  right:42%;
-  top:74%;
-  width:3px;
-  height:3px;
-  animation-delay:-2s
-}
-
-@keyframes drift {
-  to {
-    transform:translate3d(8px,-14px,0);
-    opacity:.3
-  }
 }
 
 .courses {
@@ -675,10 +616,6 @@ h1 {
   .hero-content {
     width:78%
   }
-  .hero-image {
-    object-position:62% center;
-    opacity:.7
-  }
   .hero-visual:after {
     background:linear-gradient(90deg,#030c14 0%,#030c14c9 45%,#030c1420 100%),linear-gradient(0deg,var(--bg),transparent 25%)
   }
@@ -783,18 +720,8 @@ h1 {
     gap:12px;
     min-height:48px
   }
-  .hero-image {
-    width:135%;
-    max-width:none;
-    left:-35%;
-    object-position:70% center;
-    opacity:.52
-  }
   .hero-visual:after {
     background:linear-gradient(90deg,#030c14ed,#030c14a6 65%,#030c1450),linear-gradient(0deg,var(--bg),transparent 30%)
-  }
-  .orbital {
-    opacity:.35
   }
   .courses {
     padding:0 20px 30px
@@ -884,3 +811,47 @@ h1 {
   }
 }
 
+
+/* Protein is a true 3D ribbon, isolated from the unchanged course artwork. */
+#protein-view {
+  position:absolute;
+  right:0;
+  top:0;
+  width:59%;
+  height:100%;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .4s ease;
+}
+.protein-ready #protein-view { opacity:1; }
+.protein-ready .hero-image { opacity:0; }
+.protein-motion {
+  position:absolute;
+  right:48px;
+  bottom:24px;
+  z-index:2;
+  min-height:38px;
+  padding:8px 16px;
+  border:1px solid #33586b;
+  border-radius:999px;
+  background:#06131ed9;
+  color:#c3dbe5;
+  cursor:pointer;
+  font-size:11px;
+}
+.protein-motion:hover { border-color:var(--cyan); color:var(--cyan); }
+.protein-motion[hidden] { display:none; }
+@media(max-width:960px) {
+  #protein-view { width:70%; right:-7%; }
+  .protein-motion { right:32px; bottom:18px; }
+}
+@media(max-width:680px) {
+  .hero { min-height:0; padding-bottom:390px; }
+  #protein-view { width:100%; height:340px; right:0; top:auto; bottom:44px; }
+  .hero-image { width:200%; height:340px; max-width:none; left:auto; right:30px; top:auto; bottom:44px; }
+  .hero-visual:after { background:linear-gradient(0deg,var(--bg),transparent 10%); }
+  .protein-motion { right:24px; bottom:22px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  #protein-view,.hero-image { transition:none; }
+}

@@ -7,7 +7,11 @@ import { createHash } from 'node:crypto';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Change the stylesheet URL whenever its content changes, avoiding stale browser caches.
 const styleVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/style.css'), 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
-const homeVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/home.css'), 'utf8').replace(/\r\n/g, '\n')).update(fs.readFileSync(path.join(root, 'assets/home.js'), 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
+const homeHash = createHash('sha256');
+for (const file of ['assets/home.css', 'assets/home.js', 'assets/home-protein.js']) {
+  homeHash.update(fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n'));
+}
+const homeVersion = homeHash.digest('hex').slice(0, 12);
 const site = JSON.parse(fs.readFileSync(path.join(root, 'data/site.json'), 'utf8'));
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const types = { simulation: '인터랙티브 시뮬레이션', inquiry: '탐구 및 실험 활동', resource: '학습 자료', external: '외부 활동' };
