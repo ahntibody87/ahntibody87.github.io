@@ -64,7 +64,7 @@ export function homePage(site, version) {
           <div class="card-content">
             <h3 lang="en">${esc(c.display.english)}</h3>
             <p class="course-name">${esc(c.display.title)}</p>
-            <p class="course-description"${c.id === 'integrated-science' ? ' lang="en"' : ''}>${esc(c.display.description)}</p>
+            <p class="course-description">${esc(c.display.description)}</p>
             <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 탐구 시작하기`}</span></div>
           </div>
         </a>`).join('')}
