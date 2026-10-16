@@ -1,4 +1,8 @@
 // Include the actual header height, including wrapped or expanded navigation.
+document.querySelector('.portal-back-top')?.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+});
+
 const header = document.querySelector('.site-header');
 if (header) {
   const updateHeaderHeight = () => {

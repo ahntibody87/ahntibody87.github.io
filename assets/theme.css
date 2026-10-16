@@ -71,3 +71,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {o
   [data-theme="light"] .portal-card {padding:var(--space-3)}
 }
 @media(prefers-reduced-motion:reduce) {html {scroll-behavior:auto}[data-theme="light"] .portal-card:hover {transform:none}}
+
+.portal-footer {flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.portal-footer>a,.portal-back-top {display:inline-flex;align-items:center;min-height:44px}
+.portal-back-top {margin-left:auto;gap:7px;padding:8px 0 8px 12px;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;white-space:nowrap}
+.portal-back-top:hover {color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
+.portal-back-top:focus-visible {outline:3px solid var(--cyan);outline-offset:4px;border-radius:4px}
