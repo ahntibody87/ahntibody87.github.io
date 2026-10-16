@@ -33,6 +33,14 @@
 - 해설과 정답은 공개 자율 학습 콘텐츠입니다. 브라우저에서 제출 전까지 숨겨 표시하며 비공개 평가용으로 사용하지 않습니다.
 - 본문은 `content/advanced-life-science/cell-energy/mitochondria-lab.html`, 기능·스타일·재사용한 그림은 `assets/activities/cell-energy/`에서 관리합니다.
 
+## 단백질 설계 실험실
+
+- 주소: `/advanced-life-science/cell-energy/protein-lab/`
+- 아미노산 20종의 이름·1레터/3레터 코드·구조식·곁사슬 성질, ESMFold2 경량 실험형 모델의 기기 내 접힘 예측, 야생형·치환 변이의 구조 비교를 제공합니다.
+- 계정·API 키·MSA·예측 서버·DB 없이 실행합니다. 첫 모델 다운로드 약 270 MB와 WebGPU 지원 기기가 필요합니다. ESMFold v1 및 전체 ESMFold2와 다른 모델임을 화면에 명시합니다.
+- PDB 저장/불러오기, 비교 A/B, 전체 대응 RMSD, 위치 고정 TM-score(근사 최적화), 위치별 거리, CSV 저장을 지원합니다. 서로 다른 길이의 사슬은 현재 비교하지 않습니다.
+- 검사: `node scripts/check-protein-lab.mjs`. 모델·검증·라이선스 상세는 `docs/protein-lab.md`를 확인하세요.
+
 ## RNA 설계 실험실
 
 - 주소: `/advanced-life-science/gene-expression/rna-lab/`

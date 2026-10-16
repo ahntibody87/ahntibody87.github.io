@@ -1,0 +1,41 @@
+Protein Design Laboratory / 단백질 설계 실험실
+
+Browser inference: LocalFold (https://github.com/sokrypton/localfold).
+The exact source revision and copied module list are in vendor/localfold/PROVENANCE.json.
+LocalFold code is under the Beer-Ware license; see vendor/localfold/LICENSE.
+Our model registry retains only the ESMFold2 Experimental Fast 300M pair.
+
+Prediction model: Biohub/ESMFold2-Experimental-Fast-base300M-step1500k (MIT).
+Language model: ESM-C 300M, with its matching ESMFold2 input shim.
+This is a quantized experimental checkpoint, not ESMFold v1 or the full ESMFold2 6B model.
+The original model card is model-card.md.
+Confidence: the Synthyra/FastPLMs confidence head on the frozen experimental trunk.
+The Synthyra/ESMFold2-300 model card declares MIT; see
+vendor/localfold/confidence-model-card.md.
+FastPLMs license: Apache-2.0; see vendor/localfold/LICENSE-confidence.
+The model weights are pinned to immutable Hugging Face revisions in
+vendor/localfold/src/bundles/manifests/index.js and are SHA-256 checked by the loader.
+Weight files are downloaded by the browser and are not included in the repository.
+
+Molecular viewer: 3Dmol.js 2.5.5 (BSD-3-Clause).
+Source and license: /assets/home/vendor/3Dmol-2.5.5.min.js,
+/assets/home/vendor/LICENSE-3Dmol.txt.
+
+Chemical structure drawings: SmilesDrawer 2.1.7 (MIT), Reymond Research Group.
+See vendor/smiles-drawer/LICENSE. Structures use neutral L-amino acid forms;
+side-chain charge classifications refer approximately to pH 7.
+
+Comparison: fixed residue correspondence, alpha-carbon coordinates,
+Horn quaternion least-squares rigid superposition. RMSD uses all residue pairs.
+TM-score: fixed correspondence, multi-start iteratively reweighted rigid fitting;
+heuristic maximization with full chain length normalization. This uses a different
+transform from the RMSD fit displayed in the viewer.
+No claim of equivalence to TM-align or RCSB structural alignment is made.
+
+Example sequences: villin HP35 (35 residues), ubiquitin (76 residues),
+protein G B1 domain (56 residues). Examples provide sequence inputs, not a
+prejudged conclusion about mutation effects.
+
+ESM models and upstream components retain their respective notices:
+https://github.com/Biohub/esm/blob/main/THIRD_PARTY_NOTICE.md
+https://github.com/Synthyra/FastPLMs
