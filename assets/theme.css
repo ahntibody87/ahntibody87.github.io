@@ -38,6 +38,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {o
 [data-theme="light"] .hero h1 {letter-spacing:-.04em;line-height:1.3}
 [data-theme="light"] .section {padding-top:var(--space-4)}
 [data-theme="light"] .intro {font-size:15px}
+/* Keep Korean words together in advanced life science titles and introductions. */
+body[data-course="advanced-life-science"] :is(.hero h1,.hero .intro,.portal-card h3,.card-description) {word-break:keep-all;overflow-wrap:break-word}
 [data-theme="light"] .portal-card {--accent:var(--cyan);--tint:var(--pale);padding:var(--space-3);border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 [data-theme="light"] .portal-card:hover {border-color:var(--cyan);box-shadow:0 10px 24px #142e400d;transform:translateY(-3px)}
 [data-theme="light"] .card-number {font-family:var(--font-sans);font-size:26px;font-weight:600}
