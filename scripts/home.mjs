@@ -17,7 +17,7 @@ export function homePage(site, version, sharedVersion) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#030c14">
-  <meta name="description" content="통합과학, 생물의 유전, 고급생명과학 수업 자료와 시뮬레이션을 모았습니다.">
+  <meta name="description" content="통합과학, 생물의 유전, 고급 생명과학 수업 자료와 시뮬레이션을 모았습니다.">
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
   ${faviconLinks}
@@ -44,7 +44,7 @@ export function homePage(site, version, sharedVersion) {
         <p class="lab-name" lang="en">AHNTIBODY’S LIFESCIENCE LAB</p>
         <div class="accent-line" aria-hidden="true"></div>
         <h2 class="hero-copy" lang="en">Lifescience<br><em>Lessons &amp; Activities</em></h2>
-        <p class="intro">통합과학, 생물의 유전, 고급생명과학의<br>수업 자료와 시뮬레이션을 모았습니다.</p>
+        <p class="intro">통합과학, 생물의 유전, 고급 생명과학의<br>수업 자료와 시뮬레이션을 모았습니다.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="${lab}" lang="en">Enter the Lab ${arrow}</a>
           <a class="button button-secondary" href="#courses" lang="en">${book} View Courses</a>

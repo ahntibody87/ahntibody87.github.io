@@ -72,7 +72,7 @@ $('ce-reset').addEventListener('click',()=>{
   state=newInvestigation();$('ce-test-reason').value='';error('ce-submit-error','');error('ce-test-error','');save();render();$('ce-welcome').scrollIntoView({block:'center'});
 });
 $('ce-download').addEventListener('click',()=>{
-  const lines=['미토콘드리아 응급 분석실','고급생명과학 · 세포의 에너지','저장 시각: '+new Date().toLocaleString('ko-KR'),'상태: '+(state.submittedAt?'최종 판정 완료':'조사 중'),'','[약물 후보]',...ordered().map(d=>'약물 '+number(d.id)+' · '+d.name+' — '+d.mechanism),'','[검사와 결과]'];
+  const lines=['미토콘드리아 응급 분석실','고급 생명과학 · 세포의 에너지','저장 시각: '+new Date().toLocaleString('ko-KR'),'상태: '+(state.submittedAt?'최종 판정 완료':'조사 중'),'','[약물 후보]',...ordered().map(d=>'약물 '+number(d.id)+' · '+d.name+' — '+d.mechanism),'','[검사와 결과]'];
   state.tests.forEach((t,i)=>{const m=metrics.find(m=>m.id===t.metric);lines.push((i+1)+'차 · '+m.name,'선택 이유: '+t.reason,...patients.map((p,j)=>'환자 '+p.id+': '+m.values[j]),'');});
   lines.push('[나의 판정]');
   patients.forEach(p=>{const a=state.answers[p.id],d=drugs.find(d=>d.id===a.drug);lines.push('환자 '+p.id+': '+(d?'약물 '+number(d.id)+' · '+d.name:'미선택'),'근거: '+(a.reason||'미작성'),'');});
