@@ -104,7 +104,7 @@ function explain(){const phase=t<25?0:t<50?1:t<70?2:t<94?3:4,label=stages[phase]
  else if(t<40){title='비활성화될 X가 XIST RNA를 만듭니다.';body='자주 헷갈리는 점: XIST RNA는 앞으로 조용해질 X에서 만들어집니다. 긴 비암호화 RNA로, 단백질로 번역되는 중간체가 아니라 RNA 자체가 조절에 참여합니다.';}
  else if(t<68){title='RNA는 자신이 만들어진 X의 영역에 축적됩니다.';body='XIST와 결합하는 단백질들이 억제 경로를 가동합니다. 자홍색 가닥은 XIST RNA, 청록색 사각형은 억제 단백질 관련 인자, 보라색 마름모는 다른 억제 인자입니다. 가닥의 개수와 모양은 실제 분자를 그대로 재현한 것이 아닙니다.';}
  else if(t<94){title='전사 억제와 염색질 변화가 겹쳐 진행됩니다.';body='억제 단백질 관련 경로의 히스톤 탈아세틸화와 다른 경로의 억제성 표지 등 여러 기전이 기여합니다. 염색질이 먼저 완전히 뭉쳐야만 전사가 꺼지는 단순한 직렬 과정은 아닙니다.';}
- else{title='바소체는 조건적 이질 염색질의 예입니다.';body='대부분의 유전자 전사가 억제된 비활성 X가 응축된 모습입니다. DNA와 대립유전자는 사라지지 않습니다. 일부 유전자는 불활성화를 회피하며, 실제 회피 양상은 유전자·조직·종에 따라 다릅니다.';}
+ else{title='바소체는 조건적 이질염색질의 예입니다.';body='대부분의 유전자 전사가 억제된 비활성 X가 응축된 모습입니다. DNA와 대립유전자는 사라지지 않습니다. 일부 유전자는 불활성화를 회피하며, 실제 회피 양상은 유전자·조직·종에 따라 다릅니다.';}
  $('molecular-observation').innerHTML=`<strong>${title}</strong>${body}`;
 }
 function render(){if(!chosen())return;$('molecular-time').value=Math.round(t);$('molecular-play').textContent=playing?'Ⅱ 일시정지':t>=100?'▶ 처음부터 재생':'▶ 과정 재생';$('molecular-play').setAttribute('aria-pressed',String(playing));$('experiment-title').textContent='관찰 세포 · '+titles[mode];$('experiment-label').textContent=mode==='normal'?'기준 과정 확인':'시작 전부터 적용';const id=identities(),html=`<div>활성으로 남을 X<strong>X<sup>${id.active}</sup></strong></div><div>불활성화 표적 X<strong>X<sup>${id.target}</sup></strong></div>`;$('normal-identities').innerHTML=html;$('experiment-identities').innerHTML=html;paintNucleus('normal-nucleus','normal');paintNucleus('experiment-nucleus',mode);readouts('normal-readouts','normal');readouts('experiment-readouts',mode);explain();paintMechanism();}

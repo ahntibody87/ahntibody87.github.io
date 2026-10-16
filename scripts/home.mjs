@@ -60,13 +60,13 @@ export function homePage(site, version, sharedVersion) {
             <h3 lang="en">${esc(c.display.english)}</h3>
             <p class="course-name">${esc(c.display.title)}</p>
             <p class="course-description">${esc(c.display.description)}</p>
-            <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 수업 자료 보기`}</span></div>
+            <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 탐구 시작하기`}</span></div>
           </div>
         </a>`).join('')}
       </div>
     </section>
   </main>
-  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-16">Oct 16, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
+  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-15">Oct 15, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
 </body>
 </html>
 `;
