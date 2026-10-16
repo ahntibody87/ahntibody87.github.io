@@ -31,11 +31,11 @@
       "id": "advanced-life-science",
       "title": "고급 생명과학",
       "english": "ADVANCED LIFESCIENCE",
-      "description": "생명 현상을 분자와 세포 수준의 구조와 작용으로 설명하는 수업입니다. 개별 과정을 생명체 전체의 기능과 연결하고, 실험 자료와 모형을 통해 그 설명이 성립하는 조건을 살펴봅니다.",
+      "description": "생명과학의 기본 개념을 바탕으로 생명 현상의 원리와 과정을 심화하여 배우는 수업입니다. 여러 개념을 연결해 복잡한 현상을 설명하고, 실험 자료와 모형을 분석하며 설명의 근거와 한계를 살펴봅니다.",
       "home": {
         "english": "Advanced Lifescience",
         "title": "고급 생명과학",
-        "description": "분자와 세포 수준에서 이해하는 생명 현상"
+        "description": "생명 현상의 원리를 깊이 있게 다루는 심화 학습"
       },
       "status": "ready",
       "units": [
