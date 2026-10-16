@@ -39,3 +39,8 @@ prejudged conclusion about mutation effects.
 ESM models and upstream components retain their respective notices:
 https://github.com/Biohub/esm/blob/main/THIRD_PARTY_NOTICE.md
 https://github.com/Synthyra/FastPLMs
+
+Amino-acid 3D structures: NCBI PubChem computed conformers, retrieved 2026-10-16.
+Source CIDs, record URL and SHA-256: amino-structures-source.json.
+https://pubchem.ncbi.nlm.nih.gov/docs/pug-rest
+Neutral free amino acids (L forms except achiral glycine); one conformer each.

@@ -1,10 +1,12 @@
 import {AMINO_ACIDS,GROUPS,PRESETS} from './amino-acids.js';
+import {AMINO_STRUCTURES} from './amino-structures.js';
 import {cleanSequence,mutationPositions,parsePdb,compareResidues,transformPdb} from './core.js';
 
 const $=id=>document.getElementById('pl-'+id);
 const root=document.getElementById('protein-lab');
 let currentAA='G',filter='all',worker=null,busy=false,result=null,history=[],selected=[],foldViewer=null,compareViewer=null,comparison=null;
 const slots={a:null,b:null};let toastTimer;
+let aminoMode='2d',aminoViewer=null;
 const aaByCode=Object.fromEntries(AMINO_ACIDS.map(a=>[a.code,a]));
 const say=text=>{$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3500);};
 const error=(id,text)=>{$(id).textContent=text??'';$(id).hidden=!text;};
@@ -16,7 +18,7 @@ function showPanel(name,focus=false){
     const active=tab.dataset.panel===name;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;
     $('panel-'+tab.dataset.panel).hidden=!active;if(active&&focus)tab.focus();
   }
-  requestAnimationFrame(()=>{foldViewer?.resize();foldViewer?.render();compareViewer?.resize();compareViewer?.render();if(name==='learn')drawFormula();});
+  requestAnimationFrame(()=>{foldViewer?.resize();foldViewer?.render();compareViewer?.resize();compareViewer?.render();if(name==='learn'){drawFormula();if(aminoMode==='3d')renderAmino3d();}});
 }
 const tabs=[...root.querySelectorAll('[data-panel]')];
 tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>showPanel(tab.dataset.panel));tab.addEventListener('keydown',e=>{let n;if(e.key==='ArrowRight')n=(i+1)%3;if(e.key==='ArrowLeft')n=(i+2)%3;if(e.key==='Home')n=0;if(e.key==='End')n=2;if(n!==undefined){e.preventDefault();showPanel(tabs[n].dataset.panel,true);}});});
@@ -35,20 +37,51 @@ function chooseAA(code){
   $('amino-detail').style.setProperty('--aa-color',group.color);
   for(const [id,text] of Object.entries({'aa-english':aa.english.toUpperCase(),'aa-name':aa.name,'aa-code':code,'aa-three':aa.three,'aa-one':code,'aa-group':group.label,'aa-charge':aa.code==='H'?'중성 우세 · 일부 양전하':group.charge,'aa-detail':aa.detail,'aa-side':aa.side}))$(id).textContent=text;
   root.querySelectorAll('.pl-amino').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.code===code)));drawFormula();
+  const structure=AMINO_STRUCTURES[code];$('aa-molecular-formula').textContent=structure.formula;$('aa-source').href=`https://pubchem.ncbi.nlm.nih.gov/compound/${structure.cid}`;$('aa-source').textContent=`PubChem · ${aa.three}`;
+  if(aminoMode==='3d')renderAmino3d();
 }
 function drawFormula(){
-  const aa=aaByCode[currentAA];$('aa-svg').setAttribute('aria-label',`${aa.name}의 비이온형 구조식`);
-  if(!window.SmilesDrawer)return;
-  try{
-    const width=Math.max(240,Math.floor($('aa-formula').clientWidth));
-    const drawer=new SmilesDrawer.SvgDrawer({width,height:220,bondThickness:1.4,bondLength:22,fontSizeLarge:13,fontSizeSmall:9,padding:22,terminalCarbons:false});
-    SmilesDrawer.parse(aa.smiles,tree=>{drawer.draw(tree,'pl-aa-svg','light');$('aa-svg').setAttribute('role','img');$('aa-svg').setAttribute('aria-label',`${aa.name}의 비이온형 구조식`);},e=>{console.error('Structure formula:',e);say('구조식을 그리지 못했습니다. 다시 아미노산을 선택해 주세요.');});
-  }catch(e){console.error('Amino acid drawing',e);}
+  const svg=$('aa-svg'),aa=aaByCode[currentAA],{atoms,bonds}=AMINO_STRUCTURES[currentAA].layout;
+  const unit=48,pad=22,xs=atoms.map(a=>a[0]*unit),ys=atoms.map(a=>-a[1]*unit);
+  const minX=Math.min(...xs)-pad,minY=Math.min(...ys)-pad;
+  svg.replaceChildren();svg.setAttribute('viewBox',`${minX} ${minY} ${Math.max(...xs)-minX+pad} ${Math.max(...ys)-minY+pad}`);
+  svg.setAttribute('aria-label',`${aa.name}의 전체 구조식. 탄소·수소·질소·산소와 곁사슬의 모든 원자를 표시합니다.`);
+  const add=(tag,attrs,parent=svg)=>{const node=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);parent.append(node);return node;};
+  const title=add('title',{});title.textContent=`${aa.name} · 전체 원자 구조식`;
+  const line=(x1,y1,x2,y2)=>add('line',{x1,y1,x2,y2,stroke:'#647780','stroke-width':1.7,'stroke-linecap':'round'});
+  for(const [a,b,order,stereo] of bonds){
+    const ax=xs[a],ay=ys[a],bx=xs[b],by=ys[b],dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy),nx=-dy/len,ny=dx/len;
+    if(stereo===1){add('polygon',{points:`${ax},${ay} ${bx+nx*4},${by+ny*4} ${bx-nx*4},${by-ny*4}`,fill:'#647780'});}
+    else if(stereo===6){for(let n=1;n<=7;n++){const t=n/8,x=ax+dx*t,y=ay+dy*t;line(x-nx*4*t,y-ny*4*t,x+nx*4*t,y+ny*4*t);}}
+    else{for(let n=0;n<order;n++){const d=(n-(order-1)/2)*4.5;line(ax+nx*d,ay+ny*d,bx+nx*d,by+ny*d);}}
+  }
+  const colors={C:'#263d48',H:'#71818a',N:'#287bb2',O:'#c4493e',S:'#927500'};
+  atoms.forEach((atom,i)=>{add('circle',{cx:xs[i],cy:ys[i],r:8,fill:'#fff'});const text=add('text',{x:xs[i],y:ys[i],'text-anchor':'middle','dominant-baseline':'central',fill:colors[atom[2]],'font-size':14,'font-family':'Arial, sans-serif','font-weight':atom[2]==='H'?400:600});text.textContent=atom[2];});
 }
+function renderAmino3d(){
+  if(!window.$3Dmol)return;
+  try{
+    aminoViewer??=$3Dmol.createViewer($('aa-3d-viewer'),{backgroundColor:'#f6f9fa',antialias:true});
+    aminoViewer.removeAllModels();aminoViewer.addModel(AMINO_STRUCTURES[currentAA].sdf,'sdf');
+    aminoViewer.setStyle({},{stick:{radius:.13,colorscheme:'Jmol'},sphere:{scale:.28,colorscheme:'Jmol'}});
+    if(!$('aa-hydrogens').checked)aminoViewer.setStyle({elem:'H'},{});
+    aminoViewer.resize();aminoViewer.zoomTo();aminoViewer.render();error('aa-error',null);
+    $('aa-3d-viewer').setAttribute('aria-label',`${aaByCode[currentAA].name}의 전체 3D 구조. 드래그하여 회전하고 휠로 확대할 수 있습니다.`);
+  }catch(e){error('aa-error','입체 구조를 표시하지 못했습니다. 페이지를 새로 열어 주세요.');}
+}
+for(const mode of ['2d','3d'])$('aa-mode-'+mode).addEventListener('click',()=>{
+  aminoMode=mode;$('aa-formula').hidden=mode!=='2d';$('aa-3d-panel').hidden=mode!=='3d';
+  for(const m of ['2d','3d'])$('aa-mode-'+m).setAttribute('aria-pressed',String(m===mode));
+  if(mode==='3d')renderAmino3d();else drawFormula();
+});
+$('aa-hydrogens').addEventListener('change',renderAmino3d);
+$('aa-fit').addEventListener('click',()=>{aminoViewer?.zoomTo();aminoViewer?.render();});
 $('filters').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;root.querySelectorAll('[data-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if(filter!=='all'&&aaByCode[currentAA].group!==filter)chooseAA(AMINO_ACIDS.find(a=>a.group===filter).code);aminoGrid();});
 
-for(const p of PRESETS){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('preset').append(o);}
-const preset=()=>PRESETS.find(p=>p.id===$('preset').value);
+const inputChoices=[{id:'custom',name:'직접 입력',sequence:'',note:'원하는 아미노산 서열을 아래에 직접 입력하거나 붙여넣으세요.'},...PRESETS];
+for(const p of inputChoices){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('preset').append(o);}
+const preset=()=>inputChoices.find(p=>p.id===$('preset').value);
+function updateInputChoice(){const p=preset();$('preset-note').textContent=p.note;$('reset').textContent=p.id==='custom'?'입력 지우기':'예제 초기화';}
 function setSequence(seq,remember=true){if(remember)history.push($('sequence').value);$('sequence').value=seq;selected=[];updateSequence();}
 function updateSequence(){
   const raw=$('sequence').value.replace(/^>.*$/gm,'').replace(/\s/g,'').toUpperCase();
@@ -64,7 +97,7 @@ function updateSequence(){
     $('save-a').disabled=$('save-b').disabled=!!stale||busy;
   }
 }
-$('preset').addEventListener('change',()=>{setSequence(preset().sequence);$('preset-note').textContent=preset().note;});
+$('preset').addEventListener('change',()=>{setSequence(preset().sequence);updateInputChoice();error('input-error',null);if(preset().id==='custom')$('sequence').focus();});
 $('sequence').addEventListener('input',()=>{selected=[];updateSequence();});
 $('sequence').addEventListener('beforeinput',()=>{if(history.at(-1)!==$('sequence').value)history.push($('sequence').value);if(history.length>50)history.shift();});
 $('undo').addEventListener('click',()=>{if(history.length){$('sequence').value=history.pop();selected=[];updateSequence();}});
@@ -95,7 +128,7 @@ function setBusy(state){
   $('save-a').disabled=$('save-b').disabled=state||!result||currentSeq()!==result.sequence;
 }
 function finishPrediction(data){
-  const p=preset(),name=data.sequence===p.sequence?p.name:`${p.name.split(' · ')[0]} · 편집 서열`;
+  const p=preset(),name=p.id==='custom'?'직접 입력한 서열':data.sequence===p.sequence?p.name:`${p.name.split(' · ')[0]} · 편집 서열`;
   result={...data,name};$('model-title').textContent=name;$('panel-fold').classList.remove('pl-stale');
   $('count-metric').textContent=data.sequence.length+' aa';$('confidence-metric').textContent=Number.isFinite(data.meanPlddt)?data.meanPlddt.toFixed(1):'—';$('ptm-metric').textContent=Number.isFinite(data.ptm)?data.ptm.toFixed(3):'—';
   $('result-note').textContent=`${data.model} · ${(data.elapsed/1000).toFixed(1)}초 · pLDDT와 pTM은 예측 신뢰도이며 안정성 측정값이 아닙니다.`;
@@ -161,6 +194,6 @@ $('compare').addEventListener('click',()=>{
 });
 $('export-csv').addEventListener('click',()=>{if(!comparison)return;const c=comparison;const rows=[['position','reference_residue_id','comparison_residue_id','reference_aa','comparison_aa','distance_angstrom','substitution'],...c.distances.map((d,i)=>[i+1,c.a[i].resid,c.b[i].resid,c.a[i].one,c.b[i].one,d.toFixed(6),c.changes.includes(i+1)?1:0])];const quote=x=>{let value=String(x);if(/^[=+@\-\t\r]/.test(value))value="'"+value;return '"'+value.replace(/"/g,'""')+'"';};download('protein-comparison.csv','\uFEFF'+rows.map(r=>r.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');});
 
-new ResizeObserver(()=>{foldViewer?.resize();foldViewer?.render();compareViewer?.resize();compareViewer?.render();}).observe(root);
-aminoGrid();chooseAA('G');$('sequence').value=PRESETS[0].sequence;$('preset-note').textContent=PRESETS[0].note;updateSequence();
+new ResizeObserver(()=>{foldViewer?.resize();foldViewer?.render();compareViewer?.resize();compareViewer?.render();aminoViewer?.resize();aminoViewer?.render();}).observe(root);
+aminoGrid();chooseAA('G');$('sequence').value=preset().sequence;updateInputChoice();updateSequence();
 window.addEventListener('load',drawFormula,{once:true});
