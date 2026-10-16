@@ -118,10 +118,11 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 
 | type | 화면 표시 |
 | --- | --- |
-| `simulation` | 인터랙티브 시뮬레이션 |
-| `inquiry` | 탐구 및 실험 활동 |
-| `resource` | 학습 자료 |
-| `external` | 외부 활동 |
+| `simulation` | INTERACTIVE SIMULATION |
+| `inquiry` | INQUIRY ACTIVITY |
+| `design` | MOLECULAR DESIGN STUDIO |
+| `resource` | LEARNING RESOURCE |
+| `external` | EXTERNAL ACTIVITY |
 
 ## 단원·과목 확장
 

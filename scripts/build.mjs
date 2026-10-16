@@ -17,7 +17,7 @@ for (const file of ['assets/home.css', 'assets/home.js', 'assets/home-protein.js
 const homeVersion = homeHash.digest('hex').slice(0, 12);
 const site = JSON.parse(fs.readFileSync(path.join(root, 'data/site.json'), 'utf8'));
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const types = { simulation: '인터랙티브 시뮬레이션', inquiry: '탐구 및 실험 활동', resource: '학습 자료', external: '외부 활동' };
+const types = { simulation: 'INTERACTIVE SIMULATION', inquiry: 'INQUIRY ACTIVITY', design: 'MOLECULAR DESIGN STUDIO', resource: 'LEARNING RESOURCE', external: 'EXTERNAL ACTIVITY' };
 const slug = value => { if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) throw new Error(`잘못된 id: ${value}`); };
 const unique = items => { const ids = new Set(); for (const item of items) { slug(item.id); if (ids.has(item.id)) throw new Error(`중복 id: ${item.id}`); ids.add(item.id); } };
 const courseUrl = course => `/${course.id}/`;
