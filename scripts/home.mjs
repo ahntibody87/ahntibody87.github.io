@@ -17,7 +17,7 @@ export function homePage(site, version, sharedVersion) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#030c14">
-  <meta name="description" content="통합과학, 생물의 유전, 고급 생명과학 수업 자료와 시뮬레이션을 모았습니다.">
+  <meta name="description" content="고등학교 생명과학 학습을 위한 시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼. Ahntibody’s Lifescience Lab에서 생명과학을 탐구하세요.">
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
   ${faviconLinks}
@@ -39,12 +39,12 @@ export function homePage(site, version, sharedVersion) {
         </div>
       </div>
       <div class="hero-content">
-        <p class="eyebrow" lang="en">High School Science<span aria-hidden="true"></span></p>
+        <p class="eyebrow" lang="en">Interactive Lifescience Education Platform<span aria-hidden="true"></span></p>
         <h1 id="lab-title" lang="en">ATLL</h1>
         <p class="lab-name" lang="en">AHNTIBODY’S LIFESCIENCE LAB</p>
         <div class="accent-line" aria-hidden="true"></div>
-        <h2 class="hero-copy" lang="en">Lifescience<br><em>Lessons &amp; Activities</em></h2>
-        <p class="intro">통합과학, 생물의 유전, 고급 생명과학의<br>수업 자료와 시뮬레이션을 모았습니다.</p>
+        <h2 class="hero-copy" lang="en">Explore <em>Biology.</em><br>Visualize <em>Life.</em><br>Learn by <em>Interaction.</em></h2>
+        <p class="intro">고등학교 생명과학 학습을 위한<br>시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼</p>
         <div class="hero-actions">
           <a class="button button-primary" href="${lab}" lang="en">Enter the Lab ${arrow}</a>
           <a class="button button-secondary" href="#courses" lang="en">${book} View Courses</a>
