@@ -5,7 +5,6 @@ export function homePage(site, version, sharedVersion) {
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg>';
   const book = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v16m0-16C8 2 5 3 2 4v15c3-1 6-2 10 1 4-3 7-2 10-1V4c-3-1-6-2-10 1Z"/></svg>';
-  const lab = '/advanced-life-science/';
   const courses = site.courses.map(c => {
     const display = c.home || { english: c.english, title: c.title, description: c.description };
     return { ...c, display };
@@ -25,13 +24,14 @@ export function homePage(site, version, sharedVersion) {
   <link rel="stylesheet" href="/assets/home.css?v=${version}">
   <link rel="stylesheet" href="/assets/theme.css?v=${sharedVersion}">
   <script src="/assets/navigation.js?v=${sharedVersion}" defer></script>
+  <script src="/assets/home.js?v=${version}" defer></script>
   <script src="/assets/home-protein.js?v=${version}" defer></script>
 </head>
 <body id="top">
   <a class="skip" href="#main">본문 바로가기</a>
   ${siteHeader(site)}
   <main id="main" tabindex="-1">
-    <section class="hero" id="about" aria-labelledby="lab-title">
+    <section class="hero" aria-labelledby="lab-title">
       <div class="hero-visual" aria-hidden="true">
         <div class="protein-stage">
           <img class="hero-image" src="/assets/home/kinase-poster.webp?v=${version}" width="1000" height="800" alt="" fetchpriority="high">
@@ -46,12 +46,12 @@ export function homePage(site, version, sharedVersion) {
         <h2 class="hero-copy" lang="en">Explore <em>Biology.</em><br>Visualize <em>Life.</em><br>Learn by <em>Interaction.</em></h2>
         <p class="intro">고등학교 생명과학 학습을 위한<br>시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="${lab}" lang="en">Enter the Lab ${arrow}</a>
-          <a class="button button-secondary" href="#courses" lang="en">${book} View Courses</a>
+          <button class="button button-primary" id="enter-lab" type="button" aria-controls="courses" aria-expanded="false" lang="en">Enter the Lab ${arrow}</button>
+          <a class="button button-secondary" href="#about" lang="en">${book} About the Lab</a>
         </div>
       </div>
-    </section>
-    <section class="courses" id="courses" aria-labelledby="courses-title" tabindex="-1">
+      <div class="hero-courses" id="courses" hidden inert>
+      <button class="button button-secondary course-back" type="button">${arrow} 뒤로 가기</button>
       <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR COURSE</span><span class="sr-only"> · 과목별 수업</span></h2></div>
       <div class="course-grid">
         ${courses.map(c => `<a class="course-card ${esc(c.id)}" href="/${esc(c.id)}/">
@@ -64,6 +64,18 @@ export function homePage(site, version, sharedVersion) {
           </div>
         </a>`).join('')}
       </div>
+      </div>
+    </section>
+    <section class="courses about-lab" id="about" aria-labelledby="about-title" tabindex="-1">
+      <div class="section-heading"><p lang="en">ABOUT THE LAB</p></div>
+      <h2 id="about-title" lang="en">Created by AHNTIBODY</h2>
+      <p class="about-intro">생명과학 교사가 직접 제작하는 인터랙티브 학습 공간입니다.</p>
+      <p class="about-description">설명에서 끝나는 수업을 넘어, 학생들이 생명현상을 직접 조작하고 탐구하며 이해할 수 있는 콘텐츠를 만듭니다.</p>
+      <ul class="about-tags" aria-label="교육 키워드" lang="en">
+        <li>Biology Education</li>
+        <li>Interactive Learning</li>
+        <li>Scientific Inquiry</li>
+      </ul>
     </section>
   </main>
   <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-15">Oct 15, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>

@@ -9,20 +9,21 @@
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
   <link rel="icon" href="/assets/favicon-light.ico?v=e6f55f7beb56" type="image/x-icon" sizes="16x16 32x32 48x48"><link rel="icon" href="/assets/favicon-light-32.png?v=e6f55f7beb56" type="image/png" sizes="32x32"><link rel="icon" href="/assets/favicon-light.svg?v=e6f55f7beb56" type="image/svg+xml" sizes="any"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=e6f55f7beb56" sizes="180x180">
-  <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=13127d854062" fetchpriority="high">
-  <link rel="stylesheet" href="/assets/home.css?v=13127d854062">
+  <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=3da3513d96d4" fetchpriority="high">
+  <link rel="stylesheet" href="/assets/home.css?v=3da3513d96d4">
   <link rel="stylesheet" href="/assets/theme.css?v=65a65eff51ac">
   <script src="/assets/navigation.js?v=65a65eff51ac" defer></script>
-  <script src="/assets/home-protein.js?v=13127d854062" defer></script>
+  <script src="/assets/home.js?v=3da3513d96d4" defer></script>
+  <script src="/assets/home-protein.js?v=3da3513d96d4" defer></script>
 </head>
 <body id="top">
   <a class="skip" href="#main">본문 바로가기</a>
   <header class="site-header"><div class="header-inner"><a class="wordmark" href="/" aria-label="ATLL 홈" lang="en"><svg class="brand-antibody" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="40" height="40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.5 6.5 12 11.5 16 16 20 11.5 21.5 6.5M16 16v9.5" stroke-width="2.5"/><path d="m6.5 8.5 1.6 4.6 2.4 2.4m15-7-1.6 4.6-2.4 2.4" stroke-width="1.8"/></svg><span>ATLL</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation" hidden>메뉴 열기</button><nav id="navigation" aria-label="현재 위치"><a href="/" lang="en" class="active" aria-current="page">Home</a><a href="/integrated-science/" lang="en">Integrated Science</a><a href="/genetics/" lang="en">Genetics</a><a href="/advanced-life-science/" lang="en">Advanced Lifescience</a></nav></div></header>
   <main id="main" tabindex="-1">
-    <section class="hero" id="about" aria-labelledby="lab-title">
+    <section class="hero" aria-labelledby="lab-title">
       <div class="hero-visual" aria-hidden="true">
         <div class="protein-stage">
-          <img class="hero-image" src="/assets/home/kinase-poster.webp?v=13127d854062" width="1000" height="800" alt="" fetchpriority="high">
+          <img class="hero-image" src="/assets/home/kinase-poster.webp?v=3da3513d96d4" width="1000" height="800" alt="" fetchpriority="high">
           <div id="protein-view" data-model-src="/assets/home/1atp-kinase.pdb" data-renderer-src="/assets/home/vendor/3Dmol-2.5.5.min.js"></div>
         </div>
       </div>
@@ -34,12 +35,12 @@
         <h2 class="hero-copy" lang="en">Explore <em>Biology.</em><br>Visualize <em>Life.</em><br>Learn by <em>Interaction.</em></h2>
         <p class="intro">고등학교 생명과학 학습을 위한<br>시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/advanced-life-science/" lang="en">Enter the Lab <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
-          <a class="button button-secondary" href="#courses" lang="en"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v16m0-16C8 2 5 3 2 4v15c3-1 6-2 10 1 4-3 7-2 10-1V4c-3-1-6-2-10 1Z"/></svg> View Courses</a>
+          <button class="button button-primary" id="enter-lab" type="button" aria-controls="courses" aria-expanded="false" lang="en">Enter the Lab <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button>
+          <a class="button button-secondary" href="#about" lang="en"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v16m0-16C8 2 5 3 2 4v15c3-1 6-2 10 1 4-3 7-2 10-1V4c-3-1-6-2-10 1Z"/></svg> About the Lab</a>
         </div>
       </div>
-    </section>
-    <section class="courses" id="courses" aria-labelledby="courses-title" tabindex="-1">
+      <div class="hero-courses" id="courses" hidden inert>
+      <button class="button button-secondary course-back" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg> 뒤로 가기</button>
       <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR COURSE</span><span class="sr-only"> · 과목별 수업</span></h2></div>
       <div class="course-grid">
         <a class="course-card integrated-science" href="/integrated-science/">
@@ -68,6 +69,18 @@
           </div>
         </a>
       </div>
+      </div>
+    </section>
+    <section class="courses about-lab" id="about" aria-labelledby="about-title" tabindex="-1">
+      <div class="section-heading"><p lang="en">ABOUT THE LAB</p></div>
+      <h2 id="about-title" lang="en">Created by AHNTIBODY</h2>
+      <p class="about-intro">생명과학 교사가 직접 제작하는 인터랙티브 학습 공간입니다.</p>
+      <p class="about-description">설명에서 끝나는 수업을 넘어, 학생들이 생명현상을 직접 조작하고 탐구하며 이해할 수 있는 콘텐츠를 만듭니다.</p>
+      <ul class="about-tags" aria-label="교육 키워드" lang="en">
+        <li>Biology Education</li>
+        <li>Interactive Learning</li>
+        <li>Scientific Inquiry</li>
+      </ul>
     </section>
   </main>
   <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-15">Oct 15, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a></footer>
