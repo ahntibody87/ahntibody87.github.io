@@ -20,8 +20,9 @@ body {font-family:var(--font-sans);background:var(--bg);color:var(--text);paddin
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {outline:3px solid var(--cyan);outline-offset:4px}
 .site-header {position:fixed;inset:0 0 auto;z-index:100;border-bottom:1px solid var(--line);background:var(--header-bg);line-height:1.5}
 .header-inner {max-width:var(--content-width);min-height:88px;margin:auto;padding:0 var(--gutter);display:flex;align-items:center;gap:var(--space-4)}
-.site-header .wordmark {display:flex;align-items:baseline;gap:8px;font-size:40px;font-weight:800;letter-spacing:-2px;color:var(--text);background:none;text-decoration:none;flex-shrink:0}
-.brand-dot {width:5px;height:5px;border-radius:50%;background:var(--cyan)}
+.site-header .wordmark {display:flex;align-items:center;gap:10px;font-size:40px;font-weight:800;letter-spacing:-2px;color:var(--text);background:none;text-decoration:none;flex-shrink:0}
+.site-header .brand-antibody {display:block;width:40px;height:40px;flex:none;color:#1f3a5f}
+[data-theme="dark"] .site-header .brand-antibody {color:#fff}
 .site-header #navigation {display:flex;align-self:stretch;align-items:center;gap:var(--space-3);margin-left:auto}
 .site-header #navigation a {position:relative;display:flex;align-items:center;margin:0;padding:10px 12px;border-radius:6px;font-size:14px;white-space:nowrap;color:var(--muted);background:transparent;text-decoration:none;line-height:1.5}
 .site-header #navigation a:hover,.site-header #navigation a.active {color:var(--text);background:var(--tint)}
@@ -56,6 +57,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {o
 @media(max-width:960px) {
   .header-inner {min-height:76px;flex-wrap:wrap;gap:0 var(--space-2);padding-block:12px}
   .site-header .wordmark {font-size:32px}
+  .site-header .brand-antibody {width:32px;height:32px}
   .site-header #navigation {width:100%;flex-wrap:wrap;gap:8px;margin:10px 0 0;align-self:auto}
   .js .site-header .menu-toggle {display:block}
   .js .site-header #navigation {display:none}
