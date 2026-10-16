@@ -24,6 +24,25 @@ export function mutationPositions(raw,length){
   return [...result].sort((a,b)=>a-b);
 }
 
+export function substituteSequence(sequence,positions,code){
+  if(!/^[ACDEFGHIKLMNPQRSTVWY]$/.test(code))throw Error('치환할 아미노산을 선택하세요.');
+  const targets=new Set(positions);
+  return [...sequence].map((letter,i)=>targets.has(i+1)?code:letter).join('');
+}
+
+// PDB identity is independent of sequence order; insertion codes are significant.
+export const residueKey=(chain,resi,icode='')=>JSON.stringify([chain||' ',Number(resi),icode.trim()]);
+export const atomResidueKey=atom=>residueKey(atom.chain,atom.resi,atom.icode??'');
+
+export function residueRows(parsed,record={}){
+  const first=parsed.chains.keys().next().value;
+  return [...parsed.chains].flatMap(([chain,residues])=>residues.map((r,i)=>({
+    ...r,position:i+1,key:residueKey(chain,r.resi,r.icode),
+    // Only explicit prediction confidence is trusted, never an uploaded B-factor.
+    plddt:chain===first&&Number.isFinite(record.plddt?.[i])?record.plddt[i]:null,
+  })));
+}
+
 export function parsePdb(text){
   if(text.length>8_000_000)throw Error('8 MB 이하의 PDB 파일을 사용하세요.');
   const chains=new Map(),seen=new Set();let started=false;
@@ -40,7 +59,8 @@ export function parsePdb(text){
     if(fields.some(x=>!x.trim()))throw Error('PDB에 좌표가 빠진 원자가 있습니다.');
     const point=fields.map(Number);
     if(point.some(x=>!Number.isFinite(x)||Math.abs(x)>100000))throw Error('PDB의 좌표가 올바르지 않습니다.');
-    const entry={one,res,resid,chain,point,b:Number(line.slice(60,66))};
+    const bfield=line.slice(60,66).trim(),b=bfield?Number(bfield):null;
+    const entry={one,res,resid,resi:Number(line.slice(22,26)),icode:(line[26]??'').trim(),chain,point,b:Number.isFinite(b)?b:null};
     if(!chains.has(chain))chains.set(chain,[]);chains.get(chain).push(entry);
   }
   if(!chains.size)throw Error('아미노산의 Cα 좌표가 있는 PDB 파일을 선택하세요.');

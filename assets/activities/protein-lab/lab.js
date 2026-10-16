@@ -1,17 +1,20 @@
 import {AMINO_ACIDS,GROUPS,PRESETS} from './amino-acids.js';
 import {AMINO_STRUCTURES} from './amino-structures.js';
-import {cleanSequence,mutationPositions,parsePdb,compareResidues,transformPdb} from './core.js';
+import {cleanSequence,mutationPositions,substituteSequence,parsePdb,compareResidues,transformPdb,residueRows} from './core.js?v=5';
+import {createResidueInspector} from './residue-inspector.js?v=5';
 
 const $=id=>document.getElementById('pl-'+id);
 const root=document.getElementById('protein-lab');
 let currentAA='G',filter='all',worker=null,busy=false,result=null,history=[],selected=[],foldViewer=null,compareViewer=null,comparison=null;
 const slots={a:null,b:null};let toastTimer;
 let aminoMode='2d',aminoViewer=null;
+let foldInspector=null,compareInspector=null,foldRows=[],mutationBaseline=null;
 const aaByCode=Object.fromEntries(AMINO_ACIDS.map(a=>[a.code,a]));
 const say=text=>{$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3500);};
 const error=(id,text)=>{$(id).textContent=text??'';$(id).hidden=!text;};
 const download=(name,text,type='text/plain')=>{const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);};
-const currentSeq=()=>{try{return cleanSequence($('sequence').value);}catch{return null;}};
+const inputLetters=()=>$('sequence').value.trim().split(/\r?\n/).filter(line=>!line.trim().startsWith('>')).join('').replace(/\s/g,'').toUpperCase();
+const matchesResult=()=>!!result&&$('sequence').value.split(/\r?\n/).filter(line=>line.trim().startsWith('>')).length<=1&&inputLetters()===result.sequence;
 
 function showPanel(name,focus=false){
   for(const tab of root.querySelectorAll('[data-panel]')){
@@ -82,27 +85,43 @@ const inputChoices=[{id:'custom',name:'직접 입력',sequence:'',note:'원하�
 for(const p of inputChoices){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('preset').append(o);}
 const preset=()=>inputChoices.find(p=>p.id===$('preset').value);
 function updateInputChoice(){const p=preset();$('preset-note').textContent=p.note;$('reset').textContent=p.id==='custom'?'입력 지우기':'예제 초기화';}
-function setSequence(seq,remember=true){if(remember)history.push($('sequence').value);$('sequence').value=seq;selected=[];updateSequence();}
+function rememberSequence(){history.push({value:$('sequence').value,baseline:mutationBaseline??preset().sequence});if(history.length>50)history.shift();}
+function setSequence(seq,remember=true){if(remember)rememberSequence();$('sequence').value=seq;selected=[];updateSequence();}
+function inputInspection(active){
+  const linked=matchesResult()&&active?.row.chain===foldRows[0]?.chain;
+  $('sequence-strip').querySelectorAll('.pl-residue').forEach((b,i)=>b.classList.toggle('inspected',!!linked&&i+1===active.row.position));
+}
+function syncMutationSelection(){
+  $('sequence-strip').querySelectorAll('.pl-residue').forEach((b,i)=>{b.classList.toggle('selected',selected.includes(i+1));b.setAttribute('aria-pressed',String(selected.includes(i+1)));});
+  $('sequence-selection').textContent=selected.length?`${selected.length}개 치환 위치 선택 · ${selected.join(', ')}`:'잔기를 눌러 치환 위치를 선택하세요.';
+}
 function updateSequence(){
-  const raw=$('sequence').value.replace(/^>.*$/gm,'').replace(/\s/g,'').toUpperCase();
+  const raw=inputLetters();
   $('length').textContent=raw.length+' aa';$('undo').disabled=history.length===0;
-  $('sequence-strip').replaceChildren();const original=preset().sequence;
+  $('sequence-strip').replaceChildren();const original=mutationBaseline??preset().sequence;
   if(/^[ACDEFGHIKLMNPQRSTVWY]*$/.test(raw)&&raw.length<=256){
     [...raw].forEach((letter,i)=>{const b=document.createElement('button');b.className='pl-residue';if(selected.includes(i+1))b.classList.add('selected');if(original.length===raw.length&&original[i]!==letter)b.classList.add('changed');b.textContent=letter;b.title=`${i+1} · ${aaByCode[letter].name}`;b.setAttribute('aria-label',b.title);b.setAttribute('aria-pressed',String(selected.includes(i+1)));if(i%10===0){const n=document.createElement('span');n.className='pl-pos';n.textContent=i+1;b.append(n);}
-      b.addEventListener('click',()=>{const at=selected.indexOf(i+1);if(at>=0)selected.splice(at,1);else selected.push(i+1);selected.sort((a,b)=>a-b);$('mutation').value=selected.join(', ');updateSequence();if(result&&currentSeq()===result.sequence&&foldViewer){foldViewer.removeAllLabels();foldViewer.addLabel(`${i+1} ${letter}`,{position:foldViewer.getModel().selectedAtoms({atom:'CA'})[i],backgroundColor:'#203f49',fontColor:'white',fontSize:12});foldViewer.render();}});$('sequence-strip').append(b);});
+      const mapped=()=>matchesResult()?foldRows.find(r=>r.chain===foldRows[0]?.chain&&r.position===i+1):null;
+      b.addEventListener('pointerenter',e=>{const r=mapped();if(r&&e.pointerType!=='touch')foldInspector?.hoverRow(r.key);});
+      b.addEventListener('pointerleave',()=>foldInspector?.hoverRow(null));b.addEventListener('focus',()=>{const r=mapped();if(r)foldInspector?.hoverRow(r.key);});b.addEventListener('blur',()=>foldInspector?.hoverRow(null));
+      b.addEventListener('click',()=>{if(busy)return;const at=selected.indexOf(i+1);if(at>=0)selected.splice(at,1);else selected.push(i+1);selected.sort((a,b)=>a-b);$('mutation').value=selected.join(', ');syncMutationSelection();const r=mapped();if(r)foldInspector?.selectRow(r.key);});$('sequence-strip').append(b);});
   }
   $('sequence-selection').textContent=selected.length?`${selected.length}개 위치 선택 · ${selected.join(', ')}`:'잔기를 눌러 위치를 선택하세요.';
-  const stale=result&&currentSeq()!==result.sequence;$('panel-fold').classList.toggle('pl-stale',!!stale);
+  const stale=result&&!matchesResult();$('panel-fold').classList.toggle('pl-stale',!!stale);
+  foldInspector?.reset();
   if(result){$('model-title').textContent=stale?'서열이 바뀌었습니다 · 다시 예측 필요':result.name;
     $('save-a').disabled=$('save-b').disabled=!!stale||busy;
   }
 }
-$('preset').addEventListener('change',()=>{setSequence(preset().sequence);updateInputChoice();error('input-error',null);if(preset().id==='custom')$('sequence').focus();});
-$('sequence').addEventListener('input',()=>{selected=[];updateSequence();});
-$('sequence').addEventListener('beforeinput',()=>{if(history.at(-1)!==$('sequence').value)history.push($('sequence').value);if(history.length>50)history.shift();});
-$('undo').addEventListener('click',()=>{if(history.length){$('sequence').value=history.pop();selected=[];updateSequence();}});
-$('reset').addEventListener('click',()=>setSequence(preset().sequence));
-$('apply-pro').addEventListener('click',()=>{try{const seq=cleanSequence($('sequence').value),pos=mutationPositions($('mutation').value,seq.length);setSequence([...seq].map((c,i)=>pos.includes(i+1)?'P':c).join(''));selected=pos;updateSequence();error('input-error',null);say(`${pos.length}개 위치를 프롤린(P)으로 치환했습니다.`);}catch(e){error('input-error',e.message);}});
+$('preset').addEventListener('change',()=>{rememberSequence();mutationBaseline=null;setSequence(preset().sequence,false);updateInputChoice();error('input-error',null);if(preset().id==='custom')$('sequence').focus();});
+$('sequence').addEventListener('input',()=>{selected=[];mutationBaseline=null;updateSequence();});
+$('sequence').addEventListener('beforeinput',()=>{if(history.at(-1)?.value!==$('sequence').value)rememberSequence();});
+$('undo').addEventListener('click',()=>{if(history.length){const previous=history.pop();$('sequence').value=previous.value;mutationBaseline=previous.baseline;selected=[];$('mutation').value='';updateSequence();}});
+$('reset').addEventListener('click',()=>{rememberSequence();mutationBaseline=null;$('mutation').value='';setSequence(preset().sequence,false);});
+$('clear-mutation').addEventListener('click',()=>{selected=[];$('mutation').value='';syncMutationSelection();foldInspector?.reset();});
+for(const aa of AMINO_ACIDS){const option=document.createElement('option');option.value=aa.code;option.textContent=`${aa.name} · ${aa.three} / ${aa.code}`;$('mutation-amino').append(option);}
+$('mutation-amino').value='P';
+$('apply-mutation').addEventListener('click',()=>{try{const seq=cleanSequence($('sequence').value),pos=mutationPositions($('mutation').value,seq.length),code=$('mutation-amino').value;mutationBaseline??=seq;setSequence(substituteSequence(seq,pos,code));selected=pos;syncMutationSelection();error('input-error',null);say(`${pos.length}개 위치를 ${aaByCode[code].name}(${aaByCode[code].three} / ${code})으로 치환했습니다.`);}catch(e){error('input-error',e.message);}});
 
 function getViewer(which){
   if(!window.$3Dmol)throw Error('3D 뷰어를 준비하지 못했습니다. 페이지를 새로 열어 주세요.');
@@ -112,20 +131,24 @@ function getViewer(which){
 function plddtColor(atom){const b=atom.b;return b>=90?'#0053d6':b>=70?'#65cbf3':b>=50?'#ffdb13':'#ff7d45';}
 function renderFold(){
   if(!result)return;try{
-    foldViewer??=getViewer('fold');foldViewer.removeAllModels();foldViewer.removeAllLabels();foldViewer.addModel(result.pdb,'pdb');styleFold();foldViewer.zoomTo();foldViewer.render();$('stage-empty').hidden=true;
+    foldInspector?.dispose();foldInspector=null;foldRows=residueRows(parsePdb(result.pdb),result);
+    foldViewer??=getViewer('fold');foldViewer.removeAllModels();foldViewer.removeAllLabels();foldViewer.addModel(result.pdb,'pdb');styleFold();
+    foldInspector=createResidueInspector({viewer:foldViewer,container:$('fold-inspector'),groups:[{model:0,label:'구조 결과',rows:foldRows}],restore:()=>styleFold(false),onActive:inputInspection});
+    foldViewer.zoomTo();foldViewer.render();$('stage-empty').hidden=true;
   }catch(e){error('input-error',e.message);}
 }
-function styleFold(){
+function styleFold(inspect=true){
   if(!foldViewer||!result)return;
   let color=$('color').value;const cartoon=color==='spectrum'?{color:'spectrum'}:color==='secondary'?{colorscheme:'ssPyMol'}:result.plddt?{colorfunc:plddtColor}:{color:'spectrum'};
-  foldViewer.setStyle({},{cartoon});if($('sidechains').checked)foldViewer.addStyle({},{stick:{radius:.12,colorscheme:'Jmol'}});foldViewer.render();$('confidence-legend').hidden=color!=='confidence'||!result.plddt;
+  foldViewer.setStyle({},{cartoon});if($('sidechains').checked)foldViewer.addStyle({},{stick:{radius:.12,colorscheme:'Jmol'}});$('confidence-legend').hidden=color!=='confidence'||!result.plddt;
+  if(inspect&&foldInspector)foldInspector.paint();else foldViewer.render();
 }
 $('color').addEventListener('change',styleFold);$('sidechains').addEventListener('change',styleFold);
 $('fit-view').addEventListener('click',()=>{foldViewer?.zoomTo();foldViewer?.render();});
 
 function setBusy(state){
-  busy=state;$('fold').disabled=state;$('cancel').hidden=!state;$('sequence').disabled=state;$('preset').disabled=state;$('apply-pro').disabled=state;$('reset').disabled=state;$('undo').disabled=state||!history.length;$('load-pdb').disabled=state;
-  $('save-a').disabled=$('save-b').disabled=state||!result||currentSeq()!==result.sequence;
+  busy=state;$('fold').disabled=state;$('cancel').hidden=!state;$('sequence').disabled=state;$('preset').disabled=state;$('apply-mutation').disabled=state;$('mutation-amino').disabled=state;$('reset').disabled=state;$('undo').disabled=state||!history.length;$('load-pdb').disabled=state;
+  $('save-a').disabled=$('save-b').disabled=state||!matchesResult();
 }
 function finishPrediction(data){
   const p=preset(),name=p.id==='custom'?'직접 입력한 서열':data.sequence===p.sequence?p.name:`${p.name.split(' · ')[0]} · 편집 서열`;
@@ -162,35 +185,37 @@ function loadSlot(key,record){
   for(const [chain,residues] of parsed.chains){const o=document.createElement('option');o.value=chain;o.textContent=`${chain.trim()||'(이름 없음)'} · ${residues.length} aa`;select.append(o);}
   select.disabled=false;$(key+'-name').textContent=record.name;invalidateComparison();$('compare').disabled=!slots.a||!slots.b;
 }
-function invalidateComparison(){comparison=null;$('export-csv').disabled=true;$('compare-status').textContent=slots.a&&slots.b?'두 구조가 준비되었습니다. 비교를 시작하세요.':'접힘 예측 결과를 담거나 PDB 파일 두 개를 선택하세요.';$('distance-panel').hidden=true;$('rmsd').textContent=$('tm-score').textContent=$('aligned-count').textContent=$('change-count').textContent='—';compareViewer?.removeAllModels();compareViewer?.removeAllLabels();compareViewer?.render();$('compare-empty').hidden=false;}
+function invalidateComparison(){compareInspector?.dispose();compareInspector=null;comparison=null;$('export-csv').disabled=true;$('compare-status').textContent=slots.a&&slots.b?'두 구조가 준비되었습니다. 비교를 시작하세요.':'접힘 예측 결과를 담거나 PDB 파일 두 개를 선택하세요.';$('distance-panel').hidden=true;$('rmsd').textContent=$('tm-score').textContent=$('aligned-count').textContent=$('change-count').textContent='—';compareViewer?.removeAllModels();compareViewer?.removeAllLabels();compareViewer?.render();$('compare-empty').hidden=false;}
 for(const key of ['a','b']){
-  $('save-'+key).addEventListener('click',()=>{if(!result||currentSeq()!==result.sequence)return;try{loadSlot(key,{...result});say(`현재 예측 결과를 비교 ${key.toUpperCase()}에 담았습니다.`);}catch(e){error('input-error',e.message);}});
+  $('save-'+key).addEventListener('click',()=>{if(!matchesResult()||busy)return;try{loadSlot(key,{...result});say(`현재 예측 결과를 비교 ${key.toUpperCase()}에 담았습니다.`);}catch(e){error('input-error',e.message);}});
   $(key+'-file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>8_000_000)throw Error('8 MB 이하의 PDB 파일을 사용하세요.');loadSlot(key,{pdb:await file.text(),name:file.name,model:'불러온 PDB · 예측 조건 미확인'});error('compare-error',null);}catch(e){error('compare-error',e.message);}finally{e.target.value='';}});
   $(key+'-chain').addEventListener('change',invalidateComparison);
 }
 $('load-pdb').addEventListener('change',async e=>{
   const file=e.target.files[0];if(!file)return;try{if(file.size>8_000_000)throw Error('8 MB 이하의 PDB 파일을 사용하세요.');const pdb=await file.text(),parsed=parsePdb(pdb),chain=[...parsed.chains.values()][0];
-    result={pdb,name:file.name,sequence:chain.map(r=>r.one).join(''),model:'불러온 PDB',plddt:null};$('sequence').value=result.sequence;updateSequence();$('model-title').textContent=file.name;$('count-metric').textContent=result.sequence.length+' aa';$('confidence-metric').textContent=$('ptm-metric').textContent='—';$('result-note').textContent='PDB 파일을 불러왔습니다. 표시된 서열은 첫 사슬이며, 구조 뷰어에는 파일의 사슬들이 함께 보일 수 있습니다. 신뢰도는 자동으로 가정하지 않습니다.';$('color').value='spectrum';$('download').disabled=false;$('save-a').disabled=$('save-b').disabled=false;renderFold();error('input-error',null);
+    result={pdb,name:file.name,sequence:chain.map(r=>r.one).join(''),model:'불러온 PDB',plddt:null};rememberSequence();mutationBaseline=null;selected=[];$('mutation').value='';$('sequence').value=result.sequence;updateSequence();$('model-title').textContent=file.name;$('count-metric').textContent=result.sequence.length+' aa';$('confidence-metric').textContent=$('ptm-metric').textContent='—';$('result-note').textContent='PDB 파일을 불러왔습니다. 표시된 서열은 첫 사슬이며, 구조 뷰어에는 파일의 사슬들이 함께 보일 수 있습니다. 신뢰도는 자동으로 가정하지 않습니다.';$('color').value='spectrum';$('download').disabled=false;$('save-a').disabled=$('save-b').disabled=false;renderFold();error('input-error',null);
   }catch(e){error('input-error',e.message);}finally{e.target.value='';}
 });
 
-function styleCompare(){
-  if(!compareViewer||!comparison)return;compareViewer.setStyle({model:0},$('show-a').checked?{cartoon:{color:'#54c7b1'}}:{});compareViewer.setStyle({model:1},$('show-b').checked?{cartoon:{color:'#f4a45c'}}:{});compareViewer.render();
+function styleCompare(inspect=true){
+  if(!compareViewer||!comparison)return;compareViewer.setStyle({model:0},$('show-a').checked?{cartoon:{color:'#54c7b1'}}:{});compareViewer.setStyle({model:1},$('show-b').checked?{cartoon:{color:'#f4a45c'}}:{});if(inspect&&compareInspector)compareInspector.paint();else compareViewer.render();
 }
 $('show-a').addEventListener('change',styleCompare);$('show-b').addEventListener('change',styleCompare);$('compare-fit').addEventListener('click',()=>{compareViewer?.zoomTo();compareViewer?.render();});
 $('compare').addEventListener('click',()=>{
   try{
     error('compare-error',null);if(!slots.a||!slots.b)throw Error('비교할 두 구조를 준비하세요.');
     const ca=$('a-chain').value,cb=$('b-chain').value,a=slots.a.parsed.chains.get(ca),b=slots.b.parsed.chains.get(cb);
-    comparison=compareResidues(a,b);comparison.a=a;comparison.b=b;
+    compareInspector?.dispose();compareInspector=null;comparison=compareResidues(a,b);comparison.a=a;comparison.b=b;
     compareViewer??=getViewer('compare');compareViewer.removeAllModels();compareViewer.removeAllLabels();compareViewer.addModel(transformPdb(slots.a.pdb,p=>p,ca),'pdb');compareViewer.addModel(transformPdb(slots.b.pdb,comparison.transform,cb),'pdb');styleCompare();compareViewer.zoomTo();compareViewer.render();$('compare-empty').hidden=true;
     $('rmsd').textContent=comparison.rmsd.toFixed(3);$('tm-score').textContent=comparison.tmScore.toFixed(3);$('aligned-count').textContent=`${a.length} / ${a.length}`;$('change-count').textContent=comparison.changes.length+'개';
     $('compare-status').textContent='같은 위치끼리 대응시켜 전체 Cα 좌표를 겹쳤습니다.';$('distance-panel').hidden=false;$('distance-chart').replaceChildren();
+    const rowsA=residueRows(slots.a.parsed,slots.a).filter(r=>r.chain===ca),rowsB=residueRows(slots.b.parsed,slots.b).filter(r=>r.chain===cb);
+    compareInspector=createResidueInspector({viewer:compareViewer,container:$('compare-inspector'),groups:[{model:0,label:'기준 A',rows:rowsA,visible:()=>$('show-a').checked},{model:1,label:'비교 B',rows:rowsB,visible:()=>$('show-b').checked}],restore:()=>styleCompare(false),distance:i=>comparison.distances[i],onActive:active=>{$('distance-chart').querySelectorAll('button').forEach((bar,i)=>bar.classList.toggle('inspected',active?.row.position===i+1));}});
     const max=Math.max(.5,...comparison.distances);
-    comparison.distances.forEach((d,i)=>{const bar=document.createElement('button');bar.style.height=Math.max(3,d/max*135)+'px';bar.className=comparison.changes.includes(i+1)?'changed':'';bar.title=`위치 ${i+1} (${a[i].resid} / ${b[i].resid}) · ${a[i].one} → ${b[i].one} · ${d.toFixed(3)} Å`;bar.setAttribute('aria-label',bar.title);bar.addEventListener('click',()=>{say(bar.title);compareViewer.removeAllLabels();compareViewer.addLabel(`${i+1} · ${d.toFixed(2)} Å`,{position:{x:a[i].point[0],y:a[i].point[1],z:a[i].point[2]},fontColor:'white',backgroundColor:'#263e47',fontSize:13});compareViewer.render();});$('distance-chart').append(bar);});
+    comparison.distances.forEach((d,i)=>{const bar=document.createElement('button');bar.style.height=Math.max(3,d/max*135)+'px';bar.className=comparison.changes.includes(i+1)?'changed':'';bar.title=`위치 ${i+1} (${a[i].resid} / ${b[i].resid}) · ${a[i].one} → ${b[i].one} · ${d.toFixed(3)} Å`;bar.setAttribute('aria-label',bar.title);bar.addEventListener('click',()=>compareInspector?.selectPosition(i+1));$('distance-chart').append(bar);});
     $('changes').textContent=comparison.changes.length?'치환 위치: '+comparison.changes.map(n=>`${a[n-1].one}${n}${b[n-1].one}`).join(' · '):'두 사슬의 아미노산 종류가 같습니다. 구조의 차이는 예측 조건이나 실험 조건 등에 의해서도 생길 수 있습니다.';
     $('comparison-provenance').textContent=`A: ${slots.a.model??'예측 조건 미확인'} / B: ${slots.b.model??'예측 조건 미확인'}. 같은 모델·설정으로 비교하는 것이 좋습니다.`;$('export-csv').disabled=false;
-  }catch(e){comparison=null;error('compare-error',e.message);}
+  }catch(e){invalidateComparison();error('compare-error',e.message);}
 });
 $('export-csv').addEventListener('click',()=>{if(!comparison)return;const c=comparison;const rows=[['position','reference_residue_id','comparison_residue_id','reference_aa','comparison_aa','distance_angstrom','substitution'],...c.distances.map((d,i)=>[i+1,c.a[i].resid,c.b[i].resid,c.a[i].one,c.b[i].one,d.toFixed(6),c.changes.includes(i+1)?1:0])];const quote=x=>{let value=String(x);if(/^[=+@\-\t\r]/.test(value))value="'"+value;return '"'+value.replace(/"/g,'""')+'"';};download('protein-comparison.csv','\uFEFF'+rows.map(r=>r.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');});
 
