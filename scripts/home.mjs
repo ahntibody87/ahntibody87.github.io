@@ -17,7 +17,7 @@ export function homePage(site, version, sharedVersion) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#030c14">
-  <meta name="description" content="고등학교 생명과학 학습을 위한 시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼. Ahntibody’s Lifescience Lab에서 생명과학을 탐구하세요.">
+  <meta name="description" content="통합과학, 생물의 유전, 고급생명과학 수업 자료와 시뮬레이션을 모았습니다.">
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
   ${faviconLinks}
@@ -39,12 +39,12 @@ export function homePage(site, version, sharedVersion) {
         </div>
       </div>
       <div class="hero-content">
-        <p class="eyebrow" lang="en">Interactive Lifescience Education Platform<span aria-hidden="true"></span></p>
+        <p class="eyebrow" lang="en">High School Science<span aria-hidden="true"></span></p>
         <h1 id="lab-title" lang="en">ATLL</h1>
         <p class="lab-name" lang="en">AHNTIBODY’S LIFESCIENCE LAB</p>
         <div class="accent-line" aria-hidden="true"></div>
-        <h2 class="hero-copy" lang="en">Explore <em>Biology.</em><br>Visualize <em>Life.</em><br>Learn by <em>Interaction.</em></h2>
-        <p class="intro">고등학교 생명과학 학습을 위한<br>시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼</p>
+        <h2 class="hero-copy" lang="en">Lifescience<br><em>Lessons &amp; Activities</em></h2>
+        <p class="intro">통합과학, 생물의 유전, 고급생명과학의<br>수업 자료와 시뮬레이션을 모았습니다.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="${lab}" lang="en">Enter the Lab ${arrow}</a>
           <a class="button button-secondary" href="#courses" lang="en">${book} View Courses</a>
@@ -60,13 +60,13 @@ export function homePage(site, version, sharedVersion) {
             <h3 lang="en">${esc(c.display.english)}</h3>
             <p class="course-name">${esc(c.display.title)}</p>
             <p class="course-description">${esc(c.display.description)}</p>
-            <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 탐구 시작하기`}</span></div>
+            <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 수업 자료 보기`}</span></div>
           </div>
         </a>`).join('')}
       </div>
     </section>
   </main>
-  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-15">Oct 15, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
+  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-16">Oct 16, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
 </body>
 </html>
 `;
