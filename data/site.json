@@ -7,7 +7,7 @@
       "english": "INTEGRATED SCIENCE",
       "description": "자연을 연결하는 과학의 원리를 살펴보는 수업입니다.",
       "home": {"english":"Integrated Science","title":"통합과학","description":"모든 탐구의 출발점이 되는 과학의 첫 지도"},
-      "entryGate": {"salt":"8abce367776cebd2868b5c00e9b8637c","iterations":210000,"digest":"0901a74b2e6b2d8cbd5e614df506f28106bbd5d9c93311c2c755670b99c12fad"},
+      "entryGate": {"salt":"8d5978cb33201a536240ee404feecfc0","iterations":210000,"digest":"1d407c119913ee3dd23faecf87f81891175b2a5614e7fc8ff640deb703e9f8c0"},
       "status": "preparing",
       "units": []
     },
@@ -17,7 +17,7 @@
       "english": "GENETICS",
       "description": "생명의 연속성과 다양성을 유전의 관점에서 탐구하는 수업입니다.",
       "home": {"english":"Genetics","title":"생물의 유전","description":"유전 현상의 원리와 규칙을 풀어가는 생명의 열쇠"},
-      "entryGate": {"salt":"757c1e9bc559f0735dd6c64b691e094b","iterations":210000,"digest":"5c3c049e4b33fd7bdf622180b9c8703a29eabdb4a988b97ff8494fa8486ba7b8"},
+      "entryGate": {"salt":"2878e095f88c31cd52abdafc82ed3d15","iterations":210000,"digest":"d513aa13015e34d1ece55da7a239210e1858f5aaa98443aef4800ed8e4fb705b"},
       "status": "preparing",
       "units": []
     },
@@ -27,6 +27,7 @@
       "english": "ADVANCED LIFESCIENCE",
       "description": "생명현상을 깊이 탐구하고, 관찰한 결과를 근거로 설명하는 수업입니다.",
       "home": {"english":"Advanced Lifescience","title":"고급 생명과학","description":"교과서 너머 생명의 원리를 깊이 들여다보는 확대경"},
+      "entryGate": {"salt":"626fbcf1bc43f969c9aedd5e7d00429e","iterations":210000,"digest":"5452ad343b7a96314566041f9b879a70c9aa78a97e42d2bbc7e91b34f2756f4a"},
       "status": "ready",
       "units": [
         { "id": "cell-energy", "title": "세포의 에너지", "english": "CELL ENERGY", "activities": [{ "id": "mitochondria-lab", "title": "미토콘드리아 응급 분석실", "description": "세 명의 환자, 세 가지 물질, 두 번의 검사. 세포 대사 자료를 분석해 노출 물질을 판정하고, 자신의 추론을 해설과 비교하세요.", "type": "inquiry", "content": "content/advanced-life-science/cell-energy/mitochondria-lab.html" }, { "id": "protein-lab", "title": "단백질 설계 실험실", "description": "20종 아미노산을 알아보고, 서열을 바꾸어 입체 구조를 예측하세요. 야생형과 치환 변이를 겹쳐 비교하며 구조의 변화를 탐구합니다.", "type": "design", "content": "content/advanced-life-science/cell-energy/protein-lab.html" }] },

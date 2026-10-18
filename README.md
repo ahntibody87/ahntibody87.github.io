@@ -65,7 +65,7 @@ BBB 실험실은 `/advanced-life-science/regulation-defense/bbb-lab/`에 있습�
 
 ## 과목 입장 비밀번호
 
-- 통합과학·생물의 유전에 입장 비밀번호를 적용합니다. 홈 배너·상단 메뉴에서는 입력창을 열고, 주소를 직접 입력한 경우 해당 과목의 입장 화면을 먼저 표시합니다. 고급 생명과학은 바로 입장합니다.
+- 통합과학·생물의 유전·고급 생명과학에 입장 비밀번호를 적용합니다. 홈 배너·상단 메뉴에서는 입력창을 열고, 주소를 직접 입력한 경우 해당 과목의 입장 화면을 먼저 표시합니다.
 - 같은 탭에서는 과목별 입장 상태를 `sessionStorage`에 유지합니다. 탭을 닫거나 비밀번호를 바꾸면 다시 입력해야 합니다. 저장 기능이 차단된 환경에서는 과목 페이지에서 입력을 받아 중복 입력을 피합니다.
 - `data/site.json`의 `entryGate`에는 과목별 무작위 salt와 PBKDF2 확인값만 저장합니다. 입력한 비밀번호는 파일·로그·브라우저 저장소에 남기지 않습니다. 공개 자료에 대한 화면 입장 제한이며 자료 비공개 기능은 아닙니다.
 - 변경: `node scripts/set-course-password.mjs integrated-science genetics` 실행 후 표시되지 않는 입력란에 새 비밀번호를 입력합니다. 한 과목 id만 지정하면 그 과목만 바뀝니다. 비밀번호를 명령줄 인수로 전달하지 않습니다. 이후 `node scripts/build.mjs`, `node scripts/check.mjs`, `node scripts/check-course-access.mjs`로 확인하고 생성 HTML과 설정을 함께 게시합니다.
