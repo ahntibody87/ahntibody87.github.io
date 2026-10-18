@@ -1,3 +1,4 @@
+html[data-course-entry-granted] .course-entry-screen{display:none!important}
 .course-entry-screen[hidden],.course-access-content[hidden]{display:none!important}
 .course-entry-screen{display:grid;place-items:center;min-height:60vh;padding:48px 0}
 .course-entry-card{width:100%;max-width:420px;padding:32px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font-family:var(--font-sans);line-height:1.7;word-break:keep-all}
