@@ -44,4 +44,5 @@ for(const id of ids){
 }
 JSON.parse(source);
 fs.writeFileSync(file,source);
-process.stdout.write(`입장 비밀번호 확인값 갱신 완료: ${ids.join(', ')}. build와 check 후 게시하세요.\n`,()=>process.exit(0));
+fs.writeSync(1,`입장 비밀번호 확인값 갱신 완료: ${ids.join(', ')}. build와 check 후 게시하세요.\n`);
+process.exit(0);
