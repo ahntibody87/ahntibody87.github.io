@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {defaults,neutralFraction,permeability,experiment,simulate} from '../assets/activities/bbb-lab/model.mjs';
+import {basalTransport,advanceTowards,GLUCOSE_Y} from '../assets/activities/bbb-lab/motion.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 for(const kind of ['acid','base'])near(neutralFraction(kind,7.4,7.4),.5);
 near(neutralFraction('base',7,8),10/11);near(neutralFraction('acid',7,8),1/11);
@@ -22,3 +23,18 @@ const ex=experiment({...defaults,pro:true});
 assert.deepEqual(ex.direct,simulate(defaults,false));
 near(ex.selected[0].y[1],100);near(ex.direct[0].y[0],100);
 console.log('BBB: 산·염기 평형, 물성 경향, 96개 극한 조건의 물질량 보존, 전구약물 활성화·비교군 검사 통과');
+// Follow each complete path: both cell membranes must be crossed through GLUT1.
+let firstGate=false,secondGate=false,brainGlucose=false,brainOxygen=false;
+for(let t=0;t<24;t+=.05){
+  const g=basalTransport('glucose',t);
+  if(g.x>=410&&g.x<=546)near(g.y,GLUCOSE_Y);
+  if(g.luminalBinding){firstGate=true;assert.ok(g.x>=418&&g.x<=439);}
+  if(g.brainBinding){secondGate=true;assert.ok(g.x>=539&&g.x<=573);}
+  if(g.x>600)brainGlucose=true;
+  if(basalTransport('oxygen',t).x>600)brainOxygen=true;
+}
+assert.ok(firstGate&&secondGate&&brainGlucose&&brainOxygen);
+const move=advanceTowards({x:400,y:GLUCOSE_Y},{x:650,y:GLUCOSE_Y},45);
+near(move.x,445);near(move.y,GLUCOSE_Y);
+assert.ok(move.x<546,'Drug should not cross the entire endothelium in one second at 1x');
+console.log('BBB 표시: 산소의 막 확산 경로, 포도당의 두 운반체 경유·결합 대기, 약물의 느린 이동 검사 통과');

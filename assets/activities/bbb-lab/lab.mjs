@@ -1,4 +1,5 @@
 import {defaults,neutralFraction,properties,experiment} from './model.mjs';
+import {basalTransport,advanceTowards,GLUCOSE_Y,CARRIER_Y} from './motion.mjs';
 
 const root=document.querySelector('#bbb-lab');
 const $=id=>root.querySelector(`#bbb-${id}`);
@@ -6,7 +7,9 @@ const ids=['logp','mw','psa','hbd','pka','ph','kind','route','blood','release'];
 const kindNames={base:'약한 염기형',acid:'약한 산형',neutral:'비이온화형'};
 const canvas=$('scene'),ctx=canvas.getContext('2d');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let p={...defaults},runs=experiment(p),index=0,running=false,last=0,elapsed=0,raf=0,recordCount=0;
+let p={...defaults},runs=experiment(p),index=0,running=false,injected=false;
+let last=null,lastDraw=0,elapsed=0,raf=0,recordCount=0;
+let flowTime=0,drugTime=0,ambientPlaying=!reduced;
 const records=[];
 const fmt=(v,d=1)=>Number(v).toFixed(d);
 const pct=v=>`${fmt(v)}%`;
@@ -81,54 +84,81 @@ function drawStructure() {
   if($('background').checked) {
     // Red blood cells remain inside the lumen; no crossing animation.
     for(let i=0;i<7;i++){
-      const x=110+rand(i,3)*235,y=80+((rand(i,4)*530+index*1.6)%535);
+      const x=110+rand(i,3)*235,y=80+((rand(i,4)*530+flowTime*17)%535);
       ellipse(x,y,25,12,'#663c4b','#985665',rand(i,8)-.5);ellipse(x,y,13,5,'#422f3c',null,rand(i,8)-.5);
     }
-    for(let i=0;i<42;i++){
-      const x=27+rand(i,7)*355,y=75+((rand(i,9)*540+index*.8)%540);
-      if(i%4===0){ellipse(x,y,8,5,'#8892a1');ellipse(x+5,y-3,4,4,'#8892a1');}
-      else if(i%4===1){circle(x,y,2.7,'#cb7982');circle(x+4,y+1,2.7,'#cb7982');}
-      else if(i%4===2){circle(x,y,3,'#7fa8cf');}
-      else {ctx.fillStyle='#d2b261';ctx.fillRect(x-3,y-3,6,6);}
+    for(let i=0;i<22;i++){
+      const x=27+rand(i,7)*355,y=75+((rand(i,9)*540+flowTime*13)%540);
+      if(i%2===0){ellipse(x,y,8,5,'#8892a1');ellipse(x+5,y-3,4,4,'#8892a1');}
+      else {circle(x,y,3.5,'#7fa8cf');}
     }
-    for(let i=0;i<9;i++)circle(650+rand(i,20)*355,80+rand(i,21)*520,2.5,i%2?'#cb7982':'#7fa8cf');
   }
-  transporter(418,552);transporter(539,552);
-  if(p.pro && p.route==='carrier'){transporter(418,345,'#b59ad1');transporter(539,345,'#b59ad1');}
+  transporter(418,GLUCOSE_Y);transporter(539,GLUCOSE_Y);
+  if(p.pro && p.route==='carrier'){transporter(418,CARRIER_Y,'#b59ad1');transporter(539,CARRIER_Y,'#b59ad1');}
+  if($('background').checked)drawBasalTransport();
+}
+function drawAnnotations(){
   if($('labels').checked){
     label(['혈관 내피세포'],409,50);
-    label(['치밀결합','세포 사이 이동 제한'],234,220,431,246,'#e0c1a0');
+    label(['밀착결합','세포 사이 이동 제한'],234,220,431,246,'#e0c1a0');
     label(['기저막'],608,76,559,89);
     label(['주위세포'],627,148,590,165,'#c6b6a3');
     label(['성상세포','발끝으로 혈관을 감쌈'],801,463,817,425);
-    label(['포도당 운반체'],220,600,419,553,'#d9c087');
-    if(p.pro && p.route==='carrier')label(['아미노산 운반체','맞는 구조를 선택적으로 운반'],180,338,417,345,'#c5afe0');
+    label(['포도당 운반체','양쪽 세포막에서 각각 운반'],192,377,418,GLUCOSE_Y,'#d9c087');
+    label(['산소 · 세포막을 통한 확산'],654,225,548,224,'#db9fa8');
+    if(p.pro && p.route==='carrier')label(['아미노산 운반체','맞는 구조를 선택적으로 운반'],180,313,417,CARRIER_Y,'#c5afe0');
   }
   ctx.fillStyle='rgba(8,22,33,.6)';ctx.fillRect(0,645,1060,35);
   text('BBB 단면 모식도 · 크기·간격은 실제 축척이 아님',22,667,'#88a6b2',12);
 }
-const particles=Array.from({length:90},(_,i)=>({x:35+rand(i,31)*340,y:90+rand(i,32)*510}));
-function drawParticles(snap=false){
+function drawBasalTransport(){
+  for(const [kind,count,color] of [['oxygen',12,'#db8995'],['glucose',6,'#ebce72']])for(let i=0;i<count;i++){
+    const point=basalTransport(kind,flowTime,i);
+    ctx.save();ctx.globalAlpha=point.alpha;
+    const trail=[];
+    for(let j=6;j>=0;j--){const before=basalTransport(kind,flowTime-j*.12,i);if(before.phase<=point.phase)trail.push([before.x,before.y]);}
+    if(trail.length>1)path(trail,kind==='oxygen'?'#9a5c6d':'#7e774e',1.5);
+    if(kind==='oxygen'){
+      circle(point.x-3,point.y,4.5,color);circle(point.x+3,point.y,4.5,color);
+      if(i===1)text('O₂',point.x+11,point.y+4,'#f0bcc4',12);
+    }else{
+      // Separate binding pauses at each membrane, not an open channel across the cell.
+      if(point.luminalBinding||point.brainBinding)circle(point.x,point.y,15,null,'#e7c76d');
+      ctx.beginPath();for(let v=0;v<6;v++){const a=v*Math.PI/3;const x=point.x+7*Math.cos(a),y=point.y+7*Math.sin(a);if(v===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();ctx.fillStyle=color;ctx.fill();
+      text('G',point.x,point.y+3,'#493c1b',8,'center');
+    }
+    ctx.restore();
+  }
+}
+const lanes=[92,224,280,426,478,613];
+const particles=Array.from({length:42},(_,i)=>({x:140+rand(i,31)*245,y:lanes[i%lanes.length],alpha:1}));
+function drawParticles(dt=0,snap=false){
+  if(!injected)return;
   const amounts=runs.selected[index].y;
   for(let i=0;i<particles.length;i++){
     const q=(i+.5)/particles.length*100;
     let state=6,cumulative=0;
     for(let j=0;j<amounts.length;j++){cumulative+=amounts[j];if(q<cumulative){state=j;break;}}
-    if(state===6)continue;
     const item=particles[i];
+    if(snap)item.alpha=state===6?0:1;
+    else if(dt>0)item.alpha=Math.max(0,Math.min(1,item.alpha+(state===6?-dt:dt)));
+    if(item.alpha===0)continue;
+    if(state===6){ctx.save();ctx.globalAlpha=item.alpha;circle(item.x,item.y,9,'#eda565');ctx.restore();continue;}
     const region=state<2?0:state<4?1:2;
-    const x=region===0?35+rand(i,31)*340:region===1?435+rand(i,31)*89:630+rand(i,31)*390;
-    let y=92+rand(i,32)*510;
-    if(Math.abs(y-246)<20)y+=42;if(Math.abs(y-450)<20)y+=42;
-    if(snap || reduced){item.x=x;item.y=y;}else{item.x+=(x-item.x)*.12;item.y+=(y-item.y)*.12;}
+    const x=region===0?140+rand(i,31)*245:region===1?449+rand(i,31)*74:645+rand(i,31)*350;
+    const y=lanes[i%lanes.length]+(region===0?Math.sin(drugTime*.65+i)*5:0);
+    if(snap){item.x=x;item.y=y;}
+    else if(dt>0)Object.assign(item,advanceTowards(item,{x,y},dt*45));
     const isPro=state%2===1;
-    const r=3.5+(p.mw-100)/700*2;
-    if(isPro){circle(item.x,item.y,r+3,null,'#b69ad5');circle(item.x,item.y,r*.65,'#b69ad5');}
-    else {circle(item.x,item.y,r,'#eda565','#ffd0a0');}
-    // Tiny dots sample the amount in each compartment, not individual trajectories.
+    const r=8.5+(p.mw-100)/700*2.5;
+    ctx.save();ctx.globalAlpha=item.alpha;ctx.lineWidth=2;
+    if(isPro){circle(item.x,item.y,r+3,'#392f50','#c4a4ed');circle(item.x,item.y,r*.46,'#b69ad5');}
+    else {circle(item.x,item.y,r,'#eda565','#ffe0ad');text('D',item.x,item.y+3,'#4c321e',9,'center');}
+    ctx.restore();
+    // Larger representative markers move at a bounded speed; graph values are authoritative.
   }
 }
-function scene(snap=false){drawStructure();drawParticles(snap);}
+function scene(dt=0,snap=false){drawStructure();drawParticles(dt,snap);drawAnnotations();}
 function phCurve(){
   const w=500,h=260,l=48,r=20,t=24,b=43,x=v=>l+(v-3)/8*(w-l-r),y=v=>h-b-v*(h-b-t);
   let svg='';
@@ -155,20 +185,24 @@ function resultsCurve(){
   $('result-curve').innerHTML=svg;
 }
 function readouts(){
-  const y=runs.selected[index].y,direct=runs.direct[index].y[4];
+  const y=injected?runs.selected[index].y:Array(7).fill(0),direct=injected?runs.direct[index].y[4]:0;
+  $('save').disabled=!injected;
+  root.dataset.experiment=!injected?'baseline':running?'running':index===120?'complete':'paused';
+  $('play').setAttribute('aria-pressed',String(running));
   $('brain-active').innerHTML=`${fmt(y[4])}<small>%</small>`;
   $('brain-pro').innerHTML=`${fmt(y[5])}<small>%</small>`;
   $('brain-direct').innerHTML=`${fmt(direct)}<small>%</small>`;
   $('time').textContent=`관찰 단계 ${fmt(index/2,index%2?1:0)} / 60`;
   $('timeline').value=index;
   $('distribution').innerHTML=[['혈액 · 활성 약물',y[0]],['혈액 · 전구약물',y[1]],['내피세포 · 활성 약물',y[2]],['내피세포 · 전구약물',y[3]],['뇌 · 활성 약물',y[4]],['뇌 · 전구약물',y[5]],['제거된 양',y[6]]].map(([name,v])=>`<div><dt>${name}</dt><dd>${pct(v)}</dd></div>`).join('');
-  $('result-caption').textContent=p.pro?`같은 원래 약물과 같은 초기량으로 비교합니다. 현재 전구약물 투여군의 뇌 속 활성 약물은 비교군보다 ${fmt(Math.abs(y[4]-direct))}%p ${y[4]>=direct?'많습니다':'적습니다'}.`:'원래 약물 투여군입니다. 전구약물을 선택하면 같은 분자 물성의 원래 약물 투여군을 함께 비교합니다.';
+  $('result-caption').textContent=!injected?'아직 약물을 투여하지 않았습니다. 기본 물질의 이동은 약물 실험과 별도로 계속됩니다.':p.pro?`같은 원래 약물과 같은 초기량으로 비교합니다. 현재 전구약물 투여군의 뇌 속 활성 약물은 비교군보다 ${fmt(Math.abs(y[4]-direct))}%p ${y[4]>=direct?'많습니다':'적습니다'}.`:'원래 약물 투여군입니다. 전구약물을 선택하면 같은 분자 물성의 원래 약물 투여군을 함께 비교합니다.';
   const t=index/2;
-  if(t===0)$('observation').textContent='초기량 100 단위를 혈액 쪽에 투여합니다. 실험 시작 또는 관찰 막대로 이동하세요. 조건을 바꾸면 처음부터 다시 계산합니다.';
+  if(!injected)$('observation').textContent='기본 상태: 혈류는 아래로 흐르고, 산소는 세포막을 통해 확산합니다. 포도당은 양쪽 세포막의 포도당 운반체를 차례로 거칩니다. 약물 실험 시작을 누르면 큰 약물 입자가 추가됩니다.';
+  else if(t===0)$('observation').textContent=`약물 투여: ${p.pro?'보라색 테두리의 전구약물':'주황색 D 약물'} 100 단위를 혈액 쪽에 투여했습니다. 큰 입자의 이동을 관찰하세요. 기본 물질의 흐름은 계속됩니다.`;
   else if(p.pro){
     const route=p.route==='mask'?'극성 부분을 가린 전구약물이 세포막을 통해 양방향 이동합니다.':'아미노산 운반체를 활용하는 전구약물의 선택적 유입과 뇌 쪽 방출을 단순화해 표시합니다.';
     $('observation').textContent=`${route} 뇌에 남아 있는 활성 약물 ${pct(y[4])}, 아직 활성화되지 않은 전구약물 ${pct(y[5])}.`;
-  }else $('observation').textContent=`약물은 내피세포의 혈액 쪽 막과 뇌 쪽 막을 거쳐 양방향으로 이동합니다. 현재 초기량의 ${pct(y[4])}가 뇌 속 활성 약물로 남아 있습니다. 세포 사이 치밀결합은 유지됩니다.`;
+  }else $('observation').textContent=`약물은 내피세포의 혈액 쪽 막과 뇌 쪽 막을 거쳐 양방향으로 이동합니다. 현재 초기량의 ${pct(y[4])}가 뇌 속 활성 약물로 남아 있습니다. 세포 사이 밀착결합은 유지됩니다.`;
   resultsCurve();
 }
 function settings(){
@@ -187,9 +221,9 @@ function settings(){
   $('effective-values').textContent=`logP ${fmt(ep.logp)} · ${ep.mw} Da · 극성 표면적 ${ep.psa} Å² · 공여체 ${ep.hbd}개`;
   phCurve();
 }
-function stop(){running=false;if(raf)cancelAnimationFrame(raf);raf=0;$('play').textContent=index===120?'다시 실험':'실험 계속';}
+function stop(){running=false;pendingDrugDt=0;$('play').textContent=index===120?'다시 실험':injected?'실험 계속':'약물 실험 시작';$('play').setAttribute('aria-pressed','false');}
 function rebuild(){
-  stop();index=0;elapsed=0;runs=experiment(p);settings();readouts();scene(true);$('play').textContent='실험 시작';
+  injected=false;stop();index=0;elapsed=0;drugTime=0;pendingDrugDt=0;runs=experiment(p);settings();readouts();scene(0,true);
 }
 function input(){
   for(const id of ids)p[id]=['logp','mw','psa','hbd','pka','ph'].includes(id)?Number($(id).value):$(id).value;
@@ -200,22 +234,31 @@ function apply(next){
   root.querySelector(`input[name="bbb-mode"][value="${p.pro?'pro':'direct'}"]`).checked=true;rebuild();
 }
 function frame(now){
-  if(!running)return;
-  const dt=Math.min(.1,(now-last)/1000);last=now;
-  if(document.hidden){raf=requestAnimationFrame(frame);return;}
-  elapsed+=dt*Number($('speed').value)*4;
-  const next=Math.min(120,Math.floor(elapsed));
-  if(next!==index){index=next;readouts();}
-  scene(reduced);
-  if(index===120){scene(true);stop();return;}
+  // One display clock remains alive for basal flow, independently of the experiment.
+  // rAF already throttles background tabs; document.hidden can be misreported by embeds.
+  const dt=last===null?0:Math.min(.1,Math.max(0,(now-last)/1000));last=now;
+  if(ambientPlaying)flowTime+=dt;
+  let drugDt=0;
+  if(running){
+    drugDt=dt*Number($('speed').value);drugTime+=drugDt;
+    elapsed=Math.min(120,elapsed+drugDt*2);
+    const next=Math.floor(elapsed);
+    if(next!==index){index=next;readouts();}
+    if(index===120){stop();readouts();}
+  }
+  // Draw at roughly 30 fps, but integrate motion with elapsed time rather than frame count.
+  pendingDrugDt+=drugDt;
+  if(now-lastDraw>=1000/30){scene(pendingDrugDt);pendingDrugDt=0;lastDraw=now;}
   raf=requestAnimationFrame(frame);
 }
+let pendingDrugDt=0;
 for(const id of ids)$(id).addEventListener(['kind','route','blood','release'].includes(id)?'change':'input',input);
 root.querySelectorAll('input[name="bbb-mode"]').forEach(el=>el.addEventListener('change',input));
 $('play').addEventListener('click',()=>{
-  if(running){stop();return;}
-  if(index===120){index=0;elapsed=0;readouts();scene(true);}
-  running=true;last=performance.now();$('play').textContent='일시 정지';raf=requestAnimationFrame(frame);
+  if(running){stop();readouts();return;}
+  if(!injected||index===120){index=0;elapsed=0;drugTime=0;injected=true;scene(0,true);}
+  // Inject and repaint synchronously so the first click always has immediate feedback.
+  running=true;last=performance.now();pendingDrugDt=0;$('play').textContent='일시 정지';readouts();scene();
 });
 $('reset').addEventListener('click',()=>rebuild());
 $('defaults').addEventListener('click',()=>{$('preset').value='balanced';apply(defaults);});
@@ -224,8 +267,16 @@ $('preset').addEventListener('change',()=>{
   const presets={balanced:{},polar:{logp:.5,mw:360,psa:135,hbd:4,kind:'neutral'},ionized:{pka:9.5,kind:'base'},lipid:{logp:5.8,mw:420,psa:45,hbd:0,kind:'neutral'}};
   apply({...defaults,...presets[$('preset').value]});
 });
-$('timeline').addEventListener('input',()=>{stop();index=Number($('timeline').value);elapsed=index;readouts();scene(true);});
-for(const id of ['background','labels'])$(id).addEventListener('change',()=>scene(true));
+$('timeline').addEventListener('input',()=>{injected=true;index=Number($('timeline').value);elapsed=index;drugTime=index/2;pendingDrugDt=0;stop();readouts();scene(0,true);});
+for(const id of ['background','labels'])$(id).addEventListener('change',()=>scene());
+$('flow-toggle').addEventListener('click',()=>{ambientPlaying=!ambientPlaying;flowButton();scene();});
+function flowButton(){
+  $('flow-toggle').textContent=ambientPlaying?'기본 흐름 일시 정지':'기본 흐름 재생';
+  $('flow-toggle').setAttribute('aria-pressed',String(ambientPlaying));
+}
+document.addEventListener('visibilitychange',()=>{last=null;});
+window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);raf=0;last=null;});
+window.addEventListener('pageshow',()=>{if(!raf)raf=requestAnimationFrame(frame);});
 $('save').addEventListener('click',()=>{
   const y=runs.selected[index].y;
   recordCount++;
@@ -238,3 +289,5 @@ $('save').addEventListener('click',()=>{
   $('record-status').textContent=`${records.length}개 실험을 기록했습니다. 표의 물성은 원래 약물 기준입니다. 기록은 이 페이지를 떠나면 사라집니다.`;
 });
 rebuild();
+flowButton();
+raf=requestAnimationFrame(frame);
