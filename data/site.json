@@ -7,6 +7,7 @@
       "english": "INTEGRATED SCIENCE",
       "description": "자연을 연결하는 과학의 원리를 살펴보는 수업입니다.",
       "home": {"english":"Integrated Science","title":"통합과학","description":"모든 탐구의 출발점이 되는 과학의 첫 지도"},
+      "entryGate": {"salt":"0e0baad1669cc07665ba1c12df6c05be","iterations":210000,"digest":"43cfc8eb02828c3ce1b067ce67ca371b04e73e8f75b98d4ec428eeeac4fceb97"},
       "status": "preparing",
       "units": []
     },
@@ -16,6 +17,7 @@
       "english": "GENETICS",
       "description": "생명의 연속성과 다양성을 유전의 관점에서 탐구하는 수업입니다.",
       "home": {"english":"Genetics","title":"생물의 유전","description":"유전 현상의 원리와 규칙을 풀어가는 생명의 열쇠"},
+      "entryGate": {"salt":"159d9caef06951081e9f3888984b795e","iterations":210000,"digest":"54428d5d8e2e0438e140c33010371766d50f6ccac9b00298d5f0347bd1ce3093"},
       "status": "preparing",
       "units": []
     },

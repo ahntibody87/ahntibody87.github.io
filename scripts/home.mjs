@@ -1,5 +1,6 @@
 import { siteHeader } from './header.mjs';
 import { faviconLinks } from './favicon.mjs';
+import { accessHead } from './course-access.mjs';
 // Home-only presentation; all course destinations come from the existing catalog.
 export function homePage(site, version, sharedVersion) {
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -26,6 +27,7 @@ export function homePage(site, version, sharedVersion) {
   <script src="/assets/navigation.js?v=${sharedVersion}" defer></script>
   <script src="/assets/home.js?v=${version}" defer></script>
   <script src="/assets/home-protein.js?v=${version}" defer></script>
+  ${accessHead(site)}
 </head>
 <body id="top">
   <a class="skip" href="#main">본문 바로가기</a>
@@ -60,7 +62,7 @@ export function homePage(site, version, sharedVersion) {
             <h3 lang="en">${esc(c.display.english)}</h3>
             <p class="course-name">${esc(c.display.title)}</p>
             <p class="course-description">${esc(c.display.description)}</p>
-            <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 탐구 시작하기`}</span></div>
+            <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.entryGate ? '비밀번호 필요 · ' : ''}${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 탐구 시작하기`}</span></div>
           </div>
         </a>`).join('')}
       </div>
