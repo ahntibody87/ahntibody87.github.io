@@ -41,6 +41,10 @@
 - PDB 저장/불러오기, 비교 A/B, 전체 대응 RMSD, 위치 고정 TM-score(근사 최적화), 위치별 거리, CSV 저장을 지원합니다. 서로 다른 길이의 사슬은 현재 비교하지 않습니다.
 - 검사: `node scripts/check-protein-lab.mjs`. 모델·검증·라이선스 상세는 `docs/protein-lab.md`를 확인하세요.
 
+## BBB 약물 설계 실험실
+
+BBB 실험실은 `/advanced-life-science/regulation-defense/bbb-lab/`에 있습니다. 다섯 분자 물성, pH–pKa 설명, 원래 약물과 전구약물의 전달·활성화를 비교합니다. 실제 BBB 예측값이 아닌 교육용 구획 모형입니다. 계산 가정과 근거는 `docs/bbb-lab.md`, 점검은 `node scripts/check-bbb-lab.mjs`를 확인하세요.
+
 ## RNA 설계 실험실
 
 - 주소: `/advanced-life-science/gene-expression/rna-lab/`
