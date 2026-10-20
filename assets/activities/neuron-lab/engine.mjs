@@ -63,7 +63,7 @@ export function simulateNetwork(raw,{seed=42,jitter=0,gainNoise=0,enabledInputs=
     for(const e of outgoing[i]) {
       const arrival=t+e.delay,step=Math.max(0,Math.round(arrival/dt));
       if(step<=steps) queue[step].push({ei:edgeIndex.get(e),value:(isInhibitory(c.nodes[i])?-1:1)*e.weight*Math.max(0,1+gainNoise*gaussian(rng))});
-      if(record)arrivals.push({from:e.from,to:e.to,time:arrival,sign:isInhibitory(c.nodes[i])?-1:1});
+      if(record)arrivals.push({from:e.from,to:e.to,depart:t,time:step*dt,edgeIndex:edgeIndex.get(e),weight:e.weight,sign:isInhibitory(c.nodes[i])?-1:1});
     }
   };
   const scheduled=Array.from({length:steps+1},()=>[]);

@@ -49,6 +49,7 @@ BBB 실험실은 `/advanced-life-science/regulation-defense/bbb-lab/`에 있습�
 
 - 주소: `/advanced-life-science/regulation-defense/neuron-lab/`
 - 7주차 수업의 입력 가중·억제 타이밍 재현, Allen의 실제 생쥐 뉴런 2세포·10자극 조건과 LIF/적응 LIF 비교, 자유 회로 편집·조건 지도·소리 방향 판별 탐구를 제공합니다.
+- 뉴런 발화의 빛·연결선의 신호 이동·막전위 커서를 같은 모델 시간으로 재생합니다. 재생/일시정지/속도/다음 사건/시간 이동/반복을 조절할 수 있습니다.
 - 모델 고정 후 별도 자극 검증, 기기 내 탐구 노트, 그래프를 포함한 HTML 보고서, 조건·기록 JSON, 결과 CSV와 회로 공유 링크를 지원합니다.
 - 브라우저 계산과 기기 저장으로 작동합니다. 학생 계정·서버·DB를 추가하지 않습니다. 실제 기록과 교육용 모형의 범위를 구분해 표시합니다.
 - 검사: `node scripts/check-neuron-lab.mjs`. 모델과 검증 범위는 `docs/neuron-lab.md`, 원본·이용 조건·가공법은 `docs/neuron-lab-data.md`를 확인하세요.

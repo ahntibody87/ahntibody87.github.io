@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {preset,simulateNetwork} from '../assets/activities/neuron-lab/engine.mjs';
+import {playbackTimeline,signalsAt,valueAt,upperBound} from '../assets/activities/neuron-lab/playback.mjs';
+
+const result=simulateNetwork(preset()),timeline=playbackTimeline(result);
+assert.equal(timeline.events.filter(e=>e.type==='spike').length,3,'only recorded spikes are presented');
+assert.equal(timeline.events.filter(e=>e.type==='arrival').length,2);
+assert.deepEqual(timeline.times.slice(0,2),[20,21],'input fires before synaptic arrival');
+assert.ok(timeline.events.at(-1).time>21,'output fires after arrival');
+assert.equal(signalsAt(result,19).length,0,'no signal before source spike');
+const moving=signalsAt(result,20.5);
+assert.equal(moving.length,2);assert.ok(moving.every(s=>Math.abs(s.progress-.5)<1e-9),'transit progress follows actual delay');
+assert.equal(signalsAt(result,21).length,0,'particles have arrived at target');
+assert.ok(result.arrivals.every(a=>a.time>a.depart&&Number.isInteger(a.edgeIndex)));
+const fractional=preset();fractional.edges[0].delay=.14;
+const quantized=simulateNetwork(fractional).arrivals[0];
+assert.ok(Math.abs(quantized.time-20.1)<1e-8,'visual arrival matches simulator time grid');
+const silent=simulateNetwork(preset(),{enabledInputs:['a']});
+assert.equal(playbackTimeline(silent).events.filter(e=>e.type==='spike'&&e.node==='out').length,0,'subthreshold output never flashes as a firing neuron');
+const zero=preset();zero.edges.forEach(e=>e.weight=0);
+assert.equal(signalsAt(simulateNetwork(zero),20.5).length,0,'zero-weight currents are not drawn as transmitted input');
+assert.equal(upperBound([20,20,25],20),2);assert.equal(upperBound([],20),0);
+assert.equal(valueAt([0,.1,.16,.2],[-65,-64,-63,-62],.17),-63,'nonuniform recorded voltage lookup');
+const noEvents=playbackTimeline(simulateNetwork(preset(),{enabledInputs:[]}));
+assert.equal(noEvents.events.length,0);assert.ok(noEvents.focus[1]>noEvents.focus[0]);
+console.log('발화 재생 검사 통과: 실제 발화·도착 시점, 전달 지연, 0강도, 역치 미달, 비균일 시간축');
