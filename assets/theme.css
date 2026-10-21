@@ -18,17 +18,20 @@ html {scroll-padding-top:calc(var(--header-height) + var(--space-3))}
 body {font-family:var(--font-sans);background:var(--bg);color:var(--text);padding-top:var(--header-height);-webkit-font-smoothing:antialiased}
 [id] {scroll-margin-top:var(--space-2)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {outline:3px solid var(--cyan);outline-offset:4px}
-.site-header {position:fixed;inset:0 0 auto;z-index:100;border-bottom:1px solid var(--line);background:var(--header-bg);line-height:1.5}
+.site-header {--gutter:clamp(22px,3.3vw,48px);font-family:Inter,"Segoe UI","Noto Sans KR","Malgun Gothic",Arial,sans-serif;position:fixed;inset:0 0 auto;z-index:100;border-bottom:1px solid var(--line);background:var(--header-bg);line-height:1.5}
 .header-inner {max-width:var(--content-width);min-height:88px;margin:auto;padding:0 var(--gutter);display:flex;align-items:center;gap:var(--space-4)}
 .site-header .wordmark {display:flex;align-items:center;gap:10px;font-size:40px;font-weight:800;letter-spacing:-2px;color:var(--text);background:none;text-decoration:none;flex-shrink:0}
 .site-header .brand-antibody {display:block;width:40px;height:40px;flex:none;color:#1f3a5f}
 [data-theme="dark"] .site-header .brand-antibody {color:#fff}
-.site-header #navigation {display:flex;align-self:stretch;align-items:center;gap:var(--space-3);margin-left:auto}
-.site-header #navigation a {position:relative;display:flex;align-items:center;margin:0;padding:10px 12px;border-radius:6px;font-size:14px;white-space:nowrap;color:var(--muted);background:transparent;text-decoration:none;line-height:1.5}
+.site-header #navigation {padding:0;order:2;justify-content:flex-start;display:flex;align-self:stretch;align-items:center;gap:var(--space-3);margin-left:auto}
+.site-header #navigation a {position:relative;display:grid;align-items:center;margin:0;padding:10px 12px;border-radius:6px;font-size:14px;white-space:nowrap;color:var(--muted);background:transparent;text-decoration:none;line-height:1.5}
 .site-header #navigation a:hover,.site-header #navigation a.active {color:var(--text);background:var(--tint)}
 .site-header #navigation a.active {font-weight:700}
+/* Reserve the bold label width so changing the current page never moves navigation. */
+.site-header #navigation a:before {content:attr(data-label);font-weight:700;visibility:hidden;grid-area:1 / 1;pointer-events:none}
+.site-header #navigation .header-link-label {grid-area:1 / 1}
 .site-header #navigation a.active:after {content:"";position:absolute;left:12px;right:12px;bottom:3px;height:2px;background:var(--cyan);box-shadow:none}
-.site-header .menu-toggle {display:none;position:static;margin-left:auto;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-size:13px}
+.site-header .menu-toggle {order:1;display:none;position:static;margin-left:auto;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-size:13px}
 .skip {z-index:110}
 [data-theme="light"] .page {margin-left:0}
 [data-theme="light"] main {max-width:1280px;padding:0 var(--gutter)}
