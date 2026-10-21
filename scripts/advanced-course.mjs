@@ -11,7 +11,7 @@ const unitArt = {
   biotechnology: '플라스미드와 유전자 삽입을 보여주는 개념도'
 };
 function diagram(id) {
-  return `<img class="research-unit-art" src="/assets/biology-art-v1/unit-${esc(id)}.webp" alt="${esc(unitArt[id] || '')}" width="800" height="600" loading="lazy" decoding="async">`;
+  return `<img class="research-unit-art" src="/assets/biology-art-v2/unit-${esc(id)}.webp" alt="${esc(unitArt[id] || '')}" width="800" height="600" loading="lazy" decoding="async">`;
 }
 
 export function advancedCourse(course) {

@@ -1,0 +1,1 @@
+Four approved unit illustrations with background and external cast shadows removed using the built-in image generation tool. Transparent alpha preserved in WebP exports. Original composition and scientific subjects retained. Activity covers remain in biology-art-v1. Original cutouts and edit prompt: workspace outputs/biology-unit-cutouts-v2.
