@@ -25,12 +25,9 @@ body[data-page="advanced-workspace"] .workspace-card-grid{display:grid;grid-temp
 body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:repeat(2,minmax(0,1fr));max-width:1120px}
 body[data-page="advanced-workspace"] .workspace-card{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid #d5dae3;box-shadow:0 2px 7px #2021240a,0 1px 2px #20212405;border-radius:10px;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 
-body[data-page="advanced-workspace"] .workspace-preview{border-bottom:1px solid var(--line);background:#fff}
+body[data-page="advanced-workspace"] .workspace-preview{border-bottom:1px solid var(--line);background:#f8fafc}
 body[data-page="advanced-workspace"] .workspace-preview-label{font:10px/1.5 ui-monospace,Consolas,monospace;letter-spacing:.06em;color:#616978;padding:9px 15px;background:#f8f9fb;border-bottom:1px solid #eef0f3}
-body[data-page="advanced-workspace"] .workspace-preview img{display:block;width:100%;height:210px;object-fit:contain;background:#fff}
-body[data-page="advanced-workspace"] .workspace-card[href$="/protein-lab/"] .workspace-preview img{background:#151b28}
-body[data-page="advanced-workspace"] .workspace-card[href$="/bbb-lab/"] .workspace-preview img{background:#101f2b}
-body[data-page="advanced-workspace"] .workspace-card[href$="/neuron-lab/"] .workspace-preview img{background:#102735}
+body[data-page="advanced-workspace"] .workspace-preview img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#f8fafc}
 body[data-page="advanced-workspace"] .workspace-card-body{padding:21px;display:flex;flex-direction:column;flex:1}
 body[data-page="advanced-workspace"] .workspace-type{font-size:10px;line-height:1.5;text-transform:uppercase;letter-spacing:.055em;color:var(--muted);margin:0 0 9px;font-weight:600}
 body[data-page="advanced-workspace"] .workspace-card h3{font-size:20px;font-weight:650;line-height:1.45;letter-spacing:-.035em;word-break:keep-all}
@@ -82,7 +79,7 @@ body[data-page="advanced-workspace"] .xci-lab .lab-nav a:hover{background:#e9edf
 body[data-page="advanced-workspace"] :is(.energy-lab,.rna-lab,.protein-lab,.bbb,.nl,.xci-lab) :is(button,input,select,textarea,summary):focus-visible{outline:3px solid #315efb;outline-offset:3px}
 body[data-page="advanced-workspace"] :is(.energy-lab,.rna-lab,.protein-lab,.bbb,.nl,.xci-lab) :is(input,select,textarea){border-color:#d9dee7}
 @media(max-width:1000px){body[data-page="advanced-workspace"] .workspace-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){body[data-page="advanced-workspace"] .workspace-card-grid,body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:1fr}body[data-page="advanced-workspace"] .workspace-toolbar{align-items:stretch;flex-direction:column;gap:12px}body[data-page="advanced-workspace"] .workspace-search input{width:100%;font-size:16px}body[data-page="advanced-workspace"] .workspace-heading{padding:23px 0}body[data-page="advanced-workspace"] .workspace-heading>p:not(.workspace-eyebrow){font-size:14px}body[data-page="advanced-workspace"] .workspace-units a{font-size:11px;padding:8px 10px}body[data-page="advanced-workspace"] .workspace-preview img{height:190px}body[data-page="advanced-workspace"] .workspace-empty{padding:28px 22px}}
+@media(max-width:700px){body[data-page="advanced-workspace"] .workspace-card-grid,body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:1fr}body[data-page="advanced-workspace"] .workspace-toolbar{align-items:stretch;flex-direction:column;gap:12px}body[data-page="advanced-workspace"] .workspace-search input{width:100%;font-size:16px}body[data-page="advanced-workspace"] .workspace-heading{padding:23px 0}body[data-page="advanced-workspace"] .workspace-heading>p:not(.workspace-eyebrow){font-size:14px}body[data-page="advanced-workspace"] .workspace-units a{font-size:11px;padding:8px 10px}body[data-page="advanced-workspace"] .workspace-empty{padding:28px 22px}}
 @media(max-width:520px){body[data-page="advanced-workspace"]{--gutter:16px}body[data-page="advanced-workspace"] .rna-controls .edit-heading,body[data-page="advanced-workspace"] .rna-controls .base-palette{background:#f8f9fb;border-color:#d9dee7}body[data-page="advanced-workspace"] .rna-controls .edit-heading>span:last-child{color:#202124}}
 @media(prefers-reduced-motion:reduce){body[data-page="advanced-workspace"] .workspace-card{transition:none}}
 
