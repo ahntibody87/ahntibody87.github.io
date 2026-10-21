@@ -27,8 +27,8 @@ body[data-page="advanced-workspace"] .workspace-filters button{padding:8px 11px;
 body[data-page="advanced-workspace"] .workspace-filters button[aria-pressed=true]{background:var(--cyan);color:#fff}
 body[data-page="advanced-workspace"] .workspace-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
 body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:repeat(2,minmax(0,1fr));max-width:1120px}
-body[data-page="advanced-workspace"] .workspace-card{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
-body[data-page="advanced-workspace"] .workspace-card:hover{border-color:#a5b5e9;box-shadow:0 4px 16px #20212407}
+body[data-page="advanced-workspace"] .workspace-card{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+
 body[data-page="advanced-workspace"] .workspace-preview{border-bottom:1px solid var(--line);background:#fff}
 body[data-page="advanced-workspace"] .workspace-preview-label{font:10px/1.5 ui-monospace,Consolas,monospace;letter-spacing:.06em;color:#616978;padding:9px 15px;background:#f8f9fb;border-bottom:1px solid #eef0f3}
 body[data-page="advanced-workspace"] .workspace-preview img{display:block;width:100%;height:210px;object-fit:contain;background:#fff}
@@ -89,3 +89,16 @@ body[data-page="advanced-workspace"] :is(.energy-lab,.rna-lab,.protein-lab,.bbb,
 @media(max-width:700px){body[data-page="advanced-workspace"] .workspace-card-grid,body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:1fr}body[data-page="advanced-workspace"] .workspace-toolbar{align-items:stretch;flex-direction:column;gap:12px}body[data-page="advanced-workspace"] .workspace-search input{width:100%;font-size:16px}body[data-page="advanced-workspace"] .workspace-heading{padding:23px 0}body[data-page="advanced-workspace"] .workspace-heading>p:not(.workspace-eyebrow){font-size:14px}body[data-page="advanced-workspace"] .workspace-units a{font-size:11px;padding:8px 10px}body[data-page="advanced-workspace"] .workspace-preview img{height:190px}body[data-page="advanced-workspace"] .workspace-empty{padding:28px 22px}}
 @media(max-width:520px){body[data-page="advanced-workspace"]{--gutter:16px}body[data-page="advanced-workspace"] .rna-controls .edit-heading,body[data-page="advanced-workspace"] .rna-controls .base-palette{background:#f8f9fb;border-color:#d9dee7}body[data-page="advanced-workspace"] .rna-controls .edit-heading>span:last-child{color:#202124}}
 @media(prefers-reduced-motion:reduce){body[data-page="advanced-workspace"] .workspace-card{transition:none}}
+
+/* Fine-pointer cards reveal their destination on hover or keyboard focus. */
+body[data-page="advanced-workspace"] .workspace-card:focus-visible{outline:3px solid var(--cyan);outline-offset:4px;border-color:#a5b5e9;box-shadow:0 6px 20px #2021240c}
+body[data-page="advanced-workspace"] .workspace-card-footer strong{transition:opacity .2s ease,transform .2s ease}
+@media(hover:hover) and (pointer:fine){
+body[data-page="advanced-workspace"] .workspace-card-footer strong{opacity:0;transform:translateX(-5px)}
+body[data-page="advanced-workspace"] .workspace-card:is(:hover,:focus-visible){transform:scale(1.015);border-color:#a5b5e9;box-shadow:0 6px 20px #2021240c}
+body[data-page="advanced-workspace"] .workspace-card:is(:hover,:focus-visible) .workspace-card-footer strong{opacity:1;transform:translateX(0)}
+}
+@media(prefers-reduced-motion:reduce){
+body[data-page="advanced-workspace"] .workspace-card,body[data-page="advanced-workspace"] .workspace-card-footer strong{transition:none}
+body[data-page="advanced-workspace"] .workspace-card:is(:hover,:focus-visible),body[data-page="advanced-workspace"] .workspace-card .workspace-card-footer strong{transform:none}
+}
