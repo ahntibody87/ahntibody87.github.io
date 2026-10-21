@@ -864,3 +864,14 @@ body { overflow-anchor:none; }
   .about-intro,.about-description { font-size:14px; }
   .course-back { min-height:48px; margin-bottom:24px; font-size:13px; }
 }
+
+/* Align the opening copy with the painted antibody mark in the shared header. */
+@media(min-width:961px) {
+  .hero {
+    padding-inline:calc(max(0px,(100% - 1500px) / 2) + clamp(22px,3.3vw,48px) + 8px);
+  }
+  .hero-content { top:-8px; }
+  .protein-stage {
+    right:max(12px,calc(clamp(12px,(100vw - 1000px) * .18,84px) - 28px));
+  }
+}
