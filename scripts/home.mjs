@@ -3,6 +3,13 @@ import { faviconLinks } from './favicon.mjs';
 import { accessHead } from './course-access.mjs';
 // Home-only presentation; all course destinations come from the existing catalog.
 export function homePage(site, version, sharedVersion) {
+  // Stamp the update date at build time, never when a visitor opens the page.
+  const updatedDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+  const updatedLabel = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric',
+  }).format(new Date(`${updatedDate}T00:00:00Z`));
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg>';
   const book = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v16m0-16C8 2 5 3 2 4v15c3-1 6-2 10 1 4-3 7-2 10-1V4c-3-1-6-2-10 1Z"/></svg>';
@@ -49,7 +56,7 @@ export function homePage(site, version, sharedVersion) {
         <p class="intro">고등학교 생명과학 학습을 위한<br>시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼</p>
         <div class="hero-actions">
           <button class="button button-primary" id="enter-lab" type="button" aria-controls="courses" aria-expanded="false" lang="en">Enter the Lab ${arrow}</button>
-          <a class="button button-secondary" href="#about" lang="en">${book} About the Lab</a>
+          <a class="button button-secondary" href="#about" lang="en">${book} Platform Overview</a>
         </div>
       </div>
       <div class="hero-courses" id="courses" hidden inert>
@@ -69,7 +76,7 @@ export function homePage(site, version, sharedVersion) {
       </div>
     </section>
     <section class="courses about-lab" id="about" aria-labelledby="about-title" tabindex="-1">
-      <div class="section-heading"><p lang="en">ABOUT THE LAB</p></div>
+      <div class="section-heading"><p lang="en">Platform Overview</p></div>
       <h2 id="about-title" lang="en">Created by AHNTIBODY</h2>
       <p class="about-intro">생명과학 교사가 직접 제작하는 인터랙티브 학습 공간입니다.</p>
       <p class="about-description">설명에서 끝나는 수업을 넘어, 학생들이 생명현상을 직접 조작하고 탐구하며 이해할 수 있는 콘텐츠를 만듭니다.</p>
@@ -80,7 +87,7 @@ export function homePage(site, version, sharedVersion) {
       </ul>
     </section>
   </main>
-  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="2026-10-15">Oct 15, 2026</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
+  <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="${updatedDate}">${updatedLabel}</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
 </body>
 </html>
 `;
