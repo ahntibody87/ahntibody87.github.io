@@ -36,7 +36,7 @@ export function homePage(site, version, sharedVersion) {
   <script src="/assets/home-protein.js?v=${version}" defer></script>
   ${accessHead(site)}
 </head>
-<body id="top">
+<body id="top" class="home-page">
   <a class="skip" href="#main">본문 바로가기</a>
   ${siteHeader(site)}
   <main id="main" tabindex="-1">

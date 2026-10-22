@@ -865,13 +865,47 @@ body { overflow-anchor:none; }
   .course-back { min-height:48px; margin-bottom:24px; font-size:13px; }
 }
 
-/* Align the opening copy with the painted antibody mark in the shared header. */
+/* Use the desktop viewport instead of a narrow, fixed-width landing canvas.
+ * Scope the shared header override to home; classroom pages keep their layout. */
 @media(min-width:961px) {
+  .home-page { --home-gutter:clamp(32px,4vw,160px); }
+  .home-page .header-inner {
+    max-width:none;
+    padding-inline:var(--home-gutter);
+  }
+  .home-page main { max-width:none; }
   .hero {
-    padding-inline:calc(max(0px,(100% - 1500px) / 2) + clamp(22px,3.3vw,48px) + 8px);
+    padding:clamp(40px,5svh,80px) calc(var(--home-gutter) + 8px);
   }
-  .hero-content { top:-8px; }
+  .hero-content { width:49%; }
+  .hero h1 {
+    font-size:clamp(100px,min(9vw,19svh),220px);
+    letter-spacing:-.045em;
+  }
+  .hero-copy {
+    font-size:clamp(36px,min(3.7vw,7.8svh),90px);
+    letter-spacing:-.03em;
+  }
+  .hero .eyebrow {
+    font-size:clamp(9px,.65vw,16px);
+    letter-spacing:.2em;
+    white-space:normal;
+  }
+  .lab-name { font-size:clamp(13px,.95vw,23px); letter-spacing:.22em; }
+  .intro { font-size:clamp(15px,1.05vw,25px); }
+  .hero-actions { flex-wrap:wrap; gap:clamp(12px,1vw,24px); }
+  .hero-actions .button {
+    font-size:clamp(14px,.9vw,21px);
+    min-height:clamp(54px,4vw,72px);
+    padding-inline:clamp(24px,1.8vw,44px);
+    min-width:0;
+  }
   .protein-stage {
-    right:max(12px,calc(clamp(12px,(100vw - 1000px) * .18,84px) - 28px));
+    width:min(56vw,calc((100svh - var(--header-height,89px) - 64px) * 1.25));
+    max-height:none;
+    right:2vw;
+    transform:translateY(-50%);
   }
+  .courses { max-width:none; padding-inline:calc(var(--home-gutter) + 8px); }
+  .site-footer { max-width:none; margin-inline:calc(var(--home-gutter) + 8px); }
 }
