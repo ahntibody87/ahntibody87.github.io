@@ -933,7 +933,9 @@ body { overflow-anchor:none; }
     width:min(100%,105cqh);
     max-height:none;
     inset:auto;
-    transform:none;
+    /* Enlarge only the protein; preserve the copy, buttons and shared header. */
+    transform:scale(1.15);
+    transform-origin:center;
   }
   .courses { max-width:none; padding-inline:calc(var(--home-gutter) + 8px); }
   .site-footer { max-width:none; margin-inline:calc(var(--home-gutter) + 8px); }
