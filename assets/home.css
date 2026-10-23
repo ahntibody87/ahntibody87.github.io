@@ -872,39 +872,73 @@ body { overflow-anchor:none; }
   .home-page .header-inner {
     max-width:none;
     padding-inline:var(--home-gutter);
+    min-height:clamp(64px,10svh,88px);
   }
   .home-page main { max-width:none; }
   .hero {
-    padding:clamp(40px,5svh,80px) calc(var(--home-gutter) + 8px);
+    /* Size everything against the space below the actual, measured header.
+     * Equal columns share a centre line; neither can push the buttons down. */
+    height:calc(100svh - var(--header-height,89px));
+    min-height:380px;
+    container-type:size;
+    padding:0 calc(var(--home-gutter) + 8px);
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:clamp(20px,2vw,64px);
+    grid-template-rows:minmax(0,1fr);
+    overflow:visible;
   }
-  .hero-content { width:49%; }
+  .hero-content { width:100%; grid-area:1 / 1; }
+  .hero-courses { grid-area:1 / 1 / 2 / -1; }
   .hero h1 {
-    font-size:clamp(100px,min(9vw,19svh),220px);
+    font-size:clamp(64px,min(9vw,17cqh),220px);
     letter-spacing:-.045em;
+    margin-bottom:1.6cqh;
   }
   .hero-copy {
-    font-size:clamp(36px,min(3.7vw,7.8svh),90px);
+    font-size:clamp(26px,min(3.7vw,6.9cqh),90px);
     letter-spacing:-.03em;
+    line-height:1.16;
   }
   .hero .eyebrow {
-    font-size:clamp(9px,.65vw,16px);
+    font-size:clamp(9px,min(.65vw,1.5cqh),16px);
     letter-spacing:.2em;
     white-space:normal;
+    line-height:1.5;
+    margin-bottom:2.5cqh;
   }
-  .lab-name { font-size:clamp(13px,.95vw,23px); letter-spacing:.22em; }
-  .intro { font-size:clamp(15px,1.05vw,25px); }
+  .lab-name { font-size:clamp(10px,min(.95vw,2.1cqh),23px); letter-spacing:.22em; }
+  .accent-line { height:2px; margin:2.5cqh 0 2cqh; }
+  .intro {
+    font-size:clamp(12px,min(1.05vw,2.25cqh),25px);
+    line-height:1.7;
+    margin:2.6cqh 0 3cqh;
+  }
   .hero-actions { flex-wrap:wrap; gap:clamp(12px,1vw,24px); }
   .hero-actions .button {
-    font-size:clamp(14px,.9vw,21px);
-    min-height:clamp(54px,4vw,72px);
+    font-size:clamp(12px,min(.9vw,1.9cqh),21px);
+    line-height:1.4;
+    min-height:clamp(40px,6.5cqh,72px);
+    padding-block:1.3cqh;
     padding-inline:clamp(24px,1.8vw,44px);
     min-width:0;
   }
+  .hero-visual {
+    position:relative;
+    inset:auto;
+    grid-area:1 / 2;
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    overflow:visible;
+  }
   .protein-stage {
-    width:min(56vw,calc((100svh - var(--header-height,89px) - 64px) * 1.25));
+    position:relative;
+    width:min(100%,105cqh);
     max-height:none;
-    right:2vw;
-    transform:translateY(-50%);
+    inset:auto;
+    transform:none;
   }
   .courses { max-width:none; padding-inline:calc(var(--home-gutter) + 8px); }
   .site-footer { max-width:none; margin-inline:calc(var(--home-gutter) + 8px); }
