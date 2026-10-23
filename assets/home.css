@@ -865,15 +865,10 @@ body { overflow-anchor:none; }
   .course-back { min-height:48px; margin-bottom:24px; font-size:13px; }
 }
 
-/* Use the desktop viewport instead of a narrow, fixed-width landing canvas.
- * Scope the shared header override to home; classroom pages keep their layout. */
+/* Home composition uses the same gutters as every classroom page.
+ * Header geometry belongs exclusively to theme.css. */
 @media(min-width:961px) {
-  .home-page { --home-gutter:clamp(32px,4vw,160px); }
-  .home-page .header-inner {
-    max-width:none;
-    padding-inline:var(--home-gutter);
-    min-height:clamp(64px,10svh,88px);
-  }
+  .home-page { --home-gutter:var(--site-gutter); }
   .home-page main { max-width:none; }
   .hero {
     /* Size everything against the space below the actual, measured header.

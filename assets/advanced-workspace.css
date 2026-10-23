@@ -1,9 +1,9 @@
 /* Workspace chrome and activity controls. Scientific encodings and drawing canvases retain their palettes. */
-body[data-page="advanced-workspace"]{--font-sans:"Pretendard ATLL",Pretendard,"Segoe UI","Malgun Gothic",sans-serif;--bg:#f7f8fa;--surface:#fff;--text:#202124;--muted:#525866;--cyan:#315efb;--line:#e5e7eb;--tint:#f0f3ff;--ink:var(--text);--paper:var(--bg);--green:var(--cyan);--pale:var(--tint);--gutter:clamp(20px,4vw,48px);font-family:var(--font-sans);line-height:1.65}
+body[data-page="advanced-workspace"]{--font-sans:"Pretendard ATLL",Pretendard,"Segoe UI","Malgun Gothic",sans-serif;--bg:#f7f8fa;--surface:#fff;--text:#202124;--muted:#525866;--cyan:#315efb;--line:#e5e7eb;--tint:#f0f3ff;--ink:var(--text);--paper:var(--bg);--green:var(--cyan);--pale:var(--tint);--gutter:var(--site-gutter);font-family:var(--font-sans);line-height:1.65}
 body[data-page="advanced-workspace"] .site-header .brand-antibody{color:var(--text)}
-body[data-page="advanced-workspace"] .page>.topbar{min-height:58px;height:auto;max-width:1440px;margin:auto;border:0;background:transparent}
+body[data-page="advanced-workspace"] .page>.topbar{min-height:58px;height:auto;max-width:none;margin:auto;border:0;background:transparent}
 body[data-page="advanced-workspace"] .breadcrumbs a{padding:0;margin:0;font-size:12px}
-body[data-course="advanced-life-science"][data-page="advanced-workspace"] main{max-width:1440px;padding:0 var(--gutter)}
+body[data-course="advanced-life-science"][data-page="advanced-workspace"] main{max-width:none;padding:0 var(--gutter)}
 body[data-page="advanced-workspace"] .workspace-units{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0 0}
 body[data-page="advanced-workspace"] .workspace-units a{display:flex;align-items:center;gap:8px;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:12px;color:var(--muted)}
 body[data-page="advanced-workspace"] .workspace-units a span{font-variant-numeric:tabular-nums;font-size:11px}
@@ -22,7 +22,7 @@ body[data-page="advanced-workspace"] .workspace-filters{display:flex;flex-wrap:w
 body[data-page="advanced-workspace"] .workspace-filters button{padding:8px 11px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
 body[data-page="advanced-workspace"] .workspace-filters button[aria-pressed=true]{background:var(--cyan);color:#fff}
 body[data-page="advanced-workspace"] .workspace-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:repeat(2,minmax(0,1fr));max-width:1120px}
+body[data-page="advanced-workspace"] .workspace-card-grid.workspace-few{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}
 body[data-page="advanced-workspace"] .workspace-card{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid #d5dae3;box-shadow:0 2px 7px #2021240a,0 1px 2px #20212405;border-radius:10px;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 
 body[data-page="advanced-workspace"] .workspace-preview{border-bottom:1px solid var(--line);background:#f8fafc}
@@ -95,3 +95,16 @@ body[data-page="advanced-workspace"] .workspace-card:is(:hover,:focus-visible) .
 body[data-page="advanced-workspace"] .workspace-card,body[data-page="advanced-workspace"] .workspace-card-footer strong{transition:none}
 body[data-page="advanced-workspace"] .workspace-card:is(:hover,:focus-visible),body[data-page="advanced-workspace"] .workspace-card .workspace-card-footer strong{transform:none}
 }
+
+/* Unit and activity shells use the full shared content width. */
+@media(min-width:1600px) {
+  body[data-page="advanced-workspace"] .workspace-heading h1 {font-size:clamp(38px,2.4vw,60px)}
+  body[data-page="advanced-workspace"] .workspace-heading>p:not(.workspace-eyebrow) {font-size:clamp(15px,1vw,23px);max-width:65ch}
+  body[data-page="advanced-workspace"] .workspace-card h3 {font-size:clamp(20px,1.4vw,32px)}
+  body[data-page="advanced-workspace"] .workspace-card-description {font-size:clamp(14px,.9vw,21px)}
+  body[data-page="advanced-workspace"] .workspace-card-body {padding:clamp(21px,1.5vw,36px)}
+}
+@media(min-width:961px) {
+  body[data-page="advanced-workspace"] .workspace-preview img {height:clamp(160px,26svh,340px);aspect-ratio:auto}
+}
+body[data-page="advanced-workspace"] .activity-content :is(.energy-lab,.rna-lab,.protein-lab,.bbb,.nl,.xci-lab) {max-width:none;width:100%}

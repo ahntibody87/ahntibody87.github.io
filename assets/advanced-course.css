@@ -1,12 +1,12 @@
 @font-face{font-family:"Pretendard ATLL";src:url("/assets/fonts/PretendardVariable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 /* Loaded only by the advanced-life-science index; all descendant pages retain their styles. */
-body[data-page="advanced-course"]{--font-sans:"Pretendard ATLL",Pretendard,"Segoe UI","Malgun Gothic",sans-serif;--bg:#f7f8fa;--surface:#fff;--text:#202124;--muted:#525866;--cyan:#315efb;--line:#e5e7eb;--tint:#f0f3ff;--ink:var(--text);--paper:var(--bg);--green:var(--cyan);--pale:var(--tint);--gutter:clamp(20px,4vw,48px);font-family:var(--font-sans);line-height:1.6}
+body[data-page="advanced-course"]{--font-sans:"Pretendard ATLL",Pretendard,"Segoe UI","Malgun Gothic",sans-serif;--bg:#f7f8fa;--surface:#fff;--text:#202124;--muted:#525866;--cyan:#315efb;--line:#e5e7eb;--tint:#f0f3ff;--ink:var(--text);--paper:var(--bg);--green:var(--cyan);--pale:var(--tint);--gutter:var(--site-gutter);font-family:var(--font-sans);line-height:1.6}
 body[data-page="advanced-course"] .site-header .brand-antibody{color:var(--text)}
-body[data-page="advanced-course"] .page>.topbar{height:auto;min-height:58px;max-width:1280px;margin:auto;border:0;background:transparent}
+body[data-page="advanced-course"] .page>.topbar{height:auto;min-height:58px;max-width:none;margin:auto;border:0;background:transparent}
 body[data-page="advanced-course"] .breadcrumbs ol{gap:9px}
 body[data-page="advanced-course"] .breadcrumbs a{padding:0;margin:0;border-radius:0;font-size:12px}
 body[data-page="advanced-course"] .breadcrumbs a:hover{background:transparent;color:var(--cyan)}
-body[data-page="advanced-course"] main{max-width:1280px;padding:0 var(--gutter)}
+body[data-page="advanced-course"] main{max-width:none;padding:0 var(--gutter)}
 body[data-page="advanced-course"] .research-intro{padding:28px 0 34px;border-bottom:1px solid var(--line)}
 body[data-page="advanced-course"] .research-eyebrow{font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:600;margin:0 0 12px}
 body[data-page="advanced-course"] h1{font-size:clamp(30px,3.4vw,42px);line-height:1.25;font-weight:750;letter-spacing:-.045em}
@@ -54,4 +54,20 @@ body[data-page="advanced-course"] .research-unit:is(:hover,:focus-visible) .rese
 @media(prefers-reduced-motion:reduce){
 body[data-page="advanced-course"] .research-unit,body[data-page="advanced-course"] .research-card-action{transition:none}
 body[data-page="advanced-course"] .research-unit:is(:hover,:focus-visible),body[data-page="advanced-course"] .research-unit .research-card-action{transform:none}
+}
+
+/* Expand the unit overview with the available viewport, including its artwork. */
+@media(min-width:961px) {
+  body[data-page="advanced-course"] .research-intro {padding-block:clamp(24px,3svh,40px)}
+  body[data-page="advanced-course"] h1 {font-size:clamp(32px,2vw,52px)}
+  body[data-page="advanced-course"] .research-description {font-size:clamp(15px,.85vw,20px)}
+  body[data-page="advanced-course"] .research-unit-grid {gap:clamp(18px,1.2vw,32px)}
+  body[data-page="advanced-course"] .research-unit {padding:clamp(22px,1.1vw,28px) clamp(24px,1.7vw,44px) 0}
+  body[data-page="advanced-course"] .research-unit h3 {font-size:clamp(23px,1.3vw,32px)}
+  body[data-page="advanced-course"] .research-card-content {min-height:clamp(140px,14svh,180px)}
+  body[data-page="advanced-course"] .research-unit-art {max-height:clamp(140px,14svh,180px)}
+  body[data-page="advanced-course"] :is(.research-activity-list,.research-preparing) {font-size:clamp(13px,.9vw,22px)}
+  body[data-page="advanced-course"] :is(.research-eyebrow,.research-card-heading,.research-card-footer) {font-size:clamp(11px,.7vw,17px)}
+  body[data-page="advanced-course"] .research-types {font-size:clamp(9px,.6vw,14px)}
+  body[data-page="advanced-course"] .research-section-heading h2 {font-size:clamp(21px,1.4vw,32px)}
 }

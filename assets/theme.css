@@ -2,7 +2,7 @@
 :root {
   --font-sans:Inter,"Segoe UI","Noto Sans KR","Malgun Gothic",Arial,sans-serif;
   --space-1:8px; --space-2:16px; --space-3:24px; --space-4:32px; --space-6:48px;
-  --gutter:clamp(22px,3.3vw,48px); --content-width:1500px;
+  --site-gutter:22px; --gutter:var(--site-gutter); --content-width:none;
   --header-height:89px; --radius:10px;
   --bg:#f7fafc; --surface:#fff; --text:#142e40; --muted:#516779;
   --cyan:#086b80; --line:#d8e4eb; --tint:#eaf3f7; --header-bg:#fff;
@@ -14,12 +14,12 @@
   --cyan:#42e6f0; --line:rgba(111,198,220,.24); --tint:#0a2935; --header-bg:#030c14;
   color-scheme:dark;
 }
-html {scroll-padding-top:calc(var(--header-height) + var(--space-3))}
+html {scrollbar-gutter:stable;scroll-padding-top:calc(var(--header-height) + var(--space-3))}
 body {font-family:var(--font-sans);background:var(--bg);color:var(--text);padding-top:var(--header-height);-webkit-font-smoothing:antialiased}
 [id] {scroll-margin-top:var(--space-2)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {outline:3px solid var(--cyan);outline-offset:4px}
 .site-header {--gutter:clamp(22px,3.3vw,48px);font-family:Inter,"Segoe UI","Noto Sans KR","Malgun Gothic",Arial,sans-serif;position:fixed;inset:0 0 auto;z-index:100;border-bottom:1px solid var(--line);background:var(--header-bg);line-height:1.5}
-.header-inner {max-width:var(--content-width);min-height:88px;margin:auto;padding:0 var(--gutter);display:flex;align-items:center;gap:var(--space-4)}
+.site-header .header-inner {box-sizing:border-box;max-width:none;min-height:88px;margin:auto;padding:0 var(--site-gutter);display:flex;align-items:center;gap:var(--space-4)}
 .site-header .wordmark {display:flex;align-items:center;gap:10px;font-size:40px;font-weight:800;letter-spacing:-2px;color:var(--text);background:none;text-decoration:none;flex-shrink:0}
 .site-header .brand-antibody {display:block;width:40px;height:40px;flex:none;color:#1f3a5f}
 [data-theme="dark"] .site-header .brand-antibody {color:#fff}
@@ -34,7 +34,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {o
 .site-header .menu-toggle {order:1;display:none;position:static;margin-left:auto;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-size:13px}
 .skip {z-index:110}
 [data-theme="light"] .page {margin-left:0}
-[data-theme="light"] main {max-width:1280px;padding:0 var(--gutter)}
+[data-theme="light"] main {max-width:none;width:100%;padding:0 var(--gutter)}
 [data-theme="light"] .topbar {padding-inline:var(--gutter);background:var(--surface)}
 [data-theme="light"] .hero {padding:var(--space-6) 0}
 [data-theme="light"] .hero.compact {padding:var(--space-4) 0}
@@ -60,7 +60,7 @@ body[data-course="advanced-life-science"] :is(.hero h1,.hero .intro,.portal-card
 [data-theme="light"] .activity-content .rna-lab {--r-ink:var(--text);--r-muted:var(--muted);--r-green:var(--cyan);--r-line:var(--line);--r-paper:var(--surface)}
 [data-theme="light"] .activity-content :is(.panel,.ce-panel,.lab-card) {border-radius:var(--radius)}
 @media(max-width:960px) {
-  .header-inner {min-height:76px;flex-wrap:wrap;gap:0 var(--space-2);padding-block:12px}
+  .site-header .header-inner {min-height:76px;flex-wrap:wrap;gap:0 var(--space-2);padding-block:12px}
   .site-header .wordmark {font-size:32px}
   .site-header .brand-antibody {width:32px;height:32px}
   .site-header #navigation {width:100%;flex-wrap:wrap;gap:8px;margin:10px 0 0;align-self:auto}
@@ -82,3 +82,17 @@ body[data-course="advanced-life-science"] :is(.hero h1,.hero .intro,.portal-card
 .portal-back-top {margin-left:auto;gap:7px;padding:8px 0 8px 12px;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;white-space:nowrap}
 .portal-back-top:hover {color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
 .portal-back-top:focus-visible {outline:3px solid var(--cyan);outline-offset:4px;border-radius:4px}
+
+/* Header geometry is shared by every route; only theme colours may differ. */
+.site-header .header-inner {gap:32px;margin-inline:auto}
+.site-header .wordmark {line-height:1.5}
+@media(min-width:961px) {
+  :root {--site-gutter:clamp(32px,4vw,160px)}
+  .site-header .header-inner {min-height:clamp(64px,10svh,88px)}
+  [data-theme="light"] .page>main,
+  [data-theme="light"] body[data-page] .page>main,
+  [data-theme="light"] .page>.topbar {max-width:none;width:100%;padding-inline:calc(var(--site-gutter) + 8px)}
+}
+@media(max-width:960px) {
+  .site-header .header-inner {padding:12px var(--site-gutter);gap:0 16px}
+}
