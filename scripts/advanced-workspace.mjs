@@ -13,7 +13,7 @@ const previews = {
   'neuron-lab':['NEURAL CIRCUIT','신경 신호 개념도'],
   'rna-lab':['RNA STRUCTURE','RNA 접힘 개념도'],
   'x-inactivation':['XIST & CHROMATIN','X 불활성화 개념도'],
-  'embryo-atlas':['HUMAN DEVELOPMENT','사람의 발생과 세 배엽 개념도','/assets/activities/embryo-atlas/preview.svg']
+  'embryo-atlas':['HUMAN DEVELOPMENT','상실배와 포배낭의 구조','/assets/activities/embryo-atlas/preview.webp']
 };
 export function unitNavigation(course, unit) {
   return `<nav class="workspace-units" aria-label="고급 생명과학 단원">${course.units.map((u,i)=>`<a href="/${course.id}/${u.id}/"${u.id===unit.id?' aria-current="page"':''}><span>${String(i+1).padStart(2,'0')}</span>${esc(u.title)}</a>`).join('')}</nav>`;

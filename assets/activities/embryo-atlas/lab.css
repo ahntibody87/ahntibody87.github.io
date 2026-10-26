@@ -320,3 +320,60 @@
 .embryo-lab dialog a{color:#315efb}
 .embryo-lab .speed-label select{background:#f2f4f7}
 @media(max-width:700px){.embryo-lab .ea-toolbar{align-items:flex-start;flex-direction:column;gap:10px}.embryo-lab .tabs button{padding:12px 8px;font-size:12px}.embryo-lab .tabs button span{display:block;margin:0 0 4px}.embryo-lab .tabs{gap:3px}}
+
+/* Native ATLL learning surface: restrained colours, light scientific models. */
+.embryo-lab{--navy:#f5f8fb;--ecto:#7ca5d8;--meso:#d99a9c;--endo:#d4ad58}
+.embryo-lab .visual-card,.embryo-lab .layer-map{background:#f5f8fb;color:var(--ink);border:1px solid #d8dfe8}
+.embryo-lab .visual-top{padding:20px 22px 10px;background:#fff;border-bottom:1px solid var(--line)}
+.embryo-lab .live-label{color:#69788d}
+.embryo-lab .segmented{background:#f1f4f8;border:1px solid #d8dfe8}
+.embryo-lab .segmented button{color:#58687a}
+.embryo-lab .segmented button.active{background:#e1e8f3;color:#253d62}
+.embryo-lab .view-caption{margin:0;padding:10px 18px;color:#607086;background:#f5f8fb;min-height:36px}
+.embryo-lab .visual-bottom{color:#59677b;border-top:1px solid #dce3eb;background:white;padding:13px 20px;gap:14px}
+.embryo-lab .visual-bottom .check input{accent-color:#315efb}
+.embryo-lab .model-viewport{position:relative;isolation:isolate;height:clamp(390px,37vw,640px);min-width:0;overflow:hidden;background:#f5f8fb}
+.embryo-lab .model-viewport>canvas{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action:none;cursor:grab;outline-offset:-4px}
+.embryo-lab .model-viewport>canvas:active{cursor:grabbing}
+.embryo-lab .model-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.embryo-lab .model-labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.embryo-lab .model-labels path{fill:none;stroke:#8395ab;stroke-width:1;opacity:.7}
+.embryo-lab .model-labels span{position:absolute;transform:translate(-50%,-50%);font-size:11px;line-height:1.4;font-weight:600;color:#35465e;background:#ffffffdc;border:1px solid #cdd6e3;padding:5px 8px;border-radius:3px;white-space:nowrap;width:max-content;max-width:210px;box-shadow:0 1px 3px #2c40500a}
+.embryo-lab .model-labels span:before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:#5b7192;margin-right:5px;vertical-align:middle}
+.embryo-lab .rotation-hint{position:absolute;bottom:12px;left:15px;font-size:10px;letter-spacing:.01em;color:#748296;pointer-events:none}
+.embryo-lab .section-inset{position:absolute;top:12px;right:12px;width:175px;margin:0;background:#ffffffed;border:1px solid #dce3ec;border-radius:5px;overflow:hidden;pointer-events:none}
+.embryo-lab .section-inset figcaption{font-size:10px;padding:7px 9px;border-bottom:1px solid #e9edf2;color:#516178}
+.embryo-lab .section-inset canvas{display:block;width:100%;height:auto;aspect-ratio:290/190}
+.embryo-lab .section-inset>span{display:block;text-align:center;font-size:9px;color:#8390a1;padding-bottom:5px}
+.embryo-lab .model-controls{padding:11px 15px;border-top:1px solid #dce3eb;background:white;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.embryo-lab .camera-buttons{display:flex;gap:4px;flex-wrap:wrap}
+.embryo-lab .camera-buttons button{font-size:11px;min-height:32px;min-width:32px;padding:5px 9px;background:#f3f5f8;border:1px solid #e0e5ed;border-radius:4px;color:#36475f}
+.embryo-lab .cut-controls{display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.embryo-lab .cut-controls label{display:flex;align-items:center;gap:8px;font-size:10px;color:#58687e}
+.embryo-lab .cut-controls input[type=range]{width:90px;height:18px;accent-color:#315efb}
+.embryo-lab .cut-controls input[type=checkbox]{accent-color:#315efb}
+.embryo-lab .layer-switches{background:#fff;border-bottom:1px solid var(--line);padding:16px 20px}
+.embryo-lab .layer-switches button{color:#4b5a70;border:1px solid #d5dce7;background:#f8f9fc;min-height:36px}
+.embryo-lab .layer-switches button.active{color:#253d62;background:#e6edf8;border-color:#aabbd8}
+.embryo-lab .layer-transport{padding:16px 20px;background:#fff;border-top:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.embryo-lab .layer-transport label{font-size:11px;color:#607086}
+.embryo-lab .layer-transport input{flex:1;min-width:180px;accent-color:#315efb}
+.embryo-lab .layer-transport p{flex-basis:100%;font-size:12px;color:#53657d}
+.embryo-lab .diagram-note{background:#f5f8fb;color:#69798e;padding:10px 18px;margin:0;font-size:10px}
+.embryo-lab .layer-detail{color:#28364b}
+.embryo-lab .myod-visual{background:#f5f8fb}
+.embryo-lab .myod-controls{background:#fff;border-top:1px solid var(--line);color:#516178}
+.embryo-lab .myod-controls .text-button{color:#315efb}
+.embryo-lab .myod-workspace{color:#26364b;border:1px solid #d8dfe8}
+.embryo-lab .myod-explanation{background:#fff;border-color:#dce3eb}
+.embryo-lab .myod-explanation .mini-label{color:#315efb}
+.embryo-lab .myod-explanation p{color:#526279}
+.embryo-lab .myod-explanation small{color:#69798e}
+.embryo-lab .dna-fixed{color:#456d59;border-color:#dce3eb}
+.embryo-lab .myod-controls input{accent-color:#315efb}
+.embryo-lab .webgl-error{position:absolute;inset:35% 12% auto;padding:20px;background:white;border:1px solid #d8dfe8;font-size:14px;color:#46566a}
+.embryo-lab .model-viewport[data-context-lost]:after{content:'3차원 화면 연결이 끊겼습니다. 페이지를 새로고침해 주세요.';position:absolute;inset:40% 10% auto;padding:20px;background:white;border:1px solid #d8dfe8;color:#46566a}
+@media(min-width:1550px){.embryo-lab .explorer-grid{grid-template-columns:minmax(0,1fr) 330px;gap:28px}.embryo-lab .explanation>p{font-size:14px}.embryo-lab .explanation h2{font-size:24px}}
+@media(max-width:1100px){.embryo-lab .explorer-grid{grid-template-columns:minmax(0,1fr) 260px;gap:18px}.embryo-lab .model-controls{gap:9px}.embryo-lab .section-inset{width:145px}.embryo-lab .model-labels span{font-size:10px}}
+@media(max-width:850px){.embryo-lab .explorer-grid,.embryo-lab .layer-layout{grid-template-columns:1fr}.embryo-lab .model-viewport{height:480px}.embryo-lab .explanation{padding:8px 4px}.embryo-lab .section-inset{width:150px}}
+@media(max-width:500px){.embryo-lab .model-viewport{height:370px}.embryo-lab .section-inset{width:110px;top:8px;right:8px}.embryo-lab .section-inset figcaption{font-size:8px;padding:5px}.embryo-lab .section-inset>span{font-size:8px}.embryo-lab .model-labels span{font-size:9px;padding:4px 5px;max-width:158px;white-space:normal}.embryo-lab .visual-top{padding:13px 12px 9px}.embryo-lab .visual-top h2{font-size:17px}.embryo-lab .segmented button{font-size:10px;padding:6px}.embryo-lab .model-controls{padding:10px}.embryo-lab .camera-buttons{gap:3px}.embryo-lab .camera-buttons button{font-size:10px;padding:4px 7px}.embryo-lab .cut-controls{gap:10px}.embryo-lab .cut-controls input[type=range]{width:85px}.embryo-lab .rotation-hint{font-size:9px}.embryo-lab .layer-transport{padding:12px}.embryo-lab .layer-transport input{flex-basis:100%}.embryo-lab .visual-bottom{padding:12px;gap:10px}.embryo-lab .legend{gap:10px}}
