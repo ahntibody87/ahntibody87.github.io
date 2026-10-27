@@ -333,14 +333,18 @@
 .embryo-lab .visual-bottom{color:#59677b;border-top:1px solid #dce3eb;background:white;padding:13px 20px;gap:14px}
 .embryo-lab .visual-bottom .check input{accent-color:#315efb}
 .embryo-lab .model-viewport{position:relative;isolation:isolate;height:clamp(390px,37vw,640px);min-width:0;overflow:hidden;background:#f5f8fb}
-.embryo-lab .model-viewport>canvas{display:block;width:100%;height:100%;aspect-ratio:auto;touch-action:none;cursor:grab;outline-offset:-4px}
+.embryo-lab .model-viewport>canvas{display:block;width:100%;height:100%;max-height:none;aspect-ratio:auto;touch-action:none;cursor:grab;outline-offset:-4px}
 .embryo-lab .model-viewport>canvas:active{cursor:grabbing}
 .embryo-lab .model-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .embryo-lab .model-labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .embryo-lab .model-labels path{fill:none;stroke:#8395ab;stroke-width:1;opacity:.7}
+.embryo-lab .model-labels circle{fill:#526b8e;stroke:white;stroke-width:1}
+.embryo-lab .model-labels .is-occluded path{stroke-dasharray:4 3}
+.embryo-lab .model-labels .is-occluded circle{fill:white;stroke:#526b8e}
 .embryo-lab .model-labels span{position:absolute;transform:translate(-50%,-50%);font-size:11px;line-height:1.4;font-weight:600;color:#35465e;background:#ffffffdc;border:1px solid #cdd6e3;padding:5px 8px;border-radius:3px;white-space:nowrap;width:max-content;max-width:210px;box-shadow:0 1px 3px #2c40500a}
 .embryo-lab .model-labels span:before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:#5b7192;margin-right:5px;vertical-align:middle}
 .embryo-lab .rotation-hint{position:absolute;bottom:12px;left:15px;font-size:10px;letter-spacing:.01em;color:#748296;pointer-events:none}
+.embryo-lab .has-occluded-labels .rotation-hint:after{content:' · 점선: 가려진 내부 부위'}
 .embryo-lab .section-inset{position:absolute;top:12px;right:12px;width:175px;margin:0;background:#ffffffed;border:1px solid #dce3ec;border-radius:5px;overflow:hidden;pointer-events:none}
 .embryo-lab .section-inset figcaption{font-size:10px;padding:7px 9px;border-bottom:1px solid #e9edf2;color:#516178}
 .embryo-lab .section-inset canvas{display:block;width:100%;height:auto;aspect-ratio:290/190}

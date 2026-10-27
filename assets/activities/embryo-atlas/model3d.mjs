@@ -9,6 +9,15 @@ const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
 const SPHERE=new T.SphereGeometry(1,24,18), NUCLEUS=new T.SphereGeometry(1,12,8);
 const dummy=new T.Object3D();
 
+// Store a point on the actual mesh, so deformation and parent transforms are
+// applied before projecting an annotation into the canvas.
+function anchor(mesh,point=V(),instance=null){return {mesh,point,instance};}
+function sheetAnchor(sheet,u,v){
+  const i=Math.round(clamp((u-sheet.u0)/(sheet.u1-sheet.u0))*sheet.nx);
+  const j=Math.round(clamp((v+.98)/1.96)*sheet.nz);
+  return {mesh:sheet.mesh,vertex:j*(sheet.nx+1)+i,sheet};
+}
+
 function lattice(n){
   if(n===1)return [V()];
   if(n===2)return [V(-.88,0,0),V(.88,0,0)];
@@ -120,7 +129,7 @@ class Sheet {
       const vtx=map(u,v), du=map(u+.001,v).sub(vtx),dv=map(u,v+.001).sub(vtx), normal=dv.cross(du).normalize();
       for(let side=0;side<2;side++){const q=vtx.clone().addScaledVector(normal,side===0?.035:-.035);p.setXYZ(side*n+j*(this.nx+1)+i,q.x,q.y,q.z);}
     }
-    p.needsUpdate=true;this.g.computeVertexNormals();this.nuclei.reset();
+    p.needsUpdate=true;this.g.computeVertexNormals();this.g.computeBoundingSphere();this.nuclei.reset();
     for(let j=0;j<21;j++)for(let i=0;i<19;i++){
       let u=mix(this.u0+.017,this.u1-.017,(i+.25*(j%2))/18.3),v=mix(-.94,.94,j/20);
       if(this.kind==='meso'||this.kind==='endo')u*=growth;
@@ -144,7 +153,7 @@ export class EmbryoView {
     this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(34,1,.1,100);
     this.scene.add(new T.HemisphereLight(0xf6faff,0xc4c9d1,2.3));const light=new T.DirectionalLight(0xfff5e9,2.4);light.position.set(-4,7,6);this.scene.add(light);
     const rim=new T.DirectionalLight(0xc9ddff,1.3);rim.position.set(4,2,-5);this.scene.add(rim);
-    this.plane=new T.Plane(V(0,0,-1),.55);this.angle=.35;this.elevation=.28;this.distance=9.6;
+    this.plane=new T.Plane(V(0,0,-1),.55);this.angle=.35;this.elevation=.28;this.distance=8.8;
     this.early=new T.Group();this.blast=new T.Group();this.disc=new T.Group();this.scene.add(this.early,this.blast,this.disc);
     this.earlyCells=[];
     for(let i=0;i<8;i++){
@@ -159,9 +168,9 @@ export class EmbryoView {
       this.packed.push({body,nu,cap,capN,c,initial,final});nu.scale.setScalar(.145);
       body.material.color.offsetHSL((i%3-1)*.018,(i%4-2)*.015,(i%5-2)*.012);cap.material.color.copy(body.material.color);
     });
-    const membrane=new T.Mesh(new T.SphereGeometry(2.3,48,32),new T.MeshPhysicalMaterial({color:0xc7d6e4,transparent:true,opacity:.10,roughness:.55,depthWrite:false,side:T.FrontSide}));this.early.add(membrane);
+    const membrane=new T.Mesh(new T.SphereGeometry(2.3,48,32),new T.MeshPhysicalMaterial({color:0xc7d6e4,transparent:true,opacity:.10,roughness:.55,depthWrite:false,side:T.FrontSide}));this.early.add(membrane);this.membrane=membrane;
     const wire=new T.LineLoop(new T.BufferGeometry().setFromPoints(Array.from({length:128},(_,i)=>V(Math.cos(i*PI/64)*2.31,Math.sin(i*PI/64)*2.31,0))),new T.LineBasicMaterial({color:0xb3c3d5,transparent:true,opacity:.4}));this.early.add(wire);
-    const shell=dualShell();this.blast.add(new T.Mesh(shell.g,this.material('shell')));
+    const shell=dualShell();this.shell=new T.Mesh(shell.g,this.material('shell'));this.blast.add(this.shell);
     const sn=this.pool('shell',shell.nuclei.length,.58,true);for(const p of shell.nuclei)sn.add(p,V(.057,.057,.021),new T.Quaternion().setFromUnitVectors(V(0,0,1),p.clone().normalize()));sn.finish();this.blast.add(sn.mesh);
     this.icm=this.pool('icm',32,1);this.icmN=this.pool('icm',32,.45,true);this.blast.add(this.icm.mesh,this.icmN.mesh);this.icmTargets=[];
     for(let i=0;i<24;i++){const a=i*2.39996,r=.17*Math.sqrt(i);this.icmTargets.push(V(-1.15+Math.cos(a)*r*.72,.8+Math.sin(a)*r*.82,-.56+(i%3)*.27));}
@@ -192,13 +201,13 @@ export class EmbryoView {
     c.addEventListener('webglcontextlost',e=>{e.preventDefault();c.parentElement.dataset.contextLost='true';});
     c.addEventListener('webglcontextrestored',()=>{delete c.parentElement.dataset.contextLost;this.update(this.lastTime,this.options);});
   }
-  view(which){if(this.failed)return;if(which==='reset'){this.angle=.35;this.elevation=this.lastTime>=6?.48:.28;this.distance=9.6;}if(which==='top'){this.angle=0;this.elevation=1.45;}if(which==='side'){this.angle=0;this.elevation=.03;}if(which==='left')this.angle-=.22;if(which==='right')this.angle+=.22;if(which==='in')this.distance=Math.max(6,this.distance-.6);if(which==='out')this.distance=Math.min(16,this.distance+.6);this.render();}
+  view(which){if(this.failed)return;if(which==='reset'){this.angle=.35;this.elevation=this.lastTime>=6?.48:.28;this.distance=8.8;}if(which==='top'){this.angle=0;this.elevation=1.45;}if(which==='side'){this.angle=0;this.elevation=.03;}if(which==='left')this.angle-=.22;if(which==='right')this.angle+=.22;if(which==='in')this.distance=Math.max(6,this.distance-.6);if(which==='out')this.distance=Math.min(16,this.distance+.6);this.render();}
   annotate(list){
     this.labels=list;if(!this.labelHost)return;
     if(this.labelHost.dataset.signature===list.map(x=>x[0]).join('|'))return;
     this.labelHost.dataset.signature=list.map(x=>x[0]).join('|');
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    list.forEach(()=>{const line=document.createElementNS('http://www.w3.org/2000/svg','path');svg.append(line);});
+    list.forEach(()=>{const group=document.createElementNS('http://www.w3.org/2000/svg','g');const line=document.createElementNS(svg.namespaceURI,'path'),dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('r','3');group.append(line,dot);svg.append(group);});
     this.labelHost.replaceChildren(svg,...list.map(([name])=>{const el=document.createElement('span');el.textContent=name;return el;}));
   }
   update(time,options={}){
@@ -216,16 +225,16 @@ export class EmbryoView {
         const f=smooth(p/.78);this.morula.scale.setScalar(1);
         const key=f.toFixed(3)+'|'+this.options.cut+'|'+cut;
         if(this.packingKey!==key)for(const cell of this.packed){const {body,nu,cap,capN,c,initial,final}=cell;const a=body.geometry.attributes.position;
-          for(let k=0;k<a.count;k++){const end=V(final[k*3],final[k*3+1],final[k*3+2]);const start=end.clone().sub(c).normalize().multiplyScalar(.87).add(initial);const q=start.lerp(end,f);a.setXYZ(k,q.x,q.y,q.z);}a.needsUpdate=true;body.geometry.computeVertexNormals();
+          for(let k=0;k<a.count;k++){const end=V(final[k*3],final[k*3+1],final[k*3+2]);const start=end.clone().sub(c).normalize().multiplyScalar(.87).add(initial);const q=start.lerp(end,f);a.setXYZ(k,q.x,q.y,q.z);}a.needsUpdate=true;body.geometry.computeVertexNormals();body.geometry.computeBoundingSphere();
           nu.position.copy(initial).lerp(c,f);cap.visible=cut;cap.geometry.dispose();cap.geometry=sectionGeometry(body.geometry,this.options.cut);
           const dz=this.options.cut-nu.position.z;capN.visible=cut&&Math.abs(dz)<.18;const r=Math.sqrt(Math.max(0,.18**2-dz**2));capN.position.set(nu.position.x,nu.position.y,this.options.cut+.01);capN.scale.set(r,r,.015);
         }
         this.packingKey=key;
       }
-      this.annotate(i===4?[['조밀한 세포 덩어리',V(-1,1.6,0)],['안쪽에도 세포가 있습니다',V(.2,-.4,.1)]]:[['배아의 바깥 경계',V(1.65,1.5,0)],['핵 · DNA',V(-.3,.25,1.3)]]);
+      this.annotate(i===4?[['조밀한 세포 덩어리',anchor(this.packed[12].body,this.packed[12].c)],['안쪽에도 세포가 있습니다',anchor(cut?this.packed[0].cap:this.packed[0].body,this.packed[0].c)]]:[['배아의 바깥 경계',anchor(this.membrane,V(1.65,1.5,0).setLength(2.3))],['핵 · DNA',anchor(this.earlyCells[0].n)]]);
     }
     this.blast.position.set(0,0,0);this.blast.scale.setScalar(1);
-    if(i===5||i===6){const f=i===6?1:smooth(p/.86);this.blast.scale.setScalar(mix(.94,1,f));this.icm.reset();this.icmN.reset();const initial=lattice(32);this.icmTargets.forEach((end,k)=>{const pos=initial[k].clone().multiplyScalar(.77).lerp(end,f),r=mix(.45,.29,f);this.icm.add(pos,V(r,r,r));this.icmN.add(pos.clone().add(V(0,.08,r*.8)),V(.085,.07,.06));});this.icm.finish();this.icmN.finish();if(i===5)this.annotate([['바깥 세포층 · 영양막',V(1.35,1.5,-.2)],['속세포덩어리',V(-1.12,.85,.3)],['포배강 · 내부 공간',V(.4,-.55,-.45)]]);}
+    if(i===5||i===6){const f=i===6?1:smooth(p/.86);this.blast.scale.setScalar(mix(.94,1,f));this.icm.reset();this.icmN.reset();const initial=lattice(32);this.icmTargets.forEach((end,k)=>{const pos=initial[k].clone().multiplyScalar(.77).lerp(end,f),r=mix(.45,.29,f);this.icm.add(pos,V(r,r,r));this.icmN.add(pos.clone().add(V(0,.08,r*.8)),V(.085,.07,.06));});this.icm.finish();this.icmN.finish();if(i===5)this.annotate([['바깥 세포층 · 영양막',anchor(this.shell,V(1.35,1.5,-.2).setLength(2.13))],['내세포덩어리',anchor(this.icm.mesh,V(),0)],['포배강 · 내부 공간',{mesh:this.blast,point:V(.4,-.55,Math.min(-.45,this.plane.constant/this.blast.scale.x-.02))}]]);}
     let fold=0;
     if(i>=6){
       const f=i===6?smooth(p/.8):1;this.disc.scale.setScalar(i===6?mix(.32,1,f):1);this.disc.position.set(i===6?mix(-.8,0,f):0,0,0);
@@ -249,26 +258,83 @@ export class EmbryoView {
       this.migrants.finish();this.migrantsM.finish();this.paths.geometry.dispose();this.paths.geometry=new T.BufferGeometry();this.paths.geometry.setAttribute('position',new T.Float32BufferAttribute(segments,3));
       this.somites.reset();if(fold>.25){for(const s of [-1,1])for(let k=0;k<12;k++){const v=-.65+k*.117;const pos=V(s*mix(.85,.59,fold),mix(.16,.27,fold)-.82*fold*v*v,2.3*Math.sin(v*1.1));this.somites.add(pos,V(.19,.17,mix(.12,.16,clamp(time-10))));}}this.somites.finish();
       this.heart.visible=time>10.12;this.heart.scale.setScalar(smooth((time-10.1)/.55));
-      if(i===6)this.annotate([['속세포덩어리에서 확대',V(-2.65,1.4,-1.3)],['몸을 만들 세포층 · 상배엽',V(-.7,.44,-.6)],['아래쪽 보조층',V(.8,-.22,.8)]]);
-      else if(i<9)this.annotate([['세포가 들어가는 통로 · 원시선',V(0,.5,1.05)],[i===7?'몸의 내배엽 형성':'내배엽',V(-1.3,-.20,-.25)],[i===8?'중배엽':'상배엽',V(1.2,i===8?.13:.44,-.35)],...(i===8?[['외배엽',V(-.9,.44,-1.05)]]:[])]);
-      else this.annotate([['외배엽 → 표피',tissuePoint('ecto',-.55,-.4,fold)],['외배엽 → 신경관',tissuePoint('neural',0,-.6,fold)],['중배엽 → 근육 등',V(.66,.1,-.05)],['내배엽 → 장관 상피',tissuePoint('endo',.25,.12,fold)]]);
+      if(i===6)this.annotate([['내세포덩어리에서 확대',anchor(this.icm.mesh,V(),0)],['몸을 만들 세포층 · 상배엽',sheetAnchor(this.sheets[0],-.6,-.3)],['아래쪽 보조층',sheetAnchor(this.support,.55,-.2)]]);
+      else if(i<9)this.annotate([['세포가 들어가는 통로 · 원시선',sheetAnchor(this.sheets[2],0,.35)],[i===7?'몸의 내배엽 형성':'내배엽',sheetAnchor(this.sheets[4],-.65,-.2)],[i===8?'중배엽':'상배엽',sheetAnchor(this.sheets[i===8?3:1],.65,-.3)],...(i===8?[['외배엽',sheetAnchor(this.sheets[0],-.55,-.5)]]:[])]);
+      else this.annotate([['외배엽 → 표피',sheetAnchor(this.sheets[0],-.55,-.4)],['외배엽 → 신경관',sheetAnchor(this.sheets[2],0,-.6)],['중배엽 → 근육 등',sheetAnchor(this.sheets[3],.4,-.1)],['내배엽 → 장관 상피',sheetAnchor(this.sheets[4],.25,.12)]]);
     }
     this.fold=fold;this.render();
+  }
+  anchorPoint(target){
+    const {mesh,vertex,instance}=target;
+    for(let node=mesh;node;node=node.parent)if(!node.visible)return null;
+    const matrix=mesh.matrixWorld.clone();
+    if(instance!=null){if(instance>=mesh.count)return null;const local=new T.Matrix4();mesh.getMatrixAt(instance,local);matrix.multiply(local);}
+    const positions=mesh.geometry?.attributes.position;
+    if(mesh.geometry&&!positions?.count)return null;
+    const preferred=vertex!=null?V().fromBufferAttribute(positions,vertex):target.point.clone();
+    preferred.applyMatrix4(matrix);
+    const clipped=mesh.material?.clippingPlanes?.includes(this.plane);
+    // A cut may remove the original point. Attach to the closest remaining
+    // vertex of the same structure; hide the callout if none remains.
+    if(positions&&(vertex==null||(clipped&&this.plane.distanceToPoint(preferred)<0))){
+      let best=null,distance=Infinity;
+      for(let k=0;k<positions.count;k++){
+        const p=V().fromBufferAttribute(positions,k).applyMatrix4(matrix);
+        if(clipped&&this.plane.distanceToPoint(p)<-1e-5)continue;
+        const d=p.distanceToSquared(preferred);if(d<distance){best=p;distance=d;}
+      }
+      return best;
+    }
+    return preferred;
+  }
+  annotationPoint(target,occluders){
+    let point=this.anchorPoint(target);if(!point)return null;
+    const ray=new T.Raycaster();
+    const obscured=p=>{
+      const direction=p.clone().sub(this.camera.position),distance=direction.length();
+      ray.set(this.camera.position,direction.normalize());ray.far=Math.max(0,distance-.08);
+      return ray.intersectObjects(occluders,false).some(hit=>!hit.object.material.clippingPlanes?.some(plane=>plane.distanceToPoint(hit.point)<0));
+    };
+    let occluded=obscured(point);
+    if(occluded&&target.sheet){
+      const {sheet}=target,positions=sheet.g.attributes.position,candidates=[];
+      // Follow an exposed edge of the same tissue when another layer covers
+      // its interior. Never transfer a lower-layer label onto the upper layer.
+      for(let j=0;j<=sheet.nz;j+=4)for(let i=0;i<=sheet.nx;i+=4){
+        if(i!==0&&i!==sheet.nx&&j!==0&&j!==sheet.nz)continue;
+        const p=V().fromBufferAttribute(positions,j*(sheet.nx+1)+i).applyMatrix4(sheet.mesh.matrixWorld);
+        if(this.plane.distanceToPoint(p)>=0)candidates.push(p);
+      }
+      candidates.sort((a,b)=>a.distanceToSquared(this.camera.position)-b.distanceToSquared(this.camera.position));
+      const exposed=candidates.slice(0,2).find(p=>!obscured(p));if(exposed){point=exposed;occluded=false;}
+    }
+    return {point,occluded};
   }
   render(){
     if(this.failed)return;const w=this.canvas.parentElement.clientWidth,h=this.canvas.parentElement.clientHeight;if(w<1||h<1)return;
     const size=this.renderer.getSize(new T.Vector2());if(size.x!==w||size.y!==h)this.renderer.setSize(w,h,false);
     this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
-    this.camera.position.set(this.distance*Math.sin(this.angle)*Math.cos(this.elevation),this.distance*Math.sin(this.elevation),this.distance*Math.cos(this.angle)*Math.cos(this.elevation));this.camera.lookAt(0,0,0);
+    const distance=this.distance*Math.max(1,1.15/this.camera.aspect);
+    this.camera.position.set(distance*Math.sin(this.angle)*Math.cos(this.elevation),distance*Math.sin(this.elevation),distance*Math.cos(this.angle)*Math.cos(this.elevation));this.camera.lookAt(0,0,0);
     this.renderer.render(this.scene,this.camera);
     if(this.labelHost){
       this.labelHost.hidden=!this.options.labels;const svg=this.labelHost.querySelector('svg');
+      const occluders=[];this.scene.traverseVisible(obj=>{if(obj.isMesh&&!obj.isInstancedMesh&&obj.material.opacity>.45&&obj.geometry.attributes.position?.count)occluders.push(obj);});
       [...this.labelHost.querySelectorAll('span')].forEach((el,j)=>{
-        const q=this.labels[j][1].clone().project(this.camera),ax=(q.x*.5+.5)*w,ay=(-q.y*.5+.5)*h;
-        const right=j%2===1, half=el.offsetWidth/2, x=clamp(right?w*.84:w*.16,half+7,w-half-7), y=(j<2?(this.lastTime>=6?.45:.24):.77)*h;
-        el.hidden=q.z>1;el.style.left=`${x}px`;el.style.top=`${y}px`;
-        const line=svg.children[j];line.setAttribute('d',`M${ax},${ay} L${x+(right?-20:20)},${y}`);
+        const resolved=this.annotationPoint(this.labels[j][1],occluders),q=resolved?.point.project(this.camera),group=svg.children[j];
+        const visible=q&&q.z>=-1&&q.z<=1&&Math.abs(q.x)<=1&&Math.abs(q.y)<=1;
+        el.hidden=!visible;group.style.display=visible?'':'none';if(!visible)return;
+        const ax=(q.x*.5+.5)*w,ay=(-q.y*.5+.5)*h;
+        const right=j%2===1,half=el.offsetWidth/2;
+        const column=Math.min(w*.34,350),x=clamp(w/2+(right?column:-column),half+8,w-half-8);
+        const y=(j<2?(this.lastTime>=6?.46:.22):.81)*h;
+        el.style.left=`${x}px`;el.style.top=`${y}px`;
+        const [line,dot]=group.children;
+        group.classList.toggle('is-occluded',resolved.occluded);
+        line.setAttribute('d',`M${ax},${ay} L${x+(right?-half:half)},${y}`);
+        dot.setAttribute('cx',ax);dot.setAttribute('cy',ay);
       });
+      this.canvas.parentElement.classList.toggle('has-occluded-labels',this.options.labels&&[...svg.children].some(g=>g.style.display!=='none'&&g.classList.contains('is-occluded')));
     }
     this.crossSection();
   }
