@@ -1,4 +1,4 @@
-import { EmbryoView } from './model3d.mjs?v=6c6b683c843a';
+import { EmbryoView } from './model3d.mjs?v=4a388fb7d507';
 'use strict';
 const root = document.getElementById('embryo-lab');
 const $ = s => root.querySelector(s);

@@ -12,10 +12,10 @@ const dummy=new T.Object3D();
 // Store a point on the actual mesh, so deformation and parent transforms are
 // applied before projecting an annotation into the canvas.
 function anchor(mesh,point=V(),instance=null){return {mesh,point,instance};}
-function sheetAnchor(sheet,u,v){
+function sheetAnchor(sheet,u,v,streak=false){
   const i=Math.round(clamp((u-sheet.u0)/(sheet.u1-sheet.u0))*sheet.nx);
   const j=Math.round(clamp((v+.98)/1.96)*sheet.nz);
-  return {mesh:sheet.mesh,vertex:j*(sheet.nx+1)+i,sheet};
+  return {mesh:sheet.mesh,vertex:j*(sheet.nx+1)+i,sheet,streak};
 }
 
 function lattice(n){
@@ -259,7 +259,7 @@ export class EmbryoView {
       this.somites.reset();if(fold>.25){for(const s of [-1,1])for(let k=0;k<12;k++){const v=-.65+k*.117;const pos=V(s*mix(.85,.59,fold),mix(.16,.27,fold)-.82*fold*v*v,2.3*Math.sin(v*1.1));this.somites.add(pos,V(.19,.17,mix(.12,.16,clamp(time-10))));}}this.somites.finish();
       this.heart.visible=time>10.12;this.heart.scale.setScalar(smooth((time-10.1)/.55));
       if(i===6)this.annotate([['내세포덩어리에서 확대',anchor(this.icm.mesh,V(),0)],['몸을 만들 세포층 · 상배엽',sheetAnchor(this.sheets[0],-.6,-.3)],['아래쪽 보조층',sheetAnchor(this.support,.55,-.2)]]);
-      else if(i<9)this.annotate([['세포가 들어가는 통로 · 원시선',sheetAnchor(this.sheets[2],0,.35)],[i===7?'몸의 내배엽 형성':'내배엽',sheetAnchor(this.sheets[4],-.65,-.2)],[i===8?'중배엽':'상배엽',sheetAnchor(this.sheets[i===8?3:1],.65,-.3)],...(i===8?[['외배엽',sheetAnchor(this.sheets[0],-.55,-.5)]]:[])]);
+      else if(i<9)this.annotate([['세포가 들어가는 통로 · 원시선',sheetAnchor(this.sheets[2],0,.35,true)],[i===7?'몸의 내배엽 형성':'내배엽',sheetAnchor(this.sheets[4],-.65,-.2)],[i===8?'중배엽':'상배엽',sheetAnchor(this.sheets[i===8?3:1],.65,-.3)],...(i===8?[['외배엽',sheetAnchor(this.sheets[0],-.55,-.5)]]:[])]);
       else this.annotate([['외배엽 → 표피',sheetAnchor(this.sheets[0],-.55,-.4)],['외배엽 → 신경관',sheetAnchor(this.sheets[2],0,-.6)],['중배엽 → 근육 등',sheetAnchor(this.sheets[3],.4,-.1)],['내배엽 → 장관 상피',sheetAnchor(this.sheets[4],.25,.12)]]);
     }
     this.fold=fold;this.render();
@@ -279,6 +279,7 @@ export class EmbryoView {
     if(positions&&(vertex==null||(clipped&&this.plane.distanceToPoint(preferred)<0))){
       let best=null,distance=Infinity;
       for(let k=0;k<positions.count;k++){
+        if(target.streak){const {nx,nz}=target.sheet,row=Math.floor((k%((nx+1)*(nz+1)))/(nx+1)),v=mix(-.98,.98,row/nz);if(k%(nx+1)!==nx/2||v<=.025||v>=.88)continue;}
         const p=V().fromBufferAttribute(positions,k).applyMatrix4(matrix);
         if(clipped&&this.plane.distanceToPoint(p)<-1e-5)continue;
         const d=p.distanceToSquared(preferred);if(d<distance){best=p;distance=d;}
@@ -296,7 +297,7 @@ export class EmbryoView {
       return ray.intersectObjects(occluders,false).some(hit=>!hit.object.material.clippingPlanes?.some(plane=>plane.distanceToPoint(hit.point)<0));
     };
     let occluded=obscured(point);
-    if(occluded&&target.sheet){
+    if(occluded&&target.sheet&&!target.streak){
       const {sheet}=target,positions=sheet.g.attributes.position,candidates=[];
       // Follow an exposed edge of the same tissue when another layer covers
       // its interior. Never transfer a lower-layer label onto the upper layer.
