@@ -139,10 +139,10 @@ export class LayerView extends SpecimenView {
       const fold=smooth((t-.6)/1.6),detail=smooth(t-2.8);
       const map=(u,v,offset=0)=>{const a=u*mix(PI,PI*.80,detail),r=.7+detail*.18;return V(mix(u*2.0,r*Math.sin(a),fold)+offset*fold*Math.sin(a),mix(0,-r*(1-Math.cos(a)),fold)+offset*mix(1,Math.cos(a),fold),2.4*v);};
       this.gut.update(map);
-      this.villi.forEach((m,j)=>{m.visible=detail>.005;m.position.set(Math.sin(j*.7)*.35,-.95,j*.47-1.88);m.scale.y=.32*detail;});
+      this.villi.forEach((m,j)=>{const x=Math.sin(j*.7)*.35;m.visible=detail>.005;m.position.set(x,-.88-Math.sqrt(.82**2-x*x)+.28,j*.47-1.88);m.scale.y=.32*detail;});
       this.outerGut.visible=detail>.05;fade(this.outerGut,detail*.6);
       this.endo.traverse(o=>{if(o.isMesh)for(const m of Array.isArray(o.material)?o.material:[o.material])m.clippingPlanes=detail>.05?[this.gutClip]:[];});
-      this.annotate([{name:t<1?'내배엽층':t<3?'내배엽 → 장관 상피':'장 상피 · 절개 확대',point:()=>map(.6,-.3,.05)},{name:t<2?'양옆의 접힘':'장관 안쪽 공간',point:V(0,-.6,.2)},{name:t<3?'몸 안으로 포함될 영역':'후기 상피의 융모 · 시간 압축',point:t<3?()=>map(-.4,.7,.06):V(0,-.7,1.5)},...(t>=3?[{name:'바깥벽 · 중배엽 유래 조직',point:V(-1.02,-.88,.9)}]:[])]);
+      this.annotate([{name:t<1?'내배엽층':t<3?'내배엽 → 장관 상피':'장 상피 · 절개 확대',point:()=>map(.6,-.3,.05)},{name:t<2?'양옆의 접힘':'장관 안쪽 공간',point:V(0,-.6,.2)},{name:t<3?'몸 안으로 포함될 영역':'후기 상피의 융모 · 시간 압축',point:t<3?()=>map(-.4,.7,.06):()=>this.villi[7].position.clone().add(V(0,.22,0))},...(t>=3?[{name:'바깥벽 · 중배엽 유래 조직',point:V(-1.02,-.88,.9)}]:[])]);
     }
     this.render();
   }

@@ -1,5 +1,5 @@
 import {EmbryoView} from './model3d.mjs?v=e860fb366ccd';
-import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=15e662c0ff4d';
+import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=d3f7ce9ecef5';
 import {routes,myodStages,routeStep} from './lineage-data.mjs?v=a2165e051653';
 const root=document.getElementById('embryo-lab'),$=s=>root.querySelector(s),$$=s=>[...root.querySelectorAll(s)];
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
