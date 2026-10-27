@@ -376,6 +376,82 @@
 .embryo-lab .dna-fixed{color:#456d59;border-color:#dce3eb}
 .embryo-lab .myod-controls input{accent-color:#315efb}
 .embryo-lab .webgl-error{position:absolute;inset:35% 12% auto;padding:20px;background:white;border:1px solid #d8dfe8;font-size:14px;color:#46566a}
+.embryo-lab .route-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.embryo-lab .section-heading h2{word-break:keep-all}
+.embryo-lab .route-tabs button{display:flex;align-items:center;gap:12px;padding:15px 18px;text-align:left;background:white;color:#35465e;border:1px solid #d8dfe8;border-radius:7px;min-height:76px;font-weight:650;font-size:15px}
+.embryo-lab .route-tabs i,.embryo-lab .molecule-legend i{display:inline-block;flex:none;width:9px;height:9px;border-radius:50%}
+.embryo-lab .route-tabs small{display:block;font-size:11px;color:#68778b;font-weight:400;margin-top:3px}
+.embryo-lab .route-tabs button.active{background:#eff4fa;border-color:#8ca6c8;box-shadow:inset 0 0 0 1px #8ca6c8}
+.embryo-lab .route-workspace{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.embryo-lab .route-specimen,.embryo-lab .specimen-workspace{background:#f5f8fb;border:1px solid #d8dfe8;border-radius:10px;overflow:hidden}
+.embryo-lab .specimen-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;background:white;border-bottom:1px solid #e3e8ef}
+.embryo-lab .specimen-heading h3{font-size:18px;font-weight:650;line-height:1.5;color:#26364b;letter-spacing:-.4px;margin:4px 0 0}
+.embryo-lab .specimen-scale{flex:none;font-size:10px;color:#718097;border:1px solid #dce3ec;border-radius:4px;padding:4px 7px}
+.embryo-lab .route-viewport{height:clamp(410px,35vw,570px)}
+.embryo-lab .model-scale-note{font-size:10px;color:#718097}
+.embryo-lab .route-timeline,.embryo-lab .myod-timeline{background:white;padding:17px 20px;border-top:1px solid #dce3eb}
+.embryo-lab .route-play-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11px;color:#617188}
+.embryo-lab .route-play-row output{margin-left:auto;font-size:11px;font-variant-numeric:tabular-nums;color:#315efb}
+.embryo-lab .route-timeline input,.embryo-lab .myod-timeline>input{display:block;width:100%;margin:18px 0 12px;accent-color:#315efb;height:20px;cursor:ew-resize}
+.embryo-lab .route-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.embryo-lab .route-steps button,.embryo-lab .myod-steps button{min-height:56px;background:#f8fafc;border:1px solid #dce3eb;border-radius:5px;padding:9px 6px;font-size:12px;color:#5b6c82;line-height:1.5}
+.embryo-lab .route-steps button span,.embryo-lab .myod-steps button span{display:block;font-size:9px;font-variant-numeric:tabular-nums;color:#7c8da3;margin-bottom:3px}
+.embryo-lab .route-steps button.active,.embryo-lab .myod-steps button.active{background:#eff3ff;color:#284ed4;border-color:#97ace7}
+.embryo-lab .route-detail{min-width:0;color:#35465e}
+.embryo-lab .location-card{border:1px solid #dce3eb;border-radius:7px;background:#f5f8fb;overflow:hidden;margin-bottom:22px}
+.embryo-lab .location-copy{padding:14px 16px 0}
+.embryo-lab .location-copy p{font-size:12px;line-height:1.6;margin-top:5px;color:#4f6178}
+.embryo-lab .locator-viewport{position:relative;height:160px;overflow:hidden}
+.embryo-lab .locator-viewport canvas{width:100%;height:100%;display:block;touch-action:none}
+.embryo-lab .location-caption{display:block;font-size:9px;color:#7b889a;text-align:center;padding:0 10px 10px}
+.embryo-lab .route-story h3{font-size:22px;line-height:1.5;letter-spacing:-.6px;margin:10px 0 12px;word-break:keep-all}
+.embryo-lab .route-story>p,.embryo-lab .route-detail .observation-note p{font-size:13px;line-height:1.9;word-break:keep-all}
+.embryo-lab .observation-note{padding:15px 16px;border-left:2px solid #a2b4ce;background:#edf2f8;margin-top:20px}
+.embryo-lab .observation-note .mini-label{color:#5e7290;font-size:9px;letter-spacing:.08em}
+.embryo-lab .observation-note p{margin-top:6px!important;color:#4f6178!important;font-size:12px!important;line-height:1.8!important}
+.embryo-lab .route-next{width:100%;font-size:12px;line-height:1.7;margin-top:22px;padding:12px 14px;text-align:left}
+.embryo-lab .route-endpoint{display:grid;grid-template-columns:1fr 1fr;gap:30px;padding:24px 26px;background:white;border:1px solid #dce3eb;border-radius:8px;margin:20px 0}
+.embryo-lab .route-endpoint>div>p{font-size:13px;line-height:1.9;margin-top:9px;color:#506078;max-width:600px}
+.embryo-lab .route-branches>div{display:grid;gap:6px;margin-top:9px}
+.embryo-lab .route-branches p{display:grid;grid-template-columns:minmax(110px,1fr) 16px minmax(120px,1fr);gap:8px;font-size:11px;color:#69788b;align-items:center}
+.embryo-lab .route-branches strong{font-weight:600;color:#3d4f68}
+.embryo-lab .organ-study{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.9fr);gap:24px;background:#fff;border:1px solid #dce3eb;border-radius:8px;overflow:hidden}
+.embryo-lab .organ-copy{padding:26px 30px}
+.embryo-lab .organ-copy h3{font-size:21px;line-height:1.5;margin:9px 0 12px;letter-spacing:-.5px}
+.embryo-lab .organ-copy p{font-size:13px;color:#56657a;line-height:1.9;max-width:550px}
+.embryo-lab .organ-copy small{display:block;font-size:10px;color:#738096;line-height:1.8;margin-top:14px}
+.embryo-lab .organ-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.embryo-lab .organ-buttons button{background:#f6f8fb;border:1px solid #d9e1ec;border-radius:5px;padding:8px 10px;font-size:11px;color:#52637b;min-height:36px}
+.embryo-lab .organ-buttons button.active{background:#eaf0fa;border-color:#97acce;color:#2d4c7a}
+.embryo-lab .organ-viewport{height:320px}
+.embryo-lab .organ-viewport .model-labels span{font-size:10px;max-width:135px;white-space:normal}
+.embryo-lab .muscle-origin{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#68758b;background:#fff;border:1px solid #dce3eb;padding:13px 18px;border-radius:7px;margin-bottom:18px}
+.embryo-lab .origin-dot{width:8px;height:8px;border-radius:50%;background:#d99a9c}
+.embryo-lab .muscle-origin strong{font-weight:600;color:#4b5d77}
+.embryo-lab .origin-dna{margin-left:auto;font-size:10px;color:#4b6e62}
+.embryo-lab .specimen-workspace{grid-template-columns:minmax(0,1fr) 300px;border-radius:10px}
+.embryo-lab .muscle-viewport{height:clamp(420px,37vw,590px)}
+.embryo-lab .specimen-workspace .myod-explanation{padding:24px 22px}
+.embryo-lab .specimen-workspace .myod-explanation h3{font-size:22px;line-height:1.5;word-break:keep-all}
+.embryo-lab .specimen-workspace .myod-explanation>small{font-size:10px;line-height:1.8;margin-top:16px}
+.embryo-lab .causal-event{border-top:1px solid #e0e6ee;margin-top:22px;padding-top:16px}
+.embryo-lab .causal-event p{font-size:12px;font-weight:600;color:#4b6483;margin-top:8px}
+.embryo-lab .dna-fixed{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-top:15px;margin-top:18px;font-size:11px}
+.embryo-lab .dna-fixed strong{margin-left:auto;font-weight:650;border:1px solid #cbdcd2;border-radius:4px;padding:2px 7px;background:#f0f7f2;color:#426d56}
+.embryo-lab .dna-fixed small{flex-basis:100%;margin:0;font-size:10px;line-height:1.7;color:#6d7e75}
+.embryo-lab .contraction-button{background:#fff;border:1px solid #b4c2d4;border-radius:5px;font-size:11px;padding:7px 12px;color:#3a5579;min-height:34px}
+.embryo-lab .molecule-legend{display:flex;gap:18px;flex-wrap:wrap;padding:11px 18px;font-size:10px;color:#66778b;border-top:1px solid #e2e7ef;background:#fff}
+.embryo-lab .molecule-legend span{display:flex;align-items:center;gap:6px}
+.embryo-lab .legend-dna{background:#6485a3}.embryo-lab .legend-rna{background:#b28b3e}.embryo-lab .legend-protein{background:#9a6585}
+.embryo-lab .myod-timeline{border:1px solid #dce3eb;border-radius:8px;margin:16px 0 22px}
+.embryo-lab .myod-timeline .myod-steps{margin:0}
+.embryo-lab .myod-timeline>p{font-size:10px;color:#738198;margin-top:12px}
+.embryo-lab .muscle-speed{display:flex;gap:7px;align-items:center;margin-left:auto}
+.embryo-lab .muscle-speed select{padding:5px;background:#f2f5f9;border:1px solid #dce3eb;border-radius:4px;color:#52637a}
+@media(min-width:1600px){.embryo-lab .route-workspace{grid-template-columns:minmax(0,1fr) 340px}.embryo-lab .specimen-workspace{grid-template-columns:minmax(0,1fr) 340px}.embryo-lab .route-story>p,.embryo-lab .specimen-workspace .myod-explanation p{font-size:14px}}
+@media(max-width:1100px){.embryo-lab .route-workspace{grid-template-columns:minmax(0,1fr) 255px;gap:18px}.embryo-lab .specimen-workspace{grid-template-columns:minmax(0,1fr) 255px}.embryo-lab .specimen-heading{padding:15px 16px}.embryo-lab .specimen-heading h3{font-size:16px}.embryo-lab .specimen-scale{display:none}.embryo-lab .route-story h3{font-size:20px}.embryo-lab .specimen-workspace .myod-explanation{padding:20px 17px}.embryo-lab .specimen-workspace .myod-explanation h3{font-size:20px}}
+@media(max-width:850px){.embryo-lab .route-workspace,.embryo-lab .specimen-workspace{grid-template-columns:1fr}.embryo-lab .route-detail{display:grid;grid-template-columns:180px 1fr;gap:16px}.embryo-lab .location-card{grid-row:1/3;margin:0}.embryo-lab .location-copy{padding:12px 12px 0}.embryo-lab .route-detail .observation-note{margin:0}.embryo-lab .route-next{grid-column:1/-1;margin:0}.embryo-lab .route-story h3{margin-top:6px}.embryo-lab .route-endpoint{gap:20px;padding:20px}.embryo-lab .organ-study{grid-template-columns:1fr}.embryo-lab .organ-copy{padding:22px}.embryo-lab .organ-viewport{height:300px}.embryo-lab .specimen-workspace .myod-explanation{border-left:0;display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;padding:22px}.embryo-lab .myod-explanation>#myodStageNumber{grid-column:1/-1}.embryo-lab .myod-explanation>div[aria-live]{grid-row:2/5}.embryo-lab .myod-explanation .causal-event{margin:0;padding:0;border:0}.embryo-lab .myod-explanation .observation-note{margin:0}.embryo-lab .myod-explanation .dna-fixed{margin:0}.embryo-lab .myod-explanation>small{grid-column:1/-1}.embryo-lab .route-viewport,.embryo-lab .muscle-viewport{height:460px}}
+@media(max-width:560px){.embryo-lab .route-tabs{gap:5px}.embryo-lab .route-tabs button{padding:11px 8px;gap:6px;font-size:12px;align-items:flex-start;min-height:90px}.embryo-lab .route-tabs i{width:6px;height:6px;margin-top:6px}.embryo-lab .route-tabs small{font-size:9px;line-height:1.6}.embryo-lab .specimen-heading{padding:14px}.embryo-lab .specimen-heading h3{font-size:16px}.embryo-lab .route-viewport,.embryo-lab .muscle-viewport{height:360px}.embryo-lab .route-detail{grid-template-columns:1fr}.embryo-lab .location-card{display:grid;grid-template-columns:1fr 120px;grid-row:auto;align-items:center}.embryo-lab .locator-viewport{height:110px}.embryo-lab .location-caption{grid-column:1/-1}.embryo-lab .route-story h3{font-size:20px}.embryo-lab .route-detail .observation-note{margin:0}.embryo-lab .route-endpoint{grid-template-columns:1fr;gap:22px;padding:18px}.embryo-lab .route-branches p{grid-template-columns:minmax(100px,1fr) 12px minmax(110px,1fr)}.embryo-lab .route-timeline,.embryo-lab .myod-timeline{padding:15px 12px}.embryo-lab .route-play-row{gap:9px}.embryo-lab .route-steps{gap:4px}.embryo-lab .route-steps button{font-size:10px;padding:8px 4px;min-height:56px}.embryo-lab .route-story>p{font-size:12px}.embryo-lab .organ-copy{padding:18px}.embryo-lab .organ-copy h3{font-size:19px}.embryo-lab .muscle-origin{font-size:10px;padding:12px;gap:7px}.embryo-lab .origin-dna{flex-basis:100%;margin:0;padding-left:15px}.embryo-lab .specimen-workspace .myod-explanation{display:block;padding:20px}.embryo-lab .myod-explanation .causal-event{border-top:1px solid #e0e6ee;margin-top:16px;padding-top:14px}.embryo-lab .myod-explanation .observation-note{margin-top:16px}.embryo-lab .myod-explanation .dna-fixed{margin-top:18px}.embryo-lab .myod-timeline .myod-steps{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.embryo-lab .myod-steps button{font-size:9px;line-height:1.7;padding:8px 3px;min-height:72px;word-break:keep-all}.embryo-lab .molecule-legend{font-size:9px;gap:10px;padding:10px 12px}.embryo-lab .model-scale-note{display:none}.embryo-lab .model-labels span{max-width:132px;white-space:normal;font-size:9px}.embryo-lab .muscle-speed{margin:0}.embryo-lab .route-play-row>label[for=myodSlider]{display:none}}
 .embryo-lab .model-viewport[data-context-lost]:after{content:'3차원 화면 연결이 끊겼습니다. 페이지를 새로고침해 주세요.';position:absolute;inset:40% 10% auto;padding:20px;background:white;border:1px solid #d8dfe8;color:#46566a}
 @media(min-width:1550px){.embryo-lab .explorer-grid{grid-template-columns:minmax(0,1fr) 330px;gap:28px}.embryo-lab .explanation>p{font-size:14px}.embryo-lab .explanation h2{font-size:24px}}
 @media(max-width:1100px){.embryo-lab .explorer-grid{grid-template-columns:minmax(0,1fr) 260px;gap:18px}.embryo-lab .model-controls{gap:9px}.embryo-lab .section-inset{width:145px}.embryo-lab .model-labels span{font-size:10px}}

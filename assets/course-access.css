@@ -19,4 +19,9 @@ html[data-course-entry-granted] .course-entry-screen{display:none!important}
 .course-access-dialog .course-entry-card{box-sizing:border-box;max-width:none}.course-dialog-actions{display:flex;gap:10px}
 .course-access-form .course-dialog-cancel{width:auto;min-width:80px;background:transparent;border-color:var(--line);color:var(--muted)}
 .course-access-content:focus{outline:none}
+.course-access-form .course-remember-choice{display:flex;align-items:flex-start;gap:8px;margin:14px 0 4px;font-size:12px;font-weight:400;line-height:1.7;cursor:pointer;letter-spacing:0}
+.course-access-form .course-remember-choice input{width:16px;height:16px;min-height:16px;flex:none;margin:2px 0 0;padding:0;accent-color:var(--cyan)}
+.course-entry-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:24px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+.course-entry-tools p{margin:0}.course-entry-tools button{padding:6px 9px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--muted);font:inherit;cursor:pointer;min-height:32px}
+.course-entry-tools button:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
 @media(max-width:480px){.course-entry-screen{padding-block:28px}.course-entry-card{box-sizing:border-box;padding:24px}.course-entry-card h2{font-size:23px}}
