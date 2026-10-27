@@ -8,14 +8,10 @@ const colors={cell:0xb7cbdc, shell:0xb3c7db, icm:0xd5bd8f, ecto:0x7ca5d8, meso:0
 const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
 const SPHERE=new T.SphereGeometry(1,24,18), NUCLEUS=new T.SphereGeometry(1,12,8);
 const dummy=new T.Object3D();
-// Short chromatin traces distinguish the DNA inside each early nucleus.
-const CHROMATIN=new T.BufferGeometry().setFromPoints(Array.from({length:3},(_,strand)=>Array.from({length:16},(_,k)=>{
-  const t=k/15;return V(-.55+t*1.1,(strand-1)*.34+.1*Math.sin(t*PI*3+strand),.2*Math.cos(t*PI*2+strand));
-})).flatMap(points=>points.slice(1).flatMap((p,i)=>[points[i],p])));
 
 // Store a point on the actual mesh, so deformation and parent transforms are
 // applied before projecting an annotation into the canvas.
-function anchor(mesh,point=V(),instance=null){return {mesh,point,instance};}
+function anchor(mesh,point=V(),instance=null,center=false){return {mesh,point,instance,center};}
 function sheetAnchor(sheet,u,v,streak=false){
   const i=Math.round(clamp((u-sheet.u0)/(sheet.u1-sheet.u0))*sheet.nx);
   const j=Math.round(clamp((v+.98)/1.96)*sheet.nz);
@@ -163,8 +159,6 @@ export class EmbryoView {
     for(let i=0;i<8;i++){
       const m=new T.Mesh(SPHERE,this.material('cell'));const n=new T.Mesh(NUCLEUS,this.material('cell',true));
       m.material.side=T.FrontSide;m.renderOrder=1;n.renderOrder=2;
-      n.material.color.set(0x416ba1);
-      const dna=new T.LineSegments(CHROMATIN,new T.LineBasicMaterial({color:0xe2efff,transparent:true,opacity:.95}));dna.renderOrder=3;n.add(dna);
       this.early.add(m,n);this.earlyCells.push({m,n});
     }
     const seeds=lattice(32);this.morula=new T.Group();this.early.add(this.morula);this.packed=[];
@@ -225,7 +219,7 @@ export class EmbryoView {
     this.early.visible=i<5;this.blast.visible=i===5||i===6;this.disc.visible=i>=6;
     for(const m of this.materials){const {key,nucleus}=m.userData;const selected=this.options.highlight, inactive=selected&&!['cell','icm','support','shell',selected].includes(key);m.opacity=inactive?.13:(nucleus?.83:1);if(key==='shell'||key==='ecto')m.opacity*=this.options.opacity;if(key==='cell'&&!nucleus)m.opacity*=.96;m.depthWrite=!inactive&&m.opacity>.45;m.needsUpdate=false;}
     // The translucent early cells expose their nuclei from every viewing angle.
-    if(i<4)for(const {m,n} of this.earlyCells){m.material.opacity=.38;m.material.depthWrite=false;n.material.opacity=.9;n.material.depthWrite=false;}
+    if(i<4)for(const {m,n} of this.earlyCells){m.material.opacity=.38;m.material.depthWrite=false;n.material.depthWrite=false;}
     if(i<5){
       this.morula.visible=i===4;
       this.earlyCells.forEach(({m,n})=>m.visible=n.visible=i<4);
@@ -241,10 +235,10 @@ export class EmbryoView {
         }
         this.packingKey=key;
       }
-      this.annotate(i===4?[['조밀한 세포 덩어리',anchor(this.packed[12].body,this.packed[12].c)],['안쪽에도 세포가 있습니다',anchor(cut?this.packed[0].cap:this.packed[0].body,this.packed[0].c)]]:[['배아의 바깥 경계',anchor(this.membrane,V(1.65,1.5,0).setLength(2.3))],['핵 · DNA',{mesh:this.earlyCells[0].n,point:V(),center:true}]]);
+      this.annotate(i===4?[['조밀한 세포 덩어리',anchor(this.packed[12].body,this.packed[12].c)],['안쪽에도 세포가 있습니다',anchor(cut?this.packed[0].cap:this.packed[0].body,this.packed[0].c)]]:[['배아의 바깥 경계',anchor(this.membrane,V(1.65,1.5,0).setLength(2.3))],['핵 · DNA',{mesh:this.earlyCells[0].n,point:V(),center:true,revealed:true}]]);
     }
     this.blast.position.set(0,0,0);this.blast.scale.setScalar(1);
-    if(i===5||i===6){const f=i===6?1:smooth(p/.86);this.blast.scale.setScalar(mix(.94,1,f));this.icm.reset();this.icmN.reset();const initial=lattice(32);this.icmTargets.forEach((end,k)=>{const pos=initial[k].clone().multiplyScalar(.77).lerp(end,f),r=mix(.45,.29,f);this.icm.add(pos,V(r,r,r));this.icmN.add(pos.clone().add(V(0,.08,r*.8)),V(.085,.07,.06));});this.icm.finish();this.icmN.finish();if(i===5)this.annotate([['바깥 세포층 · 영양막',anchor(this.shell,V(1.35,1.5,-.2).setLength(2.13))],['내세포덩어리',anchor(this.icm.mesh,V(),0)],['포배강 · 내부 공간',{mesh:this.blast,point:V(.4,-.55,Math.min(-.45,this.plane.constant/this.blast.scale.x-.02))}]]);}
+    if(i===5||i===6){const f=i===6?1:smooth(p/.86);this.blast.scale.setScalar(mix(.94,1,f));this.icm.reset();this.icmN.reset();const initial=lattice(32);this.icmTargets.forEach((end,k)=>{const pos=initial[k].clone().multiplyScalar(.77).lerp(end,f),r=mix(.45,.29,f);this.icm.add(pos,V(r,r,r));this.icmN.add(pos.clone().add(V(0,.08,r*.8)),V(.085,.07,.06));});this.icm.finish();this.icmN.finish();if(i===5)this.annotate([['바깥 세포층 · 영양막',anchor(this.shell,V(1.35,1.5,-.2).setLength(2.13))],['내세포덩어리',anchor(this.icm.mesh,V(),0,true)],['포배강 · 내부 공간',{mesh:this.blast,point:V(.4,-.55,Math.min(-.45,this.plane.constant/this.blast.scale.x-.02))}]]);}
     let fold=0;
     if(i>=6){
       const f=i===6?smooth(p/.8):1;this.disc.scale.setScalar(i===6?mix(.32,1,f):1);this.disc.position.set(i===6?mix(-.8,0,f):0,0,0);
@@ -268,7 +262,7 @@ export class EmbryoView {
       this.migrants.finish();this.migrantsM.finish();this.paths.geometry.dispose();this.paths.geometry=new T.BufferGeometry();this.paths.geometry.setAttribute('position',new T.Float32BufferAttribute(segments,3));
       this.somites.reset();if(fold>.25){for(const s of [-1,1])for(let k=0;k<12;k++){const v=-.65+k*.117;const pos=V(s*mix(.85,.59,fold),mix(.16,.27,fold)-.82*fold*v*v,2.3*Math.sin(v*1.1));this.somites.add(pos,V(.19,.17,mix(.12,.16,clamp(time-10))));}}this.somites.finish();
       this.heart.visible=time>10.12;this.heart.scale.setScalar(smooth((time-10.1)/.55));
-      if(i===6)this.annotate([['내세포덩어리에서 확대',anchor(this.icm.mesh,V(),0)],['몸을 만들 세포층 · 상배엽',sheetAnchor(this.sheets[0],-.6,-.3)],['아래쪽 보조층',sheetAnchor(this.support,.55,-.2)]]);
+      if(i===6)this.annotate([['내세포덩어리에서 확대',anchor(this.icm.mesh,V(),0,true)],['몸을 만들 세포층 · 상배엽',sheetAnchor(this.sheets[0],-.6,-.3)],['아래쪽 보조층',sheetAnchor(this.support,.55,-.2)]]);
       else if(i<9)this.annotate([['세포가 들어가는 통로 · 원시선',sheetAnchor(this.sheets[2],0,.35,true)],[i===7?'몸의 내배엽 형성':'내배엽',sheetAnchor(this.sheets[4],-.65,-.2)],[i===8?'중배엽':'상배엽',sheetAnchor(this.sheets[i===8?3:1],.65,-.3)],...(i===8?[['외배엽',sheetAnchor(this.sheets[0],-.55,-.5)]]:[])]);
       else this.annotate([['외배엽 → 표피',sheetAnchor(this.sheets[0],-.55,-.4)],['외배엽 → 신경관',sheetAnchor(this.sheets[2],0,-.6)],['중배엽 → 근육 등',sheetAnchor(this.sheets[3],.4,-.1)],['내배엽 → 장관 상피',sheetAnchor(this.sheets[4],.25,.12)]]);
     }
@@ -284,6 +278,9 @@ export class EmbryoView {
     const preferred=vertex!=null?V().fromBufferAttribute(positions,vertex):target.point.clone();
     preferred.applyMatrix4(matrix);
     const clipped=mesh.material?.clippingPlanes?.includes(this.plane);
+    // A centre is a stable anatomical reference, not an arbitrary nearest
+    // vertex on a sphere. Hide it if sectioning removes that reference point.
+    if(target.center&&clipped&&this.plane.distanceToPoint(preferred)<0)return null;
     // A cut may remove the original point. Attach to the closest remaining
     // vertex of the same structure; hide the callout if none remains.
     if(positions&&!target.center&&(vertex==null||(clipped&&this.plane.distanceToPoint(preferred)<0))){
@@ -299,7 +296,7 @@ export class EmbryoView {
     return preferred;
   }
   annotationPoint(target,occluders){
-    let point=this.anchorPoint(target);if(!point)return null;if(target.center)return {point,occluded:false};
+    let point=this.anchorPoint(target);if(!point)return null;if(target.revealed)return {point,occluded:false};
     const ray=new T.Raycaster();
     const obscured=p=>{
       const direction=p.clone().sub(this.camera.position),distance=direction.length();

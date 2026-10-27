@@ -1,4 +1,4 @@
-import { EmbryoView } from './model3d.mjs?v=61d22ee436cc';
+import { EmbryoView } from './model3d.mjs?v=e860fb366ccd';
 'use strict';
 const root = document.getElementById('embryo-lab');
 const $ = s => root.querySelector(s);
@@ -84,7 +84,7 @@ function drawMyod(){background(mc,1100,470);const step=Math.min(4,Math.floor(sta
 }
 function stageIndex(){return Math.min(10,Math.floor(state.time));}
 let lastStage=-1;
-function updateStage(force=false){const i=stageIndex(),s=stages[i];$('#timeSlider').value=state.time;$('#progressLabel').textContent=`${String(i+1).padStart(2,'0')} / 11`;$('#prev').disabled=i===0;$('#next').disabled=i===10;if(i===lastStage&&!force)return;lastStage=i;$('#stageTitle').textContent=s.name;$('#phaseName').textContent=s.phase;$('#stageTime').textContent=`수정 후 ${s.day}`;$('#infoTitle').textContent=s.title;$('#infoText').textContent=s.text;$('#keyText').textContent=s.key;$('#factLabel').textContent=s.fact[0];$('#factValue').textContent=s.fact[1];$('#connectionText').textContent=s.gene;$('#viewCaption').textContent=s.caption+(i<4?' · 파란 구: 핵, 내부 선: DNA':'');$('#questionArea').hidden=true;$('#questionButton').setAttribute('aria-expanded','false');$$('#stageButtons button').forEach((b,j)=>{b.classList.toggle('active',i===j);b.setAttribute('aria-current',i===j?'step':'false');});}
+function updateStage(force=false){const i=stageIndex(),s=stages[i];$('#timeSlider').value=state.time;$('#progressLabel').textContent=`${String(i+1).padStart(2,'0')} / 11`;$('#prev').disabled=i===0;$('#next').disabled=i===10;if(i===lastStage&&!force)return;lastStage=i;$('#stageTitle').textContent=s.name;$('#phaseName').textContent=s.phase;$('#stageTime').textContent=`수정 후 ${s.day}`;$('#infoTitle').textContent=s.title;$('#infoText').textContent=s.text;$('#keyText').textContent=s.key;$('#factLabel').textContent=s.fact[0];$('#factValue').textContent=s.fact[1];$('#connectionText').textContent=s.gene;$('#viewCaption').textContent=s.caption+(i<4?' · 회청색 구: 핵 (DNA 포함)':'');$('#questionArea').hidden=true;$('#questionButton').setAttribute('aria-expanded','false');$$('#stageButtons button').forEach((b,j)=>{b.classList.toggle('active',i===j);b.setAttribute('aria-current',i===j?'step':'false');});}
 function setPlaying(value){state.playing=value;$('#play').innerHTML=value?'Ⅱ <span>일시정지</span>':'▶ <span>재생</span>';$('#play').setAttribute('aria-label',value?'발생 일시정지':'발생 재생');}
 function seek(t,stop=true){state.time=clamp(t,0,10.999);if(stop)setPlaying(false);updateStage();drawDevelopment();}
 function selectTab(tab){state.tab=tab;setPlaying(false);setMyodPlaying(false);layerPlay(false);$$('.tabs button').forEach(b=>{const on=b.dataset.tab===tab;b.classList.toggle('active',on);b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;});$$('[role="tabpanel"]').forEach(el=>el.hidden=el.id!==tab);if(tab==='development')drawDevelopment();if(tab==='layers')drawLayers();if(tab==='expression'){drawComparisons();drawMyod();}}
