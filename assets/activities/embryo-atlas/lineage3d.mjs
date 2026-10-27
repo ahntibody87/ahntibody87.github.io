@@ -137,7 +137,7 @@ export class LayerView extends SpecimenView {
       this.annotate([{name:t<1?'축옆중배엽':t<2?'반복되는 체절':'체절의 근육 형성 영역',point:V(-.82,.25,-1.5)},{name:t<2?'신경관 · 위치 기준':t<3?'근육 전구세포':'정렬된 골격근 조직',point:t<2?V(0,0,.3):()=>this.muscle[20].group.localToWorld(V(0,.14,0))},{name:t<2?'몸통 중배엽의 일부를 확대':'근육이 될 세포의 이동·배열',point:t<2?V(-.82,.25,1.4):()=>this.muscle[8].group.localToWorld(V(0,.10,.28))}]);
     }else{
       const fold=smooth((t-.6)/1.6),detail=smooth(t-2.8);
-      const map=(u,v,offset=0)=>{const a=u*mix(PI,PI*.80,detail),r=.7+detail*.18;return V(mix(u*2.0,r*Math.sin(a),fold)+offset*fold*Math.sin(a),mix(0,-r*(1-Math.cos(a)),fold)+offset*mix(1,Math.cos(a),fold),2.4*v);};
+      const map=(u,v,offset=0)=>{const a=u*PI,r=.7+detail*.18;return V(mix(u*2.0,r*Math.sin(a),fold)+offset*fold*Math.sin(a),mix(0,-r*(1-Math.cos(a)),fold)+offset*mix(1,Math.cos(a),fold),2.4*v);};
       this.gut.update(map);
       this.villi.forEach((m,j)=>{const x=Math.sin(j*.7)*.35;m.visible=detail>.005;m.position.set(x,-.88-Math.sqrt(.82**2-x*x)+.28,j*.47-1.88);m.scale.y=.32*detail;});
       this.outerGut.visible=detail>.05;fade(this.outerGut,detail*.6);
