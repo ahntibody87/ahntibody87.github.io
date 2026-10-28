@@ -183,6 +183,6 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 
 ## 링크 공유 미리보기 — 2026-10-28
 
-- 대표 이미지: `assets/social/atll-share-v1.png` (1200×630 PNG). 원본 디자인은 같은 폴더의 `card-source.html`이며 ATLL의 기존 단백질 사진/ATAA의 기존 색상을 사용합니다.
+- 대표 이미지: `assets/social/atll-share-v2.png` (1200×630 PNG). 원본 디자인은 같은 폴더의 `card-source.html`이며 ATLL의 기존 단백질 사진/ATAA의 기존 색상을 사용합니다.
 - HTML head에 Open Graph 제목·설명·이미지·정규 주소와 큰 이미지용 Twitter Card를 제공합니다. ATLL 하위 페이지는 공통 생성기에서 페이지별 제목·설명을 넣습니다.
 - 카카오톡에 이전 정보가 보이면 [카카오 공유 디버거](https://developers.kakao.com/tool/debugger/sharing)에서 해당 URL의 공유 캐시를 초기화할 수 있습니다. 기존 대화에 이미 생성된 카드는 그대로 남을 수 있습니다.
