@@ -1,6 +1,6 @@
 import {EmbryoView} from './model3d.mjs?v=e860fb366ccd';
-import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=nuclear20261028';
-import {routes,myodStages,routeStep} from './lineage-data.mjs?v=nuclear20261028';
+import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=nuclear20261028b';
+import {routes,myodStages,routeStep} from './lineage-data.mjs?v=nuclear20261028b';
 const root=document.getElementById('embryo-lab'),$=s=>root.querySelector(s),$$=s=>[...root.querySelectorAll(s)];
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const state={tab:'development',time:0,playing:false,speed:1,view:'section',labels:true,trail:true,layer:'ecto',layerTime:0,layerPlaying:false,myod:0,myodPlaying:false,myodSpeed:1,contractStart:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
