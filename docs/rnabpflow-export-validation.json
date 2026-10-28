@@ -1,0 +1,49 @@
+{
+  "originalVsMatrixComposition": [
+    9.5367431640625e-06,
+    2.1010637283325195e-06,
+    1.52587890625e-05
+  ],
+  "onnx": [
+    {
+      "length": 8,
+      "maxAbsoluteError": {
+        "pred_trans": 5.245208740234375e-06,
+        "pred_rot": 1.6093254089355469e-06,
+        "torsions": 8.225440979003906e-06
+      }
+    },
+    {
+      "length": 12,
+      "maxAbsoluteError": {
+        "pred_trans": 1.1920928955078125e-05,
+        "pred_rot": 1.430511474609375e-06,
+        "torsions": 2.3126602172851562e-05
+      }
+    },
+    {
+      "length": 19,
+      "maxAbsoluteError": {
+        "pred_trans": 1.8596649169921875e-05,
+        "pred_rot": 4.0065497159957886e-06,
+        "torsions": 2.8848648071289062e-05
+      }
+    },
+    {
+      "length": 60,
+      "maxAbsoluteError": {
+        "pred_trans": 9.5367431640625e-06,
+        "pred_rot": 1.6689300537109375e-06,
+        "torsions": 8.732080459594727e-06
+      }
+    },
+    {
+      "length": 120,
+      "maxAbsoluteError": {
+        "pred_trans": 1.5735626220703125e-05,
+        "pred_rot": 1.9073486328125e-06,
+        "torsions": 3.5136938095092773e-05
+      }
+    }
+  ]
+}

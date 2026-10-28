@@ -1,0 +1,29 @@
+{
+  "name": "RNAbpFlow CASP16 browser port",
+  "authors": ["Sumit Tarafder", "Debswapna Bhattacharya"],
+  "upstream": "https://github.com/Bhattacharya-Lab/RNAbpFlow",
+  "commit": "e8b1c077f7951d4d6ebe00c851d22c37777dfc9f",
+  "paper": "https://doi.org/10.1038/s41592-026-03128-4",
+  "checkpointSource": "https://zenodo.org/records/18305861/files/model.tar.gz?download=1",
+  "archiveMD5": "f79ce1555126ee77651594b65a95cb4b",
+  "checkpoint": "checkpoint/CASP16.ckpt",
+  "checkpointSHA256": "8ed7deadcea6a7fd025454ab8a4ef542d6d9c4a4365ef7319fc17b5b1d599a66",
+  "weightsLicense": "CC-BY-4.0",
+  "sourceLicense": "GPL-3.0; original OpenFold-derived Apache-2.0 notices retained",
+  "artifact": "rnabpflow-casp16-f32.onnx",
+  "artifactBytes": 68455757,
+  "artifactSHA256": "ca3fc6587ed7107d15add940227ce4362f8780700f445a436510b6ea4e41f46d",
+  "precision": "float32; no quantization or retraining",
+  "opset": 17,
+  "changes": [
+    "Export denoiser with dynamic sequence length and batch size 1; unused training outputs pruned",
+    "Equivalent normalized right quaternion update implemented by matrix composition to avoid ONNX eigendecomposition",
+    "Normalize negative Transpose axes emitted by PyTorch export",
+    "Port 50-step translation/SO(3) sampler and atom23 reconstruction to JavaScript",
+    "Use same prior distributions with a different explicit seeded JavaScript RNG",
+    "Repeat the current secondary base-pair map in three input channels, supported by upstream"
+  ],
+  "source": "source/src (unmodified upstream Python source; notices preserved)",
+  "exportScript": "/scripts/rnabpflow/export_model.py",
+  "validation": "/docs/rnabpflow-browser-port.md"
+}

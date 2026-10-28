@@ -1,3 +1,5 @@
+> 이전 버전의 검사 기록입니다. 현재 엔진과 화면은 [RNAbpFlow 이식·검증](rnabpflow-browser-port.md)을 참고하세요.
+
 # RNA 3D 구현·검사 기록 (2026-10-23)
 
 이 문서는 최초 구현의 기록입니다. 2026-10-28 이후의 검사·후보 선별·보정·표시 정책은 [RNA 3차 구조 개선](rna-quality-improvements.md)을 따릅니다.

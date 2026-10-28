@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/assets/activities/rna-lab/tertiary.css?v=2">
+<link rel="stylesheet" href="/assets/activities/rna-lab/tertiary.css?v=3">
 <link rel="stylesheet" href="/assets/activities/rna-lab/lab.css?v=7">
 <link rel="stylesheet" href="/assets/activities/rna-lab/molecule.css?v=7">
 <link rel="stylesheet" href="/assets/activities/rna-lab/missions.css?v=9">
@@ -42,8 +42,8 @@
     <section id="rna-tertiary" class="rna-tertiary" aria-label="RNA 3차 구조 예측"></section>
     <details class="rna-explainer"><summary>구조도 읽는 법과 예측의 범위</summary><div><p><strong>골격은 이어지고, 염기의 짝이 바뀝니다.</strong> 작은 오각형은 리보스, 그 사이의 원은 인산입니다. 염기는 리보스에 연결됩니다. 화살표는 한 가닥의 5′ → 3′ 방향을 나타내며, 염기쌍을 이루는 두 구간은 서로 반대 방향입니다. 염기의 고리 윤곽은 퓨린·피리미딘 계열을 나타내는 약식 표기입니다.</p><p><strong>점선은 수소 결합입니다.</strong> 대표적인 A–U와 G–U 염기쌍은 두 개, G–C는 세 개의 수소 결합을 표시합니다. G–U도 RNA에서 짝을 이룰 수 있습니다. 전체 안정성에는 이웃 염기 사이의 상호작용과 고리 구조 등도 관여하므로, 수소 결합 개수만으로 에너지나 기능을 판단하지 마세요.</p><p><strong>움직임은 구조 변화를 연결하는 연출입니다.</strong> 37 °C에서의 최소 자유에너지 2차 구조를 예측합니다. 애니메이션은 실제로 접히는 순서나 속도를 계산한 결과가 아닙니다. 실제 RNA는 여러 구조를 오갈 수 있으며, 이 2차 계산은 복잡하게 얽힌 구조와 입체 구조를 다루지 않습니다. 별도의 3차 구조 예측도 실제 구조나 반응 능력을 검증한 결과는 아닙니다.</p></div></details>
   </section>
-  <p class="rna-credit">접힘 계산: <a href="https://github.com/mirditalab/RibossFold" target="_blank" rel="noopener noreferrer">RibossFold 0.0.5</a> · Turner 2004 에너지 모형 · <a href="/assets/activities/rna-lab/vendor/LICENSE-ribossfold.txt" target="_blank" rel="noopener noreferrer">MIT 라이선스</a><br>2차·3차 예측 모두 학생 기기에서 계산하며, 입력 서열을 계산 서버로 전송하지 않습니다. 3차 모델 파일은 처음 실행할 때 외부 저장소에서 내려받습니다.</p>
+  <p class="rna-credit">접힘 계산: <a href="https://github.com/mirditalab/RibossFold" target="_blank" rel="noopener noreferrer">RibossFold 0.0.5</a> · Turner 2004 에너지 모형 · <a href="/assets/activities/rna-lab/vendor/LICENSE-ribossfold.txt" target="_blank" rel="noopener noreferrer">MIT 라이선스</a><br>원자 좌표 예측: RNAbpFlow · 2차·3차 계산은 학생 기기에서 실행하며, 입력 서열을 계산 서버로 전송하지 않습니다. 3차 모델 파일은 처음 예측할 때 내려받습니다.</p>
   <p class="rna-toast" id="rna-toast" role="status" hidden></p>
   <dialog id="mission-success" class="mission-success" aria-labelledby="success-title" aria-describedby="success-detail"><form method="dialog"><p class="rna-kicker">DESIGN COMPLETE</p><div class="success-mark" aria-hidden="true">✓</div><h2 id="success-title">미션 성공!</h2><h3 id="success-mission"></h3><p id="success-detail"></p><p class="success-proof" id="success-proof"></p><div class="success-actions"><button id="success-close" value="close" autofocus>내 설계 더 살펴보기</button><button id="success-next" type="button" class="rna-primary">다음 미션 →</button></div></form></dialog>
 </div>
-<script type="module" src="/assets/activities/rna-lab/lab.js?v=12"></script>
+<script type="module" src="/assets/activities/rna-lab/lab.js?v=13"></script>

@@ -23,6 +23,13 @@
 
 각 경로에 실제 `index.html`이 있어 직접 접속과 새로고침을 지원합니다. 고급생명과학 3단원에는 RNA 설계 실험실이 등록되어 있으며, 통합과학과 생물의 유전은 준비 중입니다.
 
+## RNA 설계 실험실
+
+- 주소: `/advanced-life-science/gene-expression/rna-lab/`
+- RibossFold 2차 구조와 RNAbpFlow CASP16의 브라우저 내 원자 좌표 예측을 제공합니다. API 키·계산 서버·WebGPU 없이 실행하며 첫 모델·계산기 다운로드는 약 78 MiB입니다.
+- 구조 하나만 표시하며 당·인산·염기를 구분합니다. 예측 실패·중단 때도 2차 구조 기반 입체 모형을 유지하고 계산 좌표를 상세 정보와 저장 파일에 남깁니다. 교육용 모형과 예측 좌표를 명확히 구별합니다.
+- 검사: `node scripts/check-rnabpflow.mjs`, `node scripts/check-rna-quality.mjs`. 원본 수치 비교·라이선스·재현 방법은 `docs/rnabpflow-browser-port.md`를 확인하세요.
+
 ## 미토콘드리아 응급 분석실
 
 - 주소: `/advanced-life-science/cell-energy/mitochondria-lab/`

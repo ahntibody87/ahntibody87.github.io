@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": [
+    "error retains one visible model",
+    "cancel retains model and terminates computation",
+    "cancelled worker cannot overwrite status",
+    "dirty input hides old result and disables export",
+    "restoring applied input restores model",
+    "wrong-sequence import rejected without blanking model"
+  ]
+}

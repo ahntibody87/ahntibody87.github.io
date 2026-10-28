@@ -1,3 +1,5 @@
+> 이전 버전의 검사 기록입니다. 현재 엔진과 화면은 [RNAbpFlow 이식·검증](rnabpflow-browser-port.md)을 참고하세요.
+
 # RNA 3차 구조 개선 (2026-10-28)
 
 대상 저장소: https://github.com/ahntibody87/ahntibody87.github.io
