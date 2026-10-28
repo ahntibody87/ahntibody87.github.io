@@ -457,11 +457,3 @@
 @media(max-width:1100px){.embryo-lab .explorer-grid{grid-template-columns:minmax(0,1fr) 260px;gap:18px}.embryo-lab .model-controls{gap:9px}.embryo-lab .section-inset{width:145px}.embryo-lab .model-labels span{font-size:10px}}
 @media(max-width:850px){.embryo-lab .explorer-grid,.embryo-lab .layer-layout{grid-template-columns:1fr}.embryo-lab .model-viewport{height:480px}.embryo-lab .explanation{padding:8px 4px}.embryo-lab .section-inset{width:150px}}
 @media(max-width:500px){.embryo-lab .model-viewport{height:370px}.embryo-lab .section-inset{width:110px;top:8px;right:8px}.embryo-lab .section-inset figcaption{font-size:8px;padding:5px}.embryo-lab .section-inset>span{font-size:8px}.embryo-lab .model-labels span{font-size:9px;padding:4px 5px;max-width:158px;white-space:normal}.embryo-lab .visual-top{padding:13px 12px 9px}.embryo-lab .visual-top h2{font-size:17px}.embryo-lab .segmented button{font-size:10px;padding:6px}.embryo-lab .model-controls{padding:10px}.embryo-lab .camera-buttons{gap:3px}.embryo-lab .camera-buttons button{font-size:10px;padding:4px 7px}.embryo-lab .cut-controls{gap:10px}.embryo-lab .cut-controls input[type=range]{width:85px}.embryo-lab .rotation-hint{font-size:9px}.embryo-lab .layer-transport{padding:12px}.embryo-lab .layer-transport input{flex-basis:100%}.embryo-lab .visual-bottom{padding:12px;gap:10px}.embryo-lab .legend{gap:10px}}
-
-/* Sequential gene regulation diagram, scoped to this activity. */
-.embryo-lab .muscle-viewport{height:auto;min-height:0;overflow-x:auto;background:#fbfcfe}
-.embryo-lab .muscle-viewport>canvas[hidden],.embryo-lab .muscle-viewport .model-labels,.embryo-lab .muscle-viewport .rotation-hint,.embryo-lab .model-controls .camera-buttons[hidden]{display:none}
-.embryo-lab .muscle-diagram{display:block;width:100%;height:auto;min-width:660px;font-family:inherit}
-.embryo-lab .myod-timeline .myod-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-.embryo-lab .myod-timeline .check{color:#52637a;font-size:12px;display:flex;align-items:center;gap:6px}
-@media(max-width:560px){.embryo-lab .myod-timeline .myod-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.embryo-lab .myod-timeline .myod-steps button{font-size:12px;min-height:55px}.embryo-lab .muscle-viewport:after{content:'좌우로 밀어 전체 연결 보기';display:block;padding:8px 14px;font-size:11px;color:#64788b}}
