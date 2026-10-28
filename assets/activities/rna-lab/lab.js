@@ -1,4 +1,4 @@
-import {createTertiary} from './tertiary.js?v=1';
+import {createTertiary} from './tertiary.js?v=2';
 import {PRESETS,MISSIONS} from './missions.js?v=8';
 import {MoleculeView,BASES,pairInfo,partners} from './molecule.js?v=10';
 import {gradeMission} from './grading.js?v=7';

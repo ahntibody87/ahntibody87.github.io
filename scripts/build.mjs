@@ -11,15 +11,17 @@ import { createHash } from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Change the stylesheet URL whenever its content changes, avoiding stale browser caches.
-const styleVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/style.css'), 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
-const sharedVersion = createHash('sha256').update(['assets/theme.css', 'assets/navigation.js'].map(file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n')).join('')).digest('hex').slice(0, 12);
+// Mixed historical CRLF blobs can acquire CRCRLF on a Windows text checkout.
+// Equivalent line endings must not invalidate every page's asset version.
+const styleVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/style.css'), 'utf8').replace(/\r+\n/g, '\n')).digest('hex').slice(0, 12);
+const sharedVersion = createHash('sha256').update(['assets/theme.css', 'assets/navigation.js'].map(file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r+\n/g, '\n')).join('')).digest('hex').slice(0, 12);
 const homeHash = createHash('sha256');
 for (const file of ['assets/home.css', 'assets/home.js', 'assets/home-protein.js']) {
-  homeHash.update(fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n'));
+  homeHash.update(fs.readFileSync(path.join(root, file), 'utf8').replace(/\r+\n/g, '\n'));
 }
 const homeVersion = homeHash.digest('hex').slice(0, 12);
-const advancedVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/advanced-course.css'), 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
-const workspaceVersion = createHash('sha256').update(['assets/advanced-workspace.css','assets/advanced-workspace.js'].map(f => fs.readFileSync(path.join(root,f),'utf8').replace(/\r\n/g,'\n')).join('')).digest('hex').slice(0,12);
+const advancedVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/advanced-course.css'), 'utf8').replace(/\r+\n/g, '\n')).digest('hex').slice(0, 12);
+const workspaceVersion = createHash('sha256').update(['assets/advanced-workspace.css','assets/advanced-workspace.js'].map(f => fs.readFileSync(path.join(root,f),'utf8').replace(/\r+\n/g,'\n')).join('')).digest('hex').slice(0,12);
 const site = JSON.parse(fs.readFileSync(path.join(root, 'data/site.json'), 'utf8'));
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const types = { simulation: 'INTERACTIVE SIMULATION', inquiry: 'INQUIRY ACTIVITY', design: 'MOLECULAR DESIGN STUDIO', resource: 'LEARNING RESOURCE', external: 'EXTERNAL ACTIVITY' };

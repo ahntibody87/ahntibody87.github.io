@@ -1,17 +1,25 @@
 // Geometric screening of canonical base-pair candidates, NOT FR3D/DSSR annotation.
+import {canonicalAtom} from './tertiary-geometry.js?v=2';
+export {inspectGeometry} from './tertiary-geometry.js?v=2';
 export function readRnaPdb(pdb){
   if(typeof pdb!=='string'||pdb.length>2000000)throw Error('구조 파일 크기가 올바르지 않습니다.');
-  const residues=new Map();let ended=false;
+  const residues=new Map();
   for(const line of pdb.split(/\r?\n/)){
-    if(line.startsWith('ENDMDL')){ended=true;break;}
+    if(line.startsWith('ENDMDL'))break;
     if(!line.startsWith('ATOM  '))continue;
     const base=line.slice(17,20).trim(),chain=line.slice(21,22),number=Number(line.slice(22,26)),insertion=line.slice(26,27).trim();
     if(!/^[ACGU]$/.test(base)||insertion||!Number.isInteger(number))throw Error('표준 A·U·G·C 단일 RNA 가닥만 지원합니다.');
-    const key=chain+':'+number,xyz=[30,38,46].map(i=>Number(line.slice(i,i+8)));
+    const key=chain+':'+number,fields=[30,38,46].map(i=>line.slice(i,i+8).trim()),xyz=fields.map(Number);
+    if(fields.some(x=>!x))throw Error('빠진 원자 좌표입니다.');
     if(xyz.some(x=>!Number.isFinite(x)||Math.abs(x)>10000))throw Error('유효하지 않은 원자 좌표입니다.');
-    if(!residues.has(key))residues.set(key,{base,chain,number,atoms:{}});
+    if(!residues.has(key))residues.set(key,{base,chain,number,atoms:{},confidence:{}});
     const r=residues.get(key);if(r.base!==base)throw Error('염기 번호가 중복되었습니다.');
-    const name=line.slice(12,16).trim(),alt=line[16];if(alt===' '||alt==='A')r.atoms[name]=xyz;
+    const name=canonicalAtom(line.slice(12,16).trim()),alt=line[16];
+    if(/^H|^D/.test(name))continue;
+    if(alt===' '||alt==='A'){
+      if(Object.hasOwn(r.atoms,name)&&alt===' ')throw Error('중복된 원자 이름입니다.');
+      r.atoms[name]=xyz;const confidence=Number(line.slice(60,66));r.confidence[name]=Number.isFinite(confidence)?Math.max(0,Math.min(100,confidence)):0;
+    }
   }
   const list=[...residues.values()];
   if(list.length<8||list.length>120||new Set(list.map(r=>r.chain)).size!==1)throw Error('8~120개 염기의 단일 RNA 가닥이 필요합니다.');
@@ -39,7 +47,6 @@ export function geometricPairs(residues){
 }
 export function dotPairs(structure){const stack=[],pairs=[];for(let i=0;i<structure.length;i++){if(structure[i]==='(')stack.push(i);else if(structure[i]===')'){if(!stack.length)throw Error('잘못된 2차 구조');pairs.push([stack.pop(),i]);}else if(structure[i]!=='.')throw Error('잘못된 2차 구조');}if(stack.length)throw Error('잘못된 2차 구조');return pairs;}
 export function comparePairs(two,three){const key=p=>p.join(':'),a=new Set(two.map(key)),b=new Set(three.map(key));return {shared:three.filter(p=>a.has(key(p))),only2d:two.filter(p=>!b.has(key(p))),only3d:three.filter(p=>!a.has(key(p)))};}
-export function inspectGeometry(residues){let breaks=0;for(let i=1;i<residues.length;i++){const a=residues[i-1].atoms["O3'"],b=residues[i].atoms.P;if(!a||!b||dist(a,b)<1.2||dist(a,b)>2.3)breaks++;}return {breaks};}
 export function validateResult(data,sequence){
   if(!data||data.format!=='rna-lab-3d-v1'||data.sequence!==sequence||typeof data.model!=='string'||data.model.length>120)throw Error('현재 적용한 서열과 같은 RNA 실험실 결과 파일을 선택하세요.');
   const parsed=readRnaPdb(data.pdb);if(parsed.sequence!==sequence)throw Error('파일의 원자 좌표와 염기서열이 일치하지 않습니다.');return {...data,...parsed};

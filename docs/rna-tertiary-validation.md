@@ -1,5 +1,7 @@
 # RNA 3D 구현·검사 기록 (2026-10-23)
 
+이 문서는 최초 구현의 기록입니다. 2026-10-28 이후의 검사·후보 선별·보정·표시 정책은 [RNA 3차 구조 개선](rna-quality-improvements.md)을 따릅니다.
+
 배포 대상: https://ahntibody87.github.io/advanced-life-science/gene-expression/rna-lab/
 
 GitHub Pages 기존 홈페이지에 추가합니다. 계산 서버, 사용자 계정, DB는 만들지 않습니다. 기존 RibossFold와 미션 채점은 유지합니다. 자유 실험실에 RoseTTAFold3 / LocalFold int5 모델을 WebGPU Worker로 연결했습니다.
