@@ -15,6 +15,19 @@ function curveMesh(parent,points,color,radius=.035,opacity=1){
 function fade(object,alpha){object.visible=alpha>.005;object.traverse(o=>{if(o.isMesh){const m=o.material;m.opacity=alpha*(m.userData.baseOpacity??1);m.transparent=m.opacity<1;m.depthWrite=m.opacity>.96;}});}
 function translucent(parent){parent.traverse(o=>{if(o.isMesh)o.material.userData.baseOpacity=o.material.opacity;});return parent;}
 
+// Small DNA segments and directional links use the existing specimen materials.
+function regulatoryGene(parent,x,y,color){
+  const g=new T.Group();g.position.set(x,y,.68);parent.add(g);
+  for(const strand of [-1,1])curveMesh(g,Array.from({length:25},(_,i)=>V(-.40+i/30,Math.sin(i*.55)*.055*strand,Math.cos(i*.55)*.055*strand)),0x6485a3,.018);
+  for(let i=0;i<9;i++)curveMesh(g,[V(-.38+i*.09,-.05,0),V(-.38+i*.09,.05,0)],0x9db1c2,.009);
+  curveMesh(g,[V(-.16,0,.025),V(.19,0,.025)],color,.045);return g;
+}
+function regulatoryLink(parent,points,color){
+  const g=new T.Group();parent.add(g);curveMesh(g,points,color,.013);
+  const end=points.at(-1),direction=end.clone().sub(points.at(-2)).normalize();
+  const head=new T.Mesh(new T.ConeGeometry(.045,.12,10),material(color));head.position.copy(end);head.quaternion.setFromUnitVectors(V(0,1,0),direction);g.add(head);return g;
+}
+
 // A shared camera, lighting and annotation system for all close-up specimens.
 // Anatomy changes with the timeline; rotation never changes the sampled stage.
 class SpecimenView {
@@ -189,9 +202,19 @@ export class MuscleView extends SpecimenView {
     this.ribosome=new T.Group();this.ribosome.position.set(1.55,-.1,.3);this.molecular.add(this.ribosome);ellipsoid(this.ribosome,0x718d9e,[0,.08,0],[.32,.18,.20]);ellipsoid(this.ribosome,0x95a8b5,[0,-.11,.03],[.25,.12,.17]);
     this.protein=new T.Group();this.molecular.add(this.protein);
     for(let i=0;i<6;i++){const a=i*2.39;ellipsoid(this.protein,pigment.protein,[Math.cos(a)*.10,Math.sin(a)*.10,(i%2)*.08],[.10,.10,.10]);}
-    this.regulators=new T.Group();this.molecular.add(this.regulators);for(let i=0;i<3;i++)ellipsoid(this.regulators,0x8b9a8b,[-1.75+i*.30,.63,.35],[.085,.10,.09]);
+    this.regulators=new T.Group();this.molecular.add(this.regulators);
+    this.regulatorGene=regulatoryGene(this.regulators,-1.42,.16,0x6d8fbb);
+    this.otherRna=new T.Group();this.regulators.add(this.otherRna);
+    curveMesh(this.otherRna,Array.from({length:21},(_,i)=>V((i/20-.5)*.55,Math.sin(i*.8)*.04,0)),pigment.rna,.026);
+    this.otherProtein=new T.Group();this.regulators.add(this.otherProtein);
+    for(let i=0;i<5;i++)ellipsoid(this.otherProtein,0x6d8fbb,[Math.cos(i*2.4)*.07,Math.sin(i*2.4)*.07,0],[.075,.075,.075]);
     this.targets=new T.Group();this.molecular.add(this.targets);
-    for(let j=0;j<3;j++){curveMesh(this.targets,[V(-2.12,-.35-j*.15,.45),V(-1.7,-.32-j*.15,.57),V(-1.15,-.35-j*.15,.47)],0x9b7e7d,.025);}
+    this.targetGenes=[regulatoryGene(this.targets,-1.42,-.37,0x9b7e7d),regulatoryGene(this.targets,-1.42,-.70,0xb28b3e)];
+    this.targetRnas=this.targetGenes.map(()=>{const g=new T.Group();this.targets.add(g);curveMesh(g,Array.from({length:21},(_,i)=>V((i/20-.5)*.55,Math.sin(i*.8)*.04,0)),pigment.rna,.026);return g;});
+    this.regulationLinks=new T.Group();this.molecular.add(this.regulationLinks);
+    this.feedbackLink=regulatoryLink(this.regulationLinks,[V(-1.98,.32,.8),V(-2.20,.48,.8),V(-2.12,.83,.8),V(-1.80,.67,.8)],pigment.protein);
+    this.inductionLink=regulatoryLink(this.regulationLinks,[V(-1.8,.55,.8),V(-1.97,.39,.8),V(-1.83,.20,.8)],pigment.protein);
+    this.targetLinks=[-.37,-.70].map(y=>regulatoryLink(this.regulationLinks,[V(-.91,.16,.8),V(-.72,y+.13,.8),V(-1.12,y,.8)],0x6d8fbb));
     this.filaments=[];for(let j=0;j<12;j++){const mesh=curveMesh(this.molecular,[V(.1,-.9+j*.13,.25),V(1.1,-.9+j*.13,.30),V(2.6,-.9+j*.13,.25)],j%2?0xb37d87:0xc89b9e,.027);this.filaments.push(mesh);}
     this.signal=[];for(let i=0;i<4;i++)this.signal.push(ellipsoid(this.molecular,0xc7ab70,[-4.05-i*.13,.25+(i-1)*.22,.1],[.06,.06,.06]));
     this.myoblasts=[];for(let i=0;i<3;i++){const group=new T.Group();this.fusion.add(group);ellipsoid(group,pigment.meso,[0,0,0],[1.5,.33,.35],.55);ellipsoid(group,0x7d5f78,[-.3,.05,.15],[.17,.12,.13]);this.myoblasts.push(group);}
@@ -205,16 +228,38 @@ export class MuscleView extends SpecimenView {
     if(this.failed)return;const step=Math.min(4,Math.floor(time)),p=time-step;this.time=time;
     this.molecular.visible=step<4;this.fusion.visible=step===4;
     if(step<4){
+      // Only stage 04 opens the compact nuclear cascade; the cell and camera stay put.
+      const focus=step===3?smooth(p/.10):0;
+      this.gene.scale.setScalar(mix(1,.66,focus));this.gene.position.set(-1.42*(1-this.gene.scale.x),.62*focus,.2*focus);
       const transit=step===1?smooth((p-.25)/.7):step>1?1:0;
-      this.rna.visible=step>=1;this.rna.position.set(mix(-1.55,1.5,transit),mix(.05,.22,transit),.68);
+      this.rna.visible=step>=1&&(step!==3||p<.18);this.rna.position.set(mix(-1.55,1.5,transit),mix(.05,.22,transit),.68);
       this.ribosome.visible=step>=2;this.protein.visible=step>=2;
       const proteinTravel=step===2?smooth((p-.35)/.6):1;
       this.protein.position.set(mix(1.75,-1.5,proteinTravel),Math.sin(proteinTravel*PI)*-.85+.35,.72);
-      this.regulators.visible=step>=3;this.targets.visible=step>=3;
-      this.filaments.forEach((m,j)=>{m.visible=step>=3&&p>j/17;m.scale.x=smooth((p-j/17)*3);});
+      this.regulators.visible=step===3;this.targets.visible=step===3;this.regulationLinks.visible=step===3;
+      if(step===3){
+        fade(this.regulatorGene,.25+.75*smooth(p/.18));
+        this.protein.position.set(mix(-1.5,-1.94,smooth(p/.12)),mix(.35,.30,smooth(p/.12)),.83);
+        fade(this.feedbackLink,smooth(p/.14));fade(this.inductionLink,smooth((p-.08)/.12));
+        const exportT=smooth((p-.18)/.18),importT=smooth((p-.38)/.19);
+        this.otherRna.visible=p>=.18;this.otherRna.position.set(mix(-1.40,1.48,exportT),mix(.16,.24,exportT),.81);
+        this.otherProtein.visible=p>=.38;this.otherProtein.position.set(mix(1.62,-.93,importT),mix(.04,.16,importT)-Math.sin(importT*PI)*.60,.83);
+        this.targetGenes.forEach((g,j)=>fade(g,.25+.75*smooth((p-.56-j*.045)/.12)));
+        this.targetLinks.forEach((g,j)=>fade(g,smooth((p-.53-j*.045)/.12)));
+        this.targetRnas.forEach((g,j)=>{const q=smooth((p-.64-j*.055)/.20);g.visible=p>=.64+j*.055;g.position.set(mix(-1.42,1.48,q),mix(-.37-j*.33,.24-j*.16,q),.82);});
+      }
+      this.filaments.forEach((m,j)=>{const q=(p-.86-j*.005)/.07;m.visible=step===3&&q>0;m.scale.x=smooth(q);});
       this.signal.forEach((m,i)=>{m.visible=step===0;m.position.x=-4.08+smooth(p)*(.45-i*.04);});
       const labels=[{name:'핵',point:V(-2.1,.9,.2)},{name:step===0?'분화 신호':step===1?'mRNA · 핵 밖으로':step===2?'리보솜 · 번역':'근육 단백질의 합성·배열',point:step===0?V(-3.7,.3,.1):step===1?()=>this.rna.position.clone():step===2?V(1.55,-.1,.3):V(1.6,-.65,.3)},{name:'MyoD 유전자 · DNA에 유지',point:V(-1.4,0,.6)}];
-      if(step>=2)labels.push({name:step===2?'MyoD 단백질 · 핵으로':'MyoD + 다른 조절인자',point:()=>this.protein.position.clone()});this.annotate(labels);
+      if(step>=2)labels.push({name:step===2?'MyoD 단백질 · 핵으로':'MyoD + 다른 조절인자',point:()=>this.protein.position.clone()});
+      if(step===3){
+        labels.splice(0,labels.length,
+          {name:'MyoD 유전자 · 자기 발현 유지',point:V(-1.42,.62,.65)},
+          {name:'다른 전사 인자 유전자',point:V(-1.42,.16,.68)},
+          {name:'근육형 액틴·마이오신 관련 유전자',point:V(-1.42,-.52,.68)},
+          {name:p<.18?'MyoD → 다른 전사 인자 유전자':p<.38?'다른 전사 인자의 mRNA · 핵 밖으로':p<.57?'새 전사 인자 · 번역 후 핵으로':p<.70?'전사 인자들의 작용 → 표적 유전자':p<.84?'근육 단백질의 mRNA · 세포질로':'근육 단백질의 합성·배열',point:p<.18?()=>this.protein.position.clone():p<.38?()=>this.otherRna.position.clone():p<.70?()=>this.otherProtein.position.clone():p<.84?()=>this.targetRnas[0].position.clone():V(1.5,-.6,.3)});
+      }
+      this.annotate(labels);
     }else{
       const merge=smooth(p/.65),mature=smooth((p-.48)/.38);
       this.myoblasts.forEach((g,i)=>{g.position.set(mix((i-1)*.75,0,merge),mix((i-1)*1.05,0,merge),0);g.scale.x=mix(1,1.7,merge);fade(g,1-mature);});

@@ -1,6 +1,6 @@
 import {EmbryoView} from './model3d.mjs?v=e860fb366ccd';
-import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=f32c9f49e67a';
-import {routes,myodStages,routeStep} from './lineage-data.mjs?v=a2165e051653';
+import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=nuclear20261028';
+import {routes,myodStages,routeStep} from './lineage-data.mjs?v=nuclear20261028';
 const root=document.getElementById('embryo-lab'),$=s=>root.querySelector(s),$$=s=>[...root.querySelectorAll(s)];
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const state={tab:'development',time:0,playing:false,speed:1,view:'section',labels:true,trail:true,layer:'ecto',layerTime:0,layerPlaying:false,myod:0,myodPlaying:false,myodSpeed:1,contractStart:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -59,8 +59,8 @@ function selectLayer(layer,reset=true){
 function drawMyod(){muscle3d?.update(state.myod);}
 function updateMyod(){
   const i=Math.min(4,Math.floor(state.myod));$('#myodSlider').value=state.myod;$('#muscleContract').disabled=state.myod<4.85;
-  if(lastMyod===i)return;lastMyod=i;const step=myodStages[i];
-  $('#myodStageNumber').textContent='STEP '+String(i+1).padStart(2,'0')+' / 05';$('#myodTitle').textContent=step.title;$('#myodDescription').textContent=step.text;$('#myodEvent').textContent=step.event;$('#myodLook').textContent=step.look;
+  if(i===3){const p=state.myod-3;$('#myodEvent').textContent=p<.18?'MyoD → 자기 발현 유지 · 다음 전사 인자 유전자':p<.38?'다른 전사 인자 유전자 → mRNA → 세포질':p<.57?'번역 → 다른 전사 인자 → 핵':p<.70?'전사 인자들의 작용 → 근육 관련 유전자':p<.84?'근육 관련 유전자의 전사 → mRNA 이동':'번역 → 근육 단백질 합성·배열';}if(lastMyod===i)return;lastMyod=i;const step=myodStages[i];
+  $('#myodStageNumber').textContent='STEP '+String(i+1).padStart(2,'0')+' / 05';$('#myodTitle').textContent=step.title;$('#myodDescription').textContent=step.text;if(i!==3)$('#myodEvent').textContent=step.event;$('#myodLook').textContent=step.look;
   $('#myodSceneTitle').textContent=i<4?'근육 전구세포의 내부':'근아세포에서 다핵 근관과 근섬유로';$('#myodScale').textContent=i<4?'세포 내부 확대':'여러 세포와 조직 관찰';
   $$('#myodSteps button').forEach((b,j)=>{b.classList.toggle('active',i===j);b.setAttribute('aria-current',i===j?'step':'false');});
 }
@@ -103,7 +103,7 @@ function init(){
   $('#layerProgress').oninput=e=>{state.layerTime=+e.target.value;layerPlay(false);drawLayers();};$('#layerPlay').onclick=()=>{if(state.layerTime>=.999)state.layerTime=0;layerPlay(!state.layerPlaying);drawLayers();};
   $('#layerAction').onclick=()=>{selectTab('expression');seekMyod(0);$('#tab-expression').focus();};$('#backMuscleRoute').onclick=()=>{selectTab('layers');selectLayer('meso');state.layerTime=1;drawLayers();$('#tab-layers').focus();};
   $$('[data-gut]').forEach(b=>b.onclick=()=>{$$('[data-gut]').forEach(other=>{const on=other===b;other.classList.toggle('active',on);other.setAttribute('aria-pressed',String(on));});gut3d?.highlight(b.dataset.gut);});
-  $('#myodSteps').innerHTML=myodStages.map((s,i)=>'<button data-myod="'+i+'"><span>0'+(i+1)+'</span>'+s.name+'</button>').join('');$$('[data-myod]').forEach(b=>b.onclick=()=>seekMyod(+b.dataset.myod===4?4.999:+b.dataset.myod+.65));
+  $('#myodSteps').innerHTML=myodStages.map((s,i)=>'<button data-myod="'+i+'"><span>0'+(i+1)+'</span>'+s.name+'</button>').join('');$$('[data-myod]').forEach(b=>b.onclick=()=>seekMyod(+b.dataset.myod===4?4.999:+b.dataset.myod===3?3:+b.dataset.myod+.65));
   $('#myodPlay').onclick=()=>{if(state.myod>=4.998)state.myod=0;state.contractStart=null;setMyodPlaying(!state.myodPlaying);updateMyod();drawMyod();};$('#myodReset').onclick=()=>seekMyod(0);$('#myodSlider').oninput=e=>seekMyod(+e.target.value);$('#myodSpeed').onchange=e=>state.myodSpeed=+e.target.value;
   $('#muscleContract').onclick=()=>{if(state.myod<4.85)return;setMyodPlaying(false);if(state.reduced){muscle3d?.update(state.myod,.12);$('#myodEvent').textContent='수축: 근섬유의 길이가 짧아집니다. 다시 관찰하려면 진행 막대를 움직이세요.';}else state.contractStart=performance.now();};
   $('#fullScreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{dialog('<h2>수업 화면</h2><p>브라우저의 전체 화면 기능(F11)을 사용해 주세요.</p>');}};
@@ -118,7 +118,7 @@ function tick(now){
   if(!document.hidden){
     if(state.playing&&state.tab==='development'){const before=stageIndex();let next=Math.min(10.999,state.time+dt*1.2*state.speed/9);if($('#pauseEach').checked&&Math.floor(next)>before){next=before+.999;setPlaying(false);}state.time=next;if(next>=10.999)setPlaying(false);updateStage();drawDevelopment();}
     if(state.layerPlaying&&state.tab==='layers'){state.layerTime=Math.min(1,state.layerTime+dt/18);if(state.layerTime>=1)layerPlay(false);drawLayers();}
-    if(state.myodPlaying&&state.tab==='expression'){state.myod=Math.min(4.999,state.myod+dt*state.myodSpeed/5.5);if(state.myod>=4.999)setMyodPlaying(false);updateMyod();drawMyod();}
+    if(state.myodPlaying&&state.tab==='expression'){state.myod=Math.min(4.999,state.myod+dt*state.myodSpeed/(Math.floor(state.myod)===3?15:5.5));if(state.myod>=4.999)setMyodPlaying(false);updateMyod();drawMyod();}
     if(state.contractStart!==null&&state.tab==='expression'){const elapsed=(now-state.contractStart)/1800;muscle3d?.update(state.myod,Math.sin(clamp(elapsed)*Math.PI)**2*.12);if(elapsed>=1)state.contractStart=null;}
   }
   requestAnimationFrame(tick);
