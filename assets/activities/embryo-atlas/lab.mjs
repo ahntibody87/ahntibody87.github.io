@@ -1,6 +1,7 @@
 import {EmbryoView} from './model3d.mjs?v=e860fb366ccd';
-import {LayerView,MuscleView,GutView} from './lineage3d.mjs?v=f32c9f49e67a';
-import {routes,myodStages,routeStep} from './lineage-data.mjs?v=a2165e051653';
+import {LayerView,GutView} from './lineage3d.mjs?v=f32c9f49e67a';
+import {routes,myodStages,routeStep} from './lineage-data.mjs?v=20261028a';
+import {MuscleDiagram} from './muscle-diagram.mjs?v=20261028a';
 const root=document.getElementById('embryo-lab'),$=s=>root.querySelector(s),$$=s=>[...root.querySelectorAll(s)];
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const state={tab:'development',time:0,playing:false,speed:1,view:'section',labels:true,trail:true,layer:'ecto',layerTime:0,layerPlaying:false,myod:0,myodPlaying:false,myodSpeed:1,contractStart:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -58,14 +59,14 @@ function selectLayer(layer,reset=true){
 }
 function drawMyod(){muscle3d?.update(state.myod);}
 function updateMyod(){
-  const i=Math.min(4,Math.floor(state.myod));$('#myodSlider').value=state.myod;$('#muscleContract').disabled=state.myod<4.85;
+  const i=Math.min(7,Math.floor(state.myod));$('#myodSlider').value=state.myod;$('#muscleContract').disabled=state.myod<7.85;
   if(lastMyod===i)return;lastMyod=i;const step=myodStages[i];
-  $('#myodStageNumber').textContent='STEP '+String(i+1).padStart(2,'0')+' / 05';$('#myodTitle').textContent=step.title;$('#myodDescription').textContent=step.text;$('#myodEvent').textContent=step.event;$('#myodLook').textContent=step.look;
-  $('#myodSceneTitle').textContent=i<4?'근육 전구세포의 내부':'근아세포에서 다핵 근관과 근섬유로';$('#myodScale').textContent=i<4?'세포 내부 확대':'여러 세포와 조직 관찰';
+  $('#myodStageNumber').textContent='STEP '+String(i+1).padStart(2,'0')+' / 08';$('#myodTitle').textContent=step.title;$('#myodDescription').textContent=step.text;$('#myodEvent').textContent=step.event;$('#myodLook').textContent=step.look;
+  $('#myodSceneTitle').textContent=i<6?'유전자에서 단백질로 이어지는 발현 조절':'단백질 배열에서 근육의 기능으로';$('#myodScale').textContent=i<6?'핵과 세포질의 연결':'근절 확대 · 세포 융합';
   $$('#myodSteps button').forEach((b,j)=>{b.classList.toggle('active',i===j);b.setAttribute('aria-current',i===j?'step':'false');});
 }
 function setMyodPlaying(on){state.myodPlaying=on;$('#myodPlay').textContent=on?'Ⅱ 일시정지':'▶ 분화 과정 재생';}
-function seekMyod(time){state.myod=clamp(time,0,4.999);state.contractStart=null;setMyodPlaying(false);updateMyod();drawMyod();}
+function seekMyod(time){state.myod=clamp(time,0,7.999);state.contractStart=null;setMyodPlaying(false);updateMyod();drawMyod();}
 function stageIndex(){return Math.min(10,Math.floor(state.time));}
 function updateStage(){
   const i=stageIndex(),s=stages[i];$('#timeSlider').value=state.time;$('#progressLabel').textContent=String(i+1).padStart(2,'0')+' / 11';$('#prev').disabled=i===0;$('#next').disabled=i===10;
@@ -79,7 +80,7 @@ function selectTab(tab){
   $$('.tabs button').forEach(b=>{const on=b.dataset.tab===tab;b.classList.toggle('active',on);b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;});$$('[role="tabpanel"]').forEach(el=>el.hidden=el.id!==tab);
   if(tab==='development')drawDevelopment();
   if(tab==='layers'){ensureLayers();drawLayers();locator3d?.render();gut3d?.render();}
-  if(tab==='expression'){muscle3d??=new MuscleView($('#myodCanvas'),$('#myodLabels'));updateMyod();drawMyod();}
+  if(tab==='expression'){muscle3d??=new MuscleDiagram($('#myodCanvas'));updateMyod();drawMyod();}
 }
 function updateView(){
   $('#cutDepth').disabled=state.view!=='section';$('#sectionView').classList.toggle('active',state.view==='section');$('#outsideView').classList.toggle('active',state.view==='outside');$('#sectionView').setAttribute('aria-pressed',String(state.view==='section'));$('#outsideView').setAttribute('aria-pressed',String(state.view==='outside'));drawDevelopment();
@@ -103,9 +104,9 @@ function init(){
   $('#layerProgress').oninput=e=>{state.layerTime=+e.target.value;layerPlay(false);drawLayers();};$('#layerPlay').onclick=()=>{if(state.layerTime>=.999)state.layerTime=0;layerPlay(!state.layerPlaying);drawLayers();};
   $('#layerAction').onclick=()=>{selectTab('expression');seekMyod(0);$('#tab-expression').focus();};$('#backMuscleRoute').onclick=()=>{selectTab('layers');selectLayer('meso');state.layerTime=1;drawLayers();$('#tab-layers').focus();};
   $$('[data-gut]').forEach(b=>b.onclick=()=>{$$('[data-gut]').forEach(other=>{const on=other===b;other.classList.toggle('active',on);other.setAttribute('aria-pressed',String(on));});gut3d?.highlight(b.dataset.gut);});
-  $('#myodSteps').innerHTML=myodStages.map((s,i)=>'<button data-myod="'+i+'"><span>0'+(i+1)+'</span>'+s.name+'</button>').join('');$$('[data-myod]').forEach(b=>b.onclick=()=>seekMyod(+b.dataset.myod===4?4.999:+b.dataset.myod+.65));
-  $('#myodPlay').onclick=()=>{if(state.myod>=4.998)state.myod=0;state.contractStart=null;setMyodPlaying(!state.myodPlaying);updateMyod();drawMyod();};$('#myodReset').onclick=()=>seekMyod(0);$('#myodSlider').oninput=e=>seekMyod(+e.target.value);$('#myodSpeed').onchange=e=>state.myodSpeed=+e.target.value;
-  $('#muscleContract').onclick=()=>{if(state.myod<4.85)return;setMyodPlaying(false);if(state.reduced){muscle3d?.update(state.myod,.12);$('#myodEvent').textContent='수축: 근섬유의 길이가 짧아집니다. 다시 관찰하려면 진행 막대를 움직이세요.';}else state.contractStart=performance.now();};
+  $('#myodSteps').innerHTML=myodStages.map((s,i)=>'<button data-myod="'+i+'"><span>0'+(i+1)+'</span>'+s.name+'</button>').join('');$$('[data-myod]').forEach(b=>b.onclick=()=>seekMyod(+b.dataset.myod));
+  $('#myodPlay').onclick=()=>{if(state.myod>=7.998)state.myod=0;else if(!state.myodPlaying&&state.myod%1>.998)state.myod=Math.floor(state.myod)+1;state.contractStart=null;setMyodPlaying(!state.myodPlaying);updateMyod();drawMyod();};$('#myodReset').onclick=()=>seekMyod(0);$('#myodNext').onclick=()=>seekMyod(state.myod>=7?7.999:Math.floor(state.myod)+1);$('#myodSlider').oninput=e=>seekMyod(+e.target.value);$('#myodSpeed').onchange=e=>state.myodSpeed=+e.target.value;
+  $('#muscleContract').onclick=()=>{if(state.myod<7.85)return;setMyodPlaying(false);if(state.reduced){muscle3d?.update(state.myod,.12);$('#myodEvent').textContent='수축: 필라멘트 길이는 유지되고 겹침이 커져 Z선 사이가 가까워집니다.';}else state.contractStart=performance.now();};
   $('#fullScreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{dialog('<h2>수업 화면</h2><p>브라우저의 전체 화면 기능(F11)을 사용해 주세요.</p>');}};
   $('#help').onclick=()=>dialog('<h2>관찰 방법</h2><h3>01 · 발생의 큰 흐름</h3><p>시간 막대와 단계 버튼으로 이동하세요. 드래그·방향키로 회전하고 절개 깊이를 조절할 수 있습니다.</p><h3>02 · 조직 하나를 따라가기</h3><p>배엽을 선택하면 다른 확대 모형과 경로가 나타납니다. 작은 배아는 관찰 위치를 알려 줍니다. 경로 재생 또는 단계 버튼을 사용하고, 장벽에서는 두 배엽 유래 조직을 비교하세요.</p><h3>03 · 골격근으로 분화하기</h3><p>MyoD 유전자에서 전사·번역·발현 조절·세포 융합으로 이어지는 과정을 관찰하세요. 마지막 단계 끝에서 수축 관찰을 누를 수 있습니다. 답변은 저장하거나 전송하지 않습니다.</p>');
   $('#sources').onclick=()=>dialog('<h2>모형 안내 · 참고 자료</h2><p>사람의 발생과 골격근 분화를 고급 생명과학 수준으로 단순화한 입체 교육 모형입니다. 실제 세포 추적·현미경·분자 구조 데이터가 아닙니다. 색, 배율, 시간과 이동을 단순화했으며 실제 과정은 겹쳐 진행됩니다.</p><h3>발생과 조직 형성</h3><a href="https://embryology.med.unsw.edu.au/embryology/index.php/Neural_System_Development" target="_blank" rel="noopener">UNSW · 신경계 발생 ↗</a><br><a href="https://embryology.med.unsw.edu.au/embryology/index.php/Musculoskeletal_System_-_Muscle_Development" target="_blank" rel="noopener">UNSW · 근육 발생 ↗</a><br><a href="https://embryology.oit.duke.edu/GI/GI.html" target="_blank" rel="noopener">Duke · 장관 형성과 여러 배엽의 참여 ↗</a><h3>유전자 발현과 MyoD</h3><a href="https://www.ncbi.nlm.nih.gov/books/NBK26854/" target="_blank" rel="noopener">Molecular Biology of the Cell · 세포 유형과 유전자 발현 ↗</a><br><a href="https://pubmed.ncbi.nlm.nih.gov/3690668/" target="_blank" rel="noopener">Davis 등 · MyoD 분화 유도 원연구 ↗</a><p>MyoD는 다른 조절인자와 함께 작용하며 모든 세포나 근육의 운명을 단독으로 정하는 스위치가 아닙니다. 장벽은 대표적인 상피와 평활근만 표시합니다.</p>');
@@ -118,7 +119,7 @@ function tick(now){
   if(!document.hidden){
     if(state.playing&&state.tab==='development'){const before=stageIndex();let next=Math.min(10.999,state.time+dt*1.2*state.speed/9);if($('#pauseEach').checked&&Math.floor(next)>before){next=before+.999;setPlaying(false);}state.time=next;if(next>=10.999)setPlaying(false);updateStage();drawDevelopment();}
     if(state.layerPlaying&&state.tab==='layers'){state.layerTime=Math.min(1,state.layerTime+dt/18);if(state.layerTime>=1)layerPlay(false);drawLayers();}
-    if(state.myodPlaying&&state.tab==='expression'){state.myod=Math.min(4.999,state.myod+dt*state.myodSpeed/5.5);if(state.myod>=4.999)setMyodPlaying(false);updateMyod();drawMyod();}
+    if(state.myodPlaying&&state.tab==='expression'){let next=Math.min(7.999,state.myod+dt*state.myodSpeed/5.5);if($('#myodPauseEach').checked&&Math.floor(next)>Math.floor(state.myod)){next=Math.floor(state.myod)+.999;setMyodPlaying(false);}state.myod=next;if(state.myod>=7.999)setMyodPlaying(false);updateMyod();drawMyod();}
     if(state.contractStart!==null&&state.tab==='expression'){const elapsed=(now-state.contractStart)/1800;muscle3d?.update(state.myod,Math.sin(clamp(elapsed)*Math.PI)**2*.12);if(elapsed>=1)state.contractStart=null;}
   }
   requestAnimationFrame(tick);
