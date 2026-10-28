@@ -5,3 +5,67 @@
 /* Keep the shared page container and centering; only the lab interior is scoped here. */
 .pl-mutation-target{display:block;margin-top:12px}.pl-mutation-target select{display:block;width:100%;margin-top:6px;font-size:12px}.pl-inspector:empty{display:none}.pl-inspector{margin:12px 0;padding:12px;border:1px solid var(--pl-line);border-radius:10px;background:#fafcf9;min-width:0}.pl-inspect-tools{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}.pl-residue-info{font-size:12px;min-height:3.5em;margin:0!important;overflow-wrap:anywhere}.pl-inspect-tools button,#pl-clear-mutation{font-size:11px;white-space:nowrap;padding:6px 9px}.pl-inspect-sequence{max-height:210px;overflow:auto;overscroll-behavior:contain;padding:3px}.pl-inspect-sequence>strong{font-size:11px;color:var(--pl-muted)}.protein-lab .pl-residue.inspected{background:#fff2ab;border-color:#c5a944;color:#3f391b;box-shadow:0 0 0 2px #d8bd55}.protein-lab .pl-residue.pinned{outline:2px solid #6c85b1;outline-offset:1px}.pl-distance-chart button.inspected{background:#325777!important}.pl-inspector .pl-residue{flex-shrink:0}@media(pointer:coarse){.protein-lab .pl-residue{width:32px;height:36px}.pl-inspector .pl-sequence-strip{gap:7px}}@media(max-width:600px){.pl-inspect-tools{flex-wrap:wrap}.pl-residue-info{flex-basis:100%}}
 .pl-library{min-width:0}.pl-aa-structure-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:17px 0 10px;font-size:12px}.pl-aa-structure-heading>span{color:var(--pl-muted);font-size:13px}.pl-aa-modes{display:flex;gap:7px}.protein-lab .pl-aa-modes button{font-size:12px;padding:7px 12px}.protein-lab .pl-aa-modes button[aria-pressed=true]{background:#e3f0eb;border-color:#88b5a5;color:#286b58;font-weight:700}.pl-aa-3d-stage{position:relative;height:280px;margin-top:17px;border:1px solid var(--pl-line);border-radius:9px;overflow:hidden;background:#f6f9fa}.pl-aa-3d-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0}.pl-aa-3d-tools label{display:flex;gap:6px;align-items:center;font-size:11px}.pl-aa-3d-tools button{font-size:11px;padding:5px 9px}.pl-atom-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--pl-muted);margin:8px 0}.pl-atom-legend span{display:flex;gap:4px;align-items:center}.pl-atom-legend i{height:9px;width:9px;border-radius:50%;border:1px solid #a7b7ba}.protein-lab .pl-aa-3d-stage canvas{display:block;max-width:100%}
+
+/* Comparison: keep identity colours separate from distance and mutation markers. */
+.pl-comparison-workspace{border:1px solid #dce4eb;border-radius:14px;background:#fff;padding:20px;min-width:0}
+.pl-compare-summary{font-size:14px;font-weight:650;margin:0 0 14px!important}
+.pl-comparison-tools{border:0;padding:0;margin:0 0 14px;display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.pl-comparison-tools button,.pl-selection-card button{font-size:12px;padding:8px 11px}
+.pl-comparison-tools label{display:flex;align-items:center;gap:5px;font-size:12px}
+.pl-compare-modes{display:flex;gap:3px;padding:3px;background:#edf2f6;border-radius:10px}
+.protein-lab .pl-compare-modes button{border-color:transparent;background:transparent}
+.protein-lab .pl-compare-modes button[aria-pressed=true],.protein-lab #pl-flip-tools button[aria-pressed=true]{background:#fff;border-color:#acc0d2;color:#255980;box-shadow:0 1px 3px #254f6910}
+#pl-compare-fit{margin-left:auto}
+.pl-compare-layout{display:grid;grid-template-columns:minmax(0,1fr) 235px;gap:18px}
+.pl-compare-layout>div,.pl-compare-scene{min-width:0}
+.pl-compare-scene{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.pl-compare-scene.pl-side-by-side{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pl-compare-scene .pl-stage{height:440px;background:#fafcfe;border:1px solid #e3eaf0;border-radius:9px}
+.pl-compare-scene .pl-stage-empty,.pl-compare-scene .pl-stage-empty strong{color:#60798b}
+.pl-panel-label{position:absolute;top:11px;left:12px;font-size:11px;color:#526d82;pointer-events:none;background:#fafcfed9;border-radius:4px;padding:3px 7px}
+.pl-selection-card{padding:15px;background:#f6f8fb;border:1px solid #e3eaf0;border-radius:10px;align-self:start}
+.pl-selection-card h3{font-size:14px;margin-bottom:12px}
+.pl-selection-actions{display:grid;gap:7px;padding-bottom:14px;border-bottom:1px solid #dce4eb;margin-bottom:14px}
+.pl-selection-card .pl-inspect-tools{display:block}
+.pl-selection-card .pl-residue-info{white-space:pre-line;line-height:1.9;min-height:130px}
+.pl-selection-card .pl-inspect-tools button{margin:8px 0}
+#pl-focus-position{width:100%}
+.pl-alignment-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+.pl-alignment-heading h3{font-size:14px}.pl-alignment-heading>span{font-size:11px;color:#697d8d}
+#pl-compare-inspector{margin:0;border:0;padding:0;background:transparent}
+.pl-paired-sequences{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px 20px}
+.pl-sequence-pair{display:grid;grid-template-columns:25px repeat(10,minmax(0,1fr));gap:5px 3px;padding:8px 0}
+.pl-sequence-pair>span{font-size:9px;text-align:center;color:#728391;align-self:center}
+.pl-sequence-pair .pl-pair-label{font-size:12px;align-self:center;text-align:center}
+.pl-pair-0{color:#477ba9}.pl-pair-1{color:#ca791e}
+.protein-lab .pl-sequence-pair .pl-residue{width:100%;height:29px;padding:0;background:#f5f7f9;border-color:#e5eaf0;color:#526673;font-size:12px}
+.protein-lab .pl-sequence-pair .pl-substituted{border-bottom:3px solid #b7508a;color:#923466;background:#fcf1f7;font-weight:700}
+.protein-lab .pl-sequence-pair .pl-residue.inspected{background:#f2dce9;border-color:#ac4e87;box-shadow:0 0 0 1px #ac4e87;color:#693253}
+.protein-lab .pl-sequence-pair .pl-residue.pinned{outline-color:#ac4e87}
+.pl-dot-a{background:#477ba9}.pl-dot-b{background:#ca791e}
+.pl-structure-card.pl-a>div:first-child>span{background:#e2edf6;color:#477ba9}
+.pl-mutation-dot{display:inline-block;width:6px;height:6px;background:#b7508a;border-radius:50%;vertical-align:middle}
+.pl-distance-axis-title,.pl-distance-axis-caption{font-size:11px;color:#65798c}
+.pl-distance-axis-caption{text-align:center;margin-top:2px}
+.pl-distance-plot{display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;margin-top:8px}
+.pl-distance-y{height:160px;display:flex;flex-direction:column;justify-content:space-between;text-align:right;font-size:10px;color:#65798c;line-height:1}
+.pl-distance-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 5px}
+.pl-distance-chart{position:relative;display:flex;gap:1px;height:160px;overflow:visible;padding:0;min-width:var(--chart-width,300px);border-bottom:1px solid #9aabb8;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#dfe6ee calc(25% - 1px),#dfe6ee 25%)}
+.pl-distance-column{flex:1;min-width:0;height:100%;display:flex;align-items:flex-end;position:relative}
+.pl-distance-column.pl-has-mutation:after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:5px;height:5px;background:#b7508a;border-radius:50%;pointer-events:none}
+.protein-lab .pl-distance-chart .pl-distance-bar{width:100%;height:100%;min-width:0;background:transparent!important;border:0;padding:0;border-radius:0;flex:none}
+.pl-distance-bar:after{content:'';position:absolute;bottom:0;left:0;width:100%;height:var(--bar-height);background:#7d83b3;border-radius:2px 2px 0 0;pointer-events:none}
+.pl-distance-bar:hover:after,.pl-distance-bar.inspected:after{background:#48518b}
+.protein-lab .pl-distance-chart .pl-distance-bar.inspected{box-shadow:inset 0 0 0 1px #48518b}
+.protein-lab .pl-distance-chart .pl-distance-bar.pl-clipped{border-top:3px solid #93376d}
+.pl-distance-bar.pl-clipped:before{content:'▲';position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-size:9px;color:#93376d}
+.pl-distance-x{height:30px;position:relative;min-width:var(--chart-width,300px)}
+.pl-distance-x span{position:absolute;top:14px;transform:translateX(-50%);font-size:10px;color:#65798c}
+.pl-distance-readout{font-size:13px;min-height:22px;color:#414b79;margin:10px 0!important}
+.pl-export-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pl-export-row button{font-size:11px;padding:7px 10px;white-space:nowrap}
+.pl-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1100px){.pl-compare-layout{grid-template-columns:minmax(0,1fr) 205px}.pl-compare-scene .pl-stage{height:380px}}
+@media(max-width:760px){.pl-comparison-workspace{padding:12px}.pl-compare-layout{grid-template-columns:minmax(0,1fr)}.pl-compare-scene .pl-stage{height:330px}.pl-side-by-side .pl-stage{height:260px}.pl-selection-card .pl-residue-info{min-height:0}.pl-selection-actions{grid-template-columns:1fr 1fr}.pl-selection-card{padding:12px}.pl-compare-modes{width:100%}.pl-compare-modes button{flex:1}.pl-paired-sequences{gap:6px}.pl-compare-summary{font-size:12px}.protein-lab .pl-sequence-pair .pl-residue{height:34px}}
+@media(max-width:600px){.pl-compare-scene.pl-side-by-side{grid-template-columns:minmax(0,1fr)}.pl-side-by-side .pl-stage{height:280px}}
+@media(pointer:coarse){.pl-distance-chart,.pl-distance-x{min-width:max(280px,calc(var(--chart-count,35)*14px))}}

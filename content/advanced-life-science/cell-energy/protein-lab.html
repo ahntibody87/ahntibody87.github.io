@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/assets/activities/protein-lab/lab.css?v=6">
+<link rel="stylesheet" href="/assets/activities/protein-lab/lab.css?v=7">
 <div id="protein-lab" class="protein-lab">
   <div class="pl-topline"><span>PROTEIN <b>/</b> DESIGN LAB</span><span class="pl-local">● 내 기기에서 탐구하기</span></div>
   <div class="pl-banners" role="tablist" aria-label="단백질 설계 실험실 메뉴">
@@ -21,15 +21,39 @@
   </section>
 
   <section id="pl-panel-compare" class="pl-panel" role="tabpanel" aria-labelledby="pl-tab-compare" hidden>
-    <div class="pl-heading"><div><p class="pl-eyebrow">SPOT THE DIFFERENCE</p><h2>같은 위치에서, 얼마나 달라졌을까요?</h2><p>같은 길이의 야생형·치환 변이를 겹쳐 보고, 잔기별 이동 거리를 확인하세요.</p></div><span class="pl-small-tag">Cα 좌표 비교</span></div>
+    <div class="pl-heading"><div><p class="pl-eyebrow">SPOT THE DIFFERENCE</p><h2>같은 위치에서, 얼마나 달라졌을까요?</h2><p>같은 길이의 야생형·치환 변이를 겹쳐 보고, 어느 위치에서 구조 차이가 큰지 살펴보세요.</p></div><span class="pl-small-tag">Cα 좌표 비교</span></div>
     <div class="pl-compare-inputs"><article class="pl-structure-card pl-a"><div><span>A</span><h3>기준 구조 · 야생형</h3></div><p id="pl-a-name">구조를 담아 주세요.</p><div class="pl-inline"><label class="pl-file-button">PDB 선택<input id="pl-a-file" type="file" accept=".pdb,.ent" hidden></label><label>사슬 <select id="pl-a-chain" aria-label="기준 구조 사슬" disabled></select></label></div></article><article class="pl-structure-card pl-b"><div><span>B</span><h3>비교 구조 · 변이</h3></div><p id="pl-b-name">구조를 담아 주세요.</p><div class="pl-inline"><label class="pl-file-button">PDB 선택<input id="pl-b-file" type="file" accept=".pdb,.ent" hidden></label><label>사슬 <select id="pl-b-chain" aria-label="비교 구조 사슬" disabled></select></label></div></article></div>
     <div class="pl-compare-action"><button id="pl-compare" class="pl-primary" disabled>두 구조 겹쳐 비교하기 <span>↗</span></button><span id="pl-compare-status" role="status">접힘 예측 결과를 담거나 PDB 파일 두 개를 선택하세요.</span></div><p id="pl-compare-error" class="pl-error" role="alert" hidden></p>
-    <div class="pl-stage pl-compare-stage"><div id="pl-compare-viewer" class="pl-viewer"></div><div id="pl-compare-empty" class="pl-stage-empty"><strong>두 구조의 차이를 한눈에</strong><span>A와 B를 준비한 뒤 비교를 시작하세요.</span></div></div><div id="pl-compare-inspector" class="pl-inspector" aria-label="A와 B의 대응 아미노산 관찰"></div><div class="pl-view-tools"><label class="pl-check"><input id="pl-show-a" type="checkbox" checked> <i class="pl-dot-a"></i>기준 A</label><label class="pl-check"><input id="pl-show-b" type="checkbox" checked> <i class="pl-dot-b"></i>비교 B</label><button id="pl-compare-fit">화면에 맞추기</button><button id="pl-export-csv" disabled>위치별 결과 CSV 저장</button></div>
-    <div class="pl-metrics pl-compare-metrics"><div><span>전체 대응 RMSD</span><strong id="pl-rmsd">—</strong><small>Å · 작을수록 가까움</small></div><div><span>TM-score · 위치 고정</span><strong id="pl-tm-score">—</strong><small>0~1 · 클수록 유사함</small></div><div><span>비교한 잔기</span><strong id="pl-aligned-count">—</strong><small>선택한 사슬의 전체 위치</small></div><div><span>치환한 위치</span><strong id="pl-change-count">—</strong><small>서열에서 다른 아미노산</small></div></div><div id="pl-distance-panel" class="pl-distance-panel" hidden><div class="pl-label-row"><h3>위치별 Cα 이동 거리</h3><span>막대에 마우스를 올려 값을 확인하세요.</span></div><div id="pl-distance-chart" class="pl-distance-chart"></div><p id="pl-changes" class="pl-help"></p><p id="pl-comparison-provenance" class="pl-help"></p></div>
+    <div class="pl-comparison-workspace">
+      <p id="pl-compare-summary" class="pl-compare-summary" role="status">두 구조를 불러온 뒤 비교를 시작하세요.</p>
+      <fieldset id="pl-comparison-tools" class="pl-comparison-tools" disabled><legend class="pl-sr-only">구조 비교 보기</legend>
+        <div class="pl-compare-modes" role="group" aria-label="비교 방식"><button type="button" data-compare-mode="overlay" aria-pressed="true">겹쳐 보기</button><button type="button" data-compare-mode="side" aria-pressed="false">나란히 보기</button><button type="button" data-compare-mode="flip" aria-pressed="false">번갈아 보기</button></div>
+        <div id="pl-overlay-tools" class="pl-inline"><label class="pl-check"><input id="pl-show-a" type="checkbox" checked><i class="pl-dot-a"></i>기준 A</label><label class="pl-check"><input id="pl-show-b" type="checkbox" checked><i class="pl-dot-b"></i>비교 B</label></div>
+        <div id="pl-flip-tools" class="pl-inline" hidden><button id="pl-flip-a" aria-pressed="true">A 보기</button><button id="pl-flip-b" aria-pressed="false">B 보기</button></div>
+        <button id="pl-compare-fit" type="button">전체 보기</button>
+      </fieldset>
+      <div class="pl-compare-layout">
+        <div><div id="pl-compare-scene" class="pl-compare-scene">
+          <div class="pl-stage pl-compare-stage"><div id="pl-compare-viewer" class="pl-viewer"></div><span id="pl-compare-panel-label" class="pl-panel-label">A + B · 겹쳐 보기</span><div id="pl-compare-empty" class="pl-stage-empty"><strong>두 구조의 차이를 한눈에</strong><span>A와 B를 준비한 뒤 비교를 시작하세요.</span></div></div>
+          <div id="pl-compare-second-stage" class="pl-stage pl-compare-stage" hidden><div id="pl-compare-viewer-b" class="pl-viewer"></div><span class="pl-panel-label">B · 비교 구조</span></div>
+        </div><p id="pl-mode-help" class="pl-help">파랑은 기준 A, 주황은 비교 B입니다. 드래그하여 회전하고 휠로 확대하세요.</p></div>
+        <aside class="pl-selection-card"><h3>같은 위치 살펴보기</h3><div class="pl-selection-actions"><button id="pl-next-mutation" disabled>다음 치환 위치 →</button><button id="pl-largest-difference" disabled>차이가 가장 큰 위치</button></div><div id="pl-selection-info"></div><button id="pl-focus-position" disabled>선택 위치 확대</button><p class="pl-help">분홍 강조는 선택한 위치입니다.<br>예측 구조의 차이이며 실제 움직임이나 기능 변화를 뜻하지는 않습니다.</p></aside>
+      </div>
+      <div class="pl-alignment-heading"><h3>같은 번호끼리 서열 비교</h3><span><i class="pl-mutation-dot"></i> 분홍 밑줄 · 치환 위치</span></div>
+      <div id="pl-compare-inspector" class="pl-inspector" aria-label="A와 B의 대응 아미노산 관찰"></div>
+    </div>
+    <div class="pl-metrics pl-compare-metrics"><div><span>전체 대응 RMSD</span><strong id="pl-rmsd">—</strong><small>Å · 작을수록 가까움</small></div><div><span>TM-score · 위치 고정</span><strong id="pl-tm-score">—</strong><small>0~1 · 클수록 유사함</small></div><div><span>비교한 잔기</span><strong id="pl-aligned-count">—</strong><small>선택한 사슬의 전체 위치</small></div><div><span>치환한 위치</span><strong id="pl-change-count">—</strong><small>서열에서 다른 아미노산</small></div></div><div id="pl-distance-panel" class="pl-distance-panel" hidden>
+      <div class="pl-label-row"><h3>위치별 구조 차이</h3><label class="pl-check"><input id="pl-lock-scale" type="checkbox">눈금 고정</label></div>
+      <p class="pl-help">두 구조를 겹친 뒤 같은 위치의 Cα 사이 거리 · <i class="pl-mutation-dot"></i> 아래 분홍 점은 치환 위치</p>
+      <div class="pl-distance-axis-title">거리 (Å)</div><div class="pl-distance-plot"><div id="pl-distance-y" class="pl-distance-y" aria-hidden="true"></div><div class="pl-distance-scroll"><div id="pl-distance-chart" class="pl-distance-chart" role="group" aria-label="위치별 구조 차이, 각 막대를 선택하여 거리 확인"></div><div id="pl-distance-x" class="pl-distance-x" aria-hidden="true"></div></div></div>
+      <div class="pl-distance-axis-caption">아미노산 위치</div><p id="pl-distance-readout" class="pl-distance-readout" role="status"></p><p id="pl-scale-note" class="pl-help"></p>
+      <p id="pl-changes" class="pl-help"></p><div class="pl-export-row"><p id="pl-comparison-provenance" class="pl-help"></p><button id="pl-export-csv" disabled>위치별 결과 CSV 저장</button></div>
+    </div>
+
     <details class="pl-details"><summary>비교 수치 읽는 법</summary><p>이 비교는 두 사슬의 첫 번째 잔기부터 같은 순서끼리 대응시킵니다. 전체 Cα 좌표의 거리 제곱합이 가장 작아지도록 구조 B를 회전·이동한 뒤 RMSD를 계산합니다. 치환 변이 실습에 적합하며, 삽입·결실이나 서로 다른 길이의 단백질은 지원하지 않습니다.</p><p>TM-score도 같은 잔기 대응을 유지합니다. 여러 초기 겹침에서 거리 가중치를 반복 조절하여 TM-score가 커지는 회전·이동을 탐색하며, 전체 사슬 길이로 정규화합니다. 근사 최적화 결과이며, 잔기 대응 자체를 찾는 TM-align과 다릅니다. RMSD와 TM-score는 각각의 기준으로 따로 최적화합니다. 화면과 위치별 막대는 RMSD 기준의 겹침입니다.</p><p>RCSB의 구조 정렬은 대응하는 위치와 비교 영역을 다시 찾을 수 있어 수치가 다를 수 있습니다. 이 화면의 RMSD는 선택한 사슬의 전체 위치를 포함합니다. 구조 차이는 예측 결과의 차이이며, 실제 변성이나 기능 상실을 증명하지 않습니다.</p><p><a href="https://www.rcsb.org/alignment" target="_blank" rel="noopener noreferrer">RCSB에서 일반 구조 정렬 열기 ↗</a></p></details>
   </section>
   <details class="pl-method"><summary>계산 방법 · 출처 · 예측의 범위</summary><p>접힘: LocalFold의 WebGPU 구현을 사용한 ESMFold2 Experimental Fast 300M 양자화 모델입니다. 구조 예측용 모델과 ESM-C 언어 모델을 함께 사용하며 MSA·ESM Atlas API를 호출하지 않습니다. pLDDT·pTM은 Synthyra의 별도 신뢰도 헤드에서 계산합니다. pLDDT는 국소 신뢰도, pTM은 전체 구조 배치에 대한 예측 신뢰도이며, 두 구조를 비교한 TM-score와 다릅니다.</p><p>예측은 하나의 정적 구조를 제시합니다. 실제 접힘 경로·속도·온도에 따른 변성·약효·안정성을 계산하는 도구가 아닙니다. 야생형과 변이는 같은 모델·설정으로 예측해 비교하세요. 예제 서열의 구조가 실제와 일치하는지 신뢰도와 실험 자료를 함께 살펴보세요.</p><p>브라우저 호환성이 부족해 예측할 수 없어도 아미노산 학습과 PDB 관찰·비교는 사용할 수 있습니다. 입력 서열·구조는 서버에 저장하지 않습니다. 모델 파일은 Hugging Face에서 내려받아 브라우저에 보관하며, 브라우저가 저장 공간을 정리하면 다시 내려받을 수 있습니다.</p><p><a href="https://github.com/sokrypton/localfold" target="_blank" rel="noopener noreferrer">LocalFold</a> · <a href="https://github.com/Biohub/esm" target="_blank" rel="noopener noreferrer">ESM 모델</a> · <a href="https://3dmol.org/" target="_blank" rel="noopener noreferrer">3Dmol.js</a> · <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer">PubChem 아미노산 구조</a> · <a href="/assets/activities/protein-lab/NOTICE.txt" target="_blank" rel="noopener noreferrer">버전과 라이선스</a></p></details>
   <div id="pl-toast" class="pl-toast" role="status" hidden></div>
 </div>
 <script src="/assets/home/vendor/3Dmol-2.5.5.min.js" defer></script>
-<script type="module" src="/assets/activities/protein-lab/lab.js?v=5"></script>
+<script type="module" src="/assets/activities/protein-lab/lab.js?v=7"></script>

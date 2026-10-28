@@ -1,14 +1,16 @@
 import {AMINO_ACIDS,GROUPS,PRESETS} from './amino-acids.js';
 import {AMINO_STRUCTURES} from './amino-structures.js';
-import {cleanSequence,mutationPositions,substituteSequence,parsePdb,compareResidues,transformPdb,residueRows} from './core.js?v=5';
-import {createResidueInspector} from './residue-inspector.js?v=5';
+import {cleanSequence,mutationPositions,substituteSequence,parsePdb,compareResidues,residueRows} from './core.js?v=5';
+import {createResidueInspector} from './residue-inspector.js?v=7';
+import {createComparisonView} from './comparison-view.js?v=7';
 
 const $=id=>document.getElementById('pl-'+id);
 const root=document.getElementById('protein-lab');
-let currentAA='G',filter='all',worker=null,busy=false,result=null,history=[],selected=[],foldViewer=null,compareViewer=null,comparison=null;
+const comparisonView=createComparisonView(root);
+let currentAA='G',filter='all',worker=null,busy=false,result=null,history=[],selected=[],foldViewer=null,comparison=null;
 const slots={a:null,b:null};let toastTimer;
 let aminoMode='2d',aminoViewer=null;
-let foldInspector=null,compareInspector=null,foldRows=[],mutationBaseline=null;
+let foldInspector=null,foldRows=[],mutationBaseline=null;
 const aaByCode=Object.fromEntries(AMINO_ACIDS.map(a=>[a.code,a]));
 const say=text=>{$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3500);};
 const error=(id,text)=>{$(id).textContent=text??'';$(id).hidden=!text;};
@@ -21,7 +23,7 @@ function showPanel(name,focus=false){
     const active=tab.dataset.panel===name;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;
     $('panel-'+tab.dataset.panel).hidden=!active;if(active&&focus)tab.focus();
   }
-  requestAnimationFrame(()=>{foldViewer?.resize();foldViewer?.render();compareViewer?.resize();compareViewer?.render();if(name==='learn'){drawFormula();if(aminoMode==='3d')renderAmino3d();}});
+  requestAnimationFrame(()=>{foldViewer?.resize();foldViewer?.render();comparisonView.resize();if(name==='learn'){drawFormula();if(aminoMode==='3d')renderAmino3d();}});
 }
 const tabs=[...root.querySelectorAll('[data-panel]')];
 tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>showPanel(tab.dataset.panel));tab.addEventListener('keydown',e=>{let n;if(e.key==='ArrowRight')n=(i+1)%3;if(e.key==='ArrowLeft')n=(i+2)%3;if(e.key==='Home')n=0;if(e.key==='End')n=2;if(n!==undefined){e.preventDefault();showPanel(tabs[n].dataset.panel,true);}});});
@@ -185,7 +187,7 @@ function loadSlot(key,record){
   for(const [chain,residues] of parsed.chains){const o=document.createElement('option');o.value=chain;o.textContent=`${chain.trim()||'(이름 없음)'} · ${residues.length} aa`;select.append(o);}
   select.disabled=false;$(key+'-name').textContent=record.name;invalidateComparison();$('compare').disabled=!slots.a||!slots.b;
 }
-function invalidateComparison(){compareInspector?.dispose();compareInspector=null;comparison=null;$('export-csv').disabled=true;$('compare-status').textContent=slots.a&&slots.b?'두 구조가 준비되었습니다. 비교를 시작하세요.':'접힘 예측 결과를 담거나 PDB 파일 두 개를 선택하세요.';$('distance-panel').hidden=true;$('rmsd').textContent=$('tm-score').textContent=$('aligned-count').textContent=$('change-count').textContent='—';compareViewer?.removeAllModels();compareViewer?.removeAllLabels();compareViewer?.render();$('compare-empty').hidden=false;}
+function invalidateComparison(){comparisonView.clear();comparison=null;$('export-csv').disabled=true;$('compare-status').textContent=slots.a&&slots.b?'두 구조가 준비되었습니다. 비교를 시작하세요.':'접힘 예측 결과를 담거나 PDB 파일 두 개를 선택하세요.';$('distance-panel').hidden=true;$('rmsd').textContent=$('tm-score').textContent=$('aligned-count').textContent=$('change-count').textContent='—';$('compare-empty').hidden=false;}
 for(const key of ['a','b']){
   $('save-'+key).addEventListener('click',()=>{if(!matchesResult()||busy)return;try{loadSlot(key,{...result});say(`현재 예측 결과를 비교 ${key.toUpperCase()}에 담았습니다.`);}catch(e){error('input-error',e.message);}});
   $(key+'-file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>8_000_000)throw Error('8 MB 이하의 PDB 파일을 사용하세요.');loadSlot(key,{pdb:await file.text(),name:file.name,model:'불러온 PDB · 예측 조건 미확인'});error('compare-error',null);}catch(e){error('compare-error',e.message);}finally{e.target.value='';}});
@@ -197,28 +199,20 @@ $('load-pdb').addEventListener('change',async e=>{
   }catch(e){error('input-error',e.message);}finally{e.target.value='';}
 });
 
-function styleCompare(inspect=true){
-  if(!compareViewer||!comparison)return;compareViewer.setStyle({model:0},$('show-a').checked?{cartoon:{color:'#54c7b1'}}:{});compareViewer.setStyle({model:1},$('show-b').checked?{cartoon:{color:'#f4a45c'}}:{});if(inspect&&compareInspector)compareInspector.paint();else compareViewer.render();
-}
-$('show-a').addEventListener('change',styleCompare);$('show-b').addEventListener('change',styleCompare);$('compare-fit').addEventListener('click',()=>{compareViewer?.zoomTo();compareViewer?.render();});
 $('compare').addEventListener('click',()=>{
   try{
     error('compare-error',null);if(!slots.a||!slots.b)throw Error('비교할 두 구조를 준비하세요.');
     const ca=$('a-chain').value,cb=$('b-chain').value,a=slots.a.parsed.chains.get(ca),b=slots.b.parsed.chains.get(cb);
-    compareInspector?.dispose();compareInspector=null;comparison=compareResidues(a,b);comparison.a=a;comparison.b=b;
-    compareViewer??=getViewer('compare');compareViewer.removeAllModels();compareViewer.removeAllLabels();compareViewer.addModel(transformPdb(slots.a.pdb,p=>p,ca),'pdb');compareViewer.addModel(transformPdb(slots.b.pdb,comparison.transform,cb),'pdb');styleCompare();compareViewer.zoomTo();compareViewer.render();$('compare-empty').hidden=true;
+    comparison=compareResidues(a,b);comparison.a=a;comparison.b=b;
     $('rmsd').textContent=comparison.rmsd.toFixed(3);$('tm-score').textContent=comparison.tmScore.toFixed(3);$('aligned-count').textContent=`${a.length} / ${a.length}`;$('change-count').textContent=comparison.changes.length+'개';
     $('compare-status').textContent='같은 위치끼리 대응시켜 전체 Cα 좌표를 겹쳤습니다.';$('distance-panel').hidden=false;$('distance-chart').replaceChildren();
-    const rowsA=residueRows(slots.a.parsed,slots.a).filter(r=>r.chain===ca),rowsB=residueRows(slots.b.parsed,slots.b).filter(r=>r.chain===cb);
-    compareInspector=createResidueInspector({viewer:compareViewer,container:$('compare-inspector'),groups:[{model:0,label:'기준 A',rows:rowsA,visible:()=>$('show-a').checked},{model:1,label:'비교 B',rows:rowsB,visible:()=>$('show-b').checked}],restore:()=>styleCompare(false),distance:i=>comparison.distances[i],onActive:active=>{$('distance-chart').querySelectorAll('button').forEach((bar,i)=>bar.classList.toggle('inspected',active?.row.position===i+1));}});
-    const max=Math.max(.5,...comparison.distances);
-    comparison.distances.forEach((d,i)=>{const bar=document.createElement('button');bar.style.height=Math.max(3,d/max*135)+'px';bar.className=comparison.changes.includes(i+1)?'changed':'';bar.title=`위치 ${i+1} (${a[i].resid} / ${b[i].resid}) · ${a[i].one} → ${b[i].one} · ${d.toFixed(3)} Å`;bar.setAttribute('aria-label',bar.title);bar.addEventListener('click',()=>compareInspector?.selectPosition(i+1));$('distance-chart').append(bar);});
+    comparisonView.load(comparison,slots,ca,cb);
     $('changes').textContent=comparison.changes.length?'치환 위치: '+comparison.changes.map(n=>`${a[n-1].one}${n}${b[n-1].one}`).join(' · '):'두 사슬의 아미노산 종류가 같습니다. 구조의 차이는 예측 조건이나 실험 조건 등에 의해서도 생길 수 있습니다.';
     $('comparison-provenance').textContent=`A: ${slots.a.model??'예측 조건 미확인'} / B: ${slots.b.model??'예측 조건 미확인'}. 같은 모델·설정으로 비교하는 것이 좋습니다.`;$('export-csv').disabled=false;
   }catch(e){invalidateComparison();error('compare-error',e.message);}
 });
 $('export-csv').addEventListener('click',()=>{if(!comparison)return;const c=comparison;const rows=[['position','reference_residue_id','comparison_residue_id','reference_aa','comparison_aa','distance_angstrom','substitution'],...c.distances.map((d,i)=>[i+1,c.a[i].resid,c.b[i].resid,c.a[i].one,c.b[i].one,d.toFixed(6),c.changes.includes(i+1)?1:0])];const quote=x=>{let value=String(x);if(/^[=+@\-\t\r]/.test(value))value="'"+value;return '"'+value.replace(/"/g,'""')+'"';};download('protein-comparison.csv','\uFEFF'+rows.map(r=>r.map(quote).join(',')).join('\r\n'),'text/csv;charset=utf-8');});
 
-new ResizeObserver(()=>{foldViewer?.resize();foldViewer?.render();compareViewer?.resize();compareViewer?.render();aminoViewer?.resize();aminoViewer?.render();}).observe(root);
+new ResizeObserver(()=>{foldViewer?.resize();foldViewer?.render();comparisonView.resize();aminoViewer?.resize();aminoViewer?.render();}).observe(root);
 aminoGrid();chooseAA('G');$('sequence').value=preset().sequence;updateInputChoice();updateSequence();
 window.addEventListener('load',drawFormula,{once:true});
