@@ -25,10 +25,10 @@ export function homePage(site, version, sharedVersion) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#030c14">
-  <meta name="description" content="고등학교 생명과학 학습을 위한 시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼. Ahntibody’s Lifescience Lab에서 생명과학을 탐구하세요.">
+  <meta name="description" content="고등학교 교사 AHNTIBODY의 생명과학 탐구 플랫폼">
   <title>ATLL | Ahntibody’s Lifescience Lab</title>
   <link rel="canonical" href="https://ahntibody87.github.io/">
-  ${socialMeta({url:'/',title:'ATLL | Ahntibody’s Lifescience Lab',description:'고등학교 생명과학을 위한 시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠.'})}
+  ${socialMeta({url:'/',title:'ATLL | Ahntibody’s Lifescience Lab',description:'고등학교 교사 AHNTIBODY의 생명과학 탐구 플랫폼'})}
   ${faviconLinks}
   <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=${version}" fetchpriority="high">
   <link rel="stylesheet" href="/assets/home.css?v=${version}">

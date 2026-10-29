@@ -1,8 +1,8 @@
 // Static metadata is readable by link scrapers without JavaScript or course entry.
 export function socialMeta({url,title,description}){
   const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const image='https://ahntibody87.github.io/assets/social/atll-share-v2.png';
-  const alt='ATLL · Ahntibody’s Lifescience Lab · 고등학교 생명과학 학습을 위한 시뮬레이션, 개념 시각화, 탐구형 학습 콘텐츠 플랫폼';
+  const image='https://ahntibody87.github.io/assets/social/atll-share-v3.png';
+  const alt='ATLL · Ahntibody’s Lifescience Lab · 흰색에서 하늘색으로 이어지는 제목과 단백질 리본';
   return `<meta property="og:type" content="website">
   <meta property="og:locale" content="ko_KR">
   <meta property="og:site_name" content="ATLL · Ahntibody’s Lifescience Lab">
@@ -12,8 +12,8 @@ export function socialMeta({url,title,description}){
   <meta property="og:image" content="${image}">
   <meta property="og:image:secure_url" content="${image}">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1730">
+  <meta property="og:image:height" content="909">
   <meta property="og:image:alt" content="${alt}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${esc(title)}">

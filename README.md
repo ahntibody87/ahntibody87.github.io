@@ -181,8 +181,11 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 - 변경 후 `node scripts/build.mjs`, `node scripts/check.mjs`, `node scripts/check-home-protein.mjs`를 실행합니다. 공통 CSS/JS는 내용 해시로 캐시를 갱신합니다.
 
 
-## 링크 공유 미리보기 — 2026-10-28
+## 링크 공유 미리보기 — 2026-10-30
 
-- 대표 이미지: `assets/social/atll-share-v2.png` (1200×630 PNG). 원본 디자인은 같은 폴더의 `card-source.html`이며 ATLL의 기존 단백질 사진/ATAA의 기존 색상을 사용합니다.
+- 대표 이미지: `assets/social/atll-share-v3.png` (1730×909 PNG). ATAA와 비슷한 높이에 자연스러운 비율의 제목을 놓고 기존 메인 제목의 흰색·아이스블루·하늘색 그라데이션을 살렸습니다. 이미지에는 이름과 영문 풀네임만 표시합니다.
+- 메인 링크 설명: `고등학교 교사 AHNTIBODY의 생명과학 탐구 플랫폼`. 일반 description, Open Graph, Twitter Card에 동일하게 적용합니다.
+- 공유 이미지 경로·크기·대체 설명은 `scripts/social.mjs`, 메인 링크 설명은 `scripts/home.mjs`에서 관리합니다. 하위 페이지의 개별 설명은 유지합니다.
+- 이미지 파일명을 새 버전으로 바꾸어 기존 이미지 캐시와 구분합니다. `card-source.html`과 v1/v2 이미지는 이전 버전 기록입니다.
 - HTML head에 Open Graph 제목·설명·이미지·정규 주소와 큰 이미지용 Twitter Card를 제공합니다. ATLL 하위 페이지는 공통 생성기에서 페이지별 제목·설명을 넣습니다.
 - 카카오톡에 이전 정보가 보이면 [카카오 공유 디버거](https://developers.kakao.com/tool/debugger/sharing)에서 해당 URL의 공유 캐시를 초기화할 수 있습니다. 기존 대화에 이미 생성된 카드는 그대로 남을 수 있습니다.
