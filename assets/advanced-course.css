@@ -8,13 +8,14 @@ body[data-page="advanced-course"] .breadcrumbs a{padding:0;margin:0;font-size:12
 .advanced-stage [hidden]{display:none!important}
 /* Structural focus targets receive focus after transitions without a frame. */
 .advanced-stage :is(.research-units,.course-access-content,#course-title):focus{outline:none}
-.research-intro{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:3vw;min-height:calc(100svh - 230px);padding:25px 0 50px;scroll-margin-top:120px}
+.research-intro{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:3vw;min-height:calc(100svh - 230px);padding:25px 0 50px;scroll-margin-top:120px}
 .research-intro-copy{max-width:620px;padding:15px 0}
 .research-eyebrow{font-size:10px;letter-spacing:.16em;color:#69717e;font-weight:650;margin:0 0 24px}
 body[data-page="advanced-course"] h1{font-size:clamp(42px,4.4vw,82px);line-height:1.2;letter-spacing:-.065em;font-weight:720;margin:0 0 35px}
 .research-description{font-size:clamp(14px,1vw,18px);line-height:1.95;color:var(--muted);word-break:keep-all;margin:0 0 18px}
-.course-open{display:inline-flex;align-items:center;justify-content:space-between;gap:44px;background:#eaf0fb;color:#30466b;border:1px solid #ccd7ea;padding:16px 22px;border-radius:7px;font-family:var(--font-sans);font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.5;margin-top:19px;transition:background .2s,border-color .2s,transform .2s}
-.course-open:hover{background:#dfe8f8;border-color:#aabddc;transform:translateY(-2px)}
+.course-open{display:inline-flex;align-items:center;justify-content:space-between;gap:44px;background:#bdceff;color:#203c7a;border:1px solid #97b0f0;padding:16px 22px;border-radius:7px;font-family:var(--font-sans);font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.5;margin-top:0;transition:background .2s,border-color .2s,transform .2s}
+.course-open:hover{background:#abc2ff;border-color:#7e9ee9;transform:translateY(-2px)}
+.course-entry-actions{display:flex;align-items:center;gap:24px;margin-top:30px}.course-unit-count{font-size:11px;font-weight:600;letter-spacing:.12em;color:#66758f;white-space:nowrap}
 .course-open svg{display:block;width:20px;height:20px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
 .course-cell{position:relative;margin:0;min-width:0;isolation:isolate;perspective:1000px}
@@ -36,7 +37,7 @@ body[data-page="advanced-course"] .portal-footer{margin-top:24px;padding:20px 0 
 .advanced-stage :is(a,button):focus-visible{outline:3px solid #315efb;outline-offset:5px}
 @media(min-width:1800px){.research-card-body{min-height:230px}.research-card-body p{font-size:16px}.research-card-footer{font-size:13px}}
 @media(max-width:900px){.research-intro{grid-template-columns:1fr;gap:15px;padding-top:25px}.research-intro-copy{max-width:650px}.course-cell{max-width:680px;width:100%;margin:auto}.research-intro h1{margin-bottom:25px}.research-unit{padding:20px 20px 0}.research-card-body{grid-template-columns:minmax(0,1fr) 38%}.research-card-body h3{font-size:22px}}
-@media(max-width:600px){.research-unit-grid{grid-template-columns:1fr;gap:18px}.research-section-heading{align-items:flex-start;gap:12px}.course-intro-back{padding:8px;font-size:11px}.research-intro{padding-top:12px}.research-eyebrow{font-size:9px;margin-bottom:20px}.research-description{font-size:14px}.course-open{margin-top:10px;padding:14px 20px}.course-cell{margin-top:15px}.research-card-body{min-height:160px}.research-card-heading{font-size:9px;gap:10px}.research-card-body p{font-size:12px}}
+@media(max-width:600px){.research-unit-grid{grid-template-columns:1fr;gap:18px}.research-section-heading{align-items:flex-start;gap:12px}.course-intro-back{padding:8px;font-size:11px}.research-intro{padding-top:12px}.research-eyebrow{font-size:9px;margin-bottom:20px}.research-description{font-size:14px}.course-open{padding:14px 20px}.course-entry-actions{margin-top:24px;gap:20px}.course-cell{margin-top:0;max-width:480px}.research-card-body{min-height:160px}.research-card-heading{font-size:9px;gap:10px}.research-card-body p{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.advanced-stage *{animation:none!important;transition:none!important}.cell-parallax{transform:none!important}}
 
 /* Four current units fit the desktop viewport; larger catalogs remain scrollable. */
