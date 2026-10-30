@@ -2,6 +2,7 @@ import { socialMeta } from './social.mjs';
 import { siteHeader } from './header.mjs';
 import { faviconLinks } from './favicon.mjs';
 import { accessHead } from './course-access.mjs';
+import { platformOverview } from './overview.mjs';
 // Home-only presentation; all course destinations come from the existing catalog.
 export function homePage(site, version, sharedVersion) {
   // Stamp the update date at build time, never when a visitor opens the page.
@@ -32,6 +33,7 @@ export function homePage(site, version, sharedVersion) {
   ${faviconLinks}
   <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=${version}" fetchpriority="high">
   <link rel="stylesheet" href="/assets/home.css?v=${version}">
+  <link rel="stylesheet" href="/assets/overview.css?v=${version}">
   <link rel="stylesheet" href="/assets/theme.css?v=${sharedVersion}">
   <script src="/assets/navigation.js?v=${sharedVersion}" defer></script>
   <script src="/assets/home.js?v=${version}" defer></script>
@@ -77,17 +79,7 @@ export function homePage(site, version, sharedVersion) {
       </div>
       </div>
     </section>
-    <section class="courses about-lab" id="about" aria-labelledby="about-title" tabindex="-1">
-      <div class="section-heading"><p lang="en">Platform Overview</p></div>
-      <h2 id="about-title" lang="en">Created by AHNTIBODY</h2>
-      <p class="about-intro">생명과학 교사가 직접 제작하는 인터랙티브 학습 공간입니다.</p>
-      <p class="about-description">설명에서 끝나는 수업을 넘어, 학생들이 생명현상을 직접 조작하고 탐구하며 이해할 수 있는 콘텐츠를 만듭니다.</p>
-      <ul class="about-tags" aria-label="교육 키워드" lang="en">
-        <li>Biology Education</li>
-        <li>Interactive Learning</li>
-        <li>Scientific Inquiry</li>
-      </ul>
-    </section>
+    ${platformOverview(version)}
   </main>
   <footer class="site-footer"><p lang="en"><span class="footer-dot" aria-hidden="true"></span> LAST UPDATED <time datetime="${updatedDate}">${updatedLabel}</time></p><span lang="en">AHNTIBODY’S LIFESCIENCE LAB</span><a href="#top">맨 위로 ${arrow}</a></footer>
 </body>

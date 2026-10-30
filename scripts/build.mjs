@@ -17,7 +17,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const styleVersion = createHash('sha256').update(fs.readFileSync(path.join(root, 'assets/style.css'), 'utf8').replace(/\r+\n/g, '\n')).digest('hex').slice(0, 12);
 const sharedVersion = createHash('sha256').update(['assets/theme.css', 'assets/navigation.js'].map(file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r+\n/g, '\n')).join('')).digest('hex').slice(0, 12);
 const homeHash = createHash('sha256');
-for (const file of ['assets/home.css', 'assets/home.js', 'assets/home-protein.js']) {
+for (const file of ['assets/home.css', 'assets/home.js', 'assets/home-protein.js', 'assets/overview.css', 'scripts/overview.mjs', 'assets/overview/protein-comparison.svg', 'assets/overview/rna-design.svg', 'assets/overview/bbb-simulation.svg', 'assets/overview/inquiry-evidence.svg', 'assets/overview/protein-comparison-mobile.svg', 'assets/overview/rna-design-mobile.svg', 'assets/overview/bbb-simulation-mobile.svg', 'assets/overview/inquiry-evidence-mobile.svg']) {
   homeHash.update(fs.readFileSync(path.join(root, file), 'utf8').replace(/\r+\n/g, '\n'));
 }
 const homeVersion = homeHash.digest('hex').slice(0, 12);

@@ -189,3 +189,11 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 - 이미지 파일명을 새 버전으로 바꾸어 기존 이미지 캐시와 구분합니다. `card-source.html`과 v1/v2 이미지는 이전 버전 기록입니다.
 - HTML head에 Open Graph 제목·설명·이미지·정규 주소와 큰 이미지용 Twitter Card를 제공합니다. ATLL 하위 페이지는 공통 생성기에서 페이지별 제목·설명을 넣습니다.
 - 카카오톡에 이전 정보가 보이면 [카카오 공유 디버거](https://developers.kakao.com/tool/debugger/sharing)에서 해당 URL의 공유 캐시를 초기화할 수 있습니다. 기존 대화에 이미 생성된 카드는 그대로 남을 수 있습니다.
+
+
+## Platform Overview — 2026-10-30
+
+- 메인의 `#about`에서 세 유형의 실제 예시와 수업 활용을 스크롤하며 봅니다. 별도 유형 선택 메뉴나 조건 전환 버튼은 없습니다.
+- `scripts/overview.mjs`: 소개와 활동 링크, 사용자가 승인한 제작자 소개. `assets/overview.css`: 메인에만 적용되는 반응형 스타일. 공통 헤더와 기존 Hero의 구조는 유지합니다.
+- 단백질 기준·L99A 비교, 실제 엔진으로 계산한 RNA 예시, 기존 BBB 모형의 분포 그래프, 산화적 인산화의 정성적 변화 자료를 표시합니다. 출처·조건·원본 좌표는 `assets/overview/README.md`와 `provenance.json`에 기록합니다.
+- `node scripts/generate-overview.mjs`로 그림을 재생성한 후 `node scripts/build.mjs`, `node scripts/check.mjs`, `node scripts/check-overview.mjs`, `node scripts/check-home-protein.mjs`로 검증합니다. 그림과 스타일 변경은 메인 파일 버전에도 반영됩니다.
