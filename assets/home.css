@@ -423,15 +423,6 @@ h1 {
   letter-spacing:-.4px
 }
 
-.course-description {
-  color:#d1dfe7;
-  font-size:12px;
-  line-height:1.65;
-  margin:0 0 17px;
-  word-break:keep-all;
-  max-width:270px
-}
-
 .card-bottom {
   display:flex;
   align-items:center;
@@ -622,9 +613,6 @@ h1 {
   .course-name {
     font-size:17px
   }
-  .course-description {
-    font-size:11px
-  }
   .course-card {
     min-height:250px
   }
@@ -733,9 +721,6 @@ h1 {
   }
   .course-name {
     font-size:19px
-  }
-  .course-description {
-    font-size:13px
   }
   .card-art {
     background-size:auto 200%;

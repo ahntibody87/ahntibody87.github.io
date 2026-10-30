@@ -65,14 +65,13 @@ export function homePage(site, version, sharedVersion) {
       </div>
       <div class="hero-courses" id="courses" hidden inert>
       <button class="button button-secondary course-back" type="button">${arrow} 뒤로 가기</button>
-      <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR COURSE</span><span class="sr-only"> · 과목별 수업</span></h2></div>
+      <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR SUBJECT</span><span class="sr-only"> · 과목별 수업</span></h2></div>
       <div class="course-grid">
         ${courses.map(c => `<a class="course-card ${esc(c.id)}" href="/${esc(c.id)}/">
           <div class="card-art" aria-hidden="true"></div>
           <div class="card-content">
             <h3 lang="en">${esc(c.display.english)}</h3>
             <p class="course-name">${esc(c.display.title)}</p>
-            <p class="course-description">${esc(c.display.description)}</p>
             <div class="card-bottom"><span class="circle-arrow">${arrow}</span><span class="course-status">${c.entryGate ? '비밀번호 필요 · ' : ''}${c.status === 'preparing' ? '콘텐츠 준비 중' : `${c.units.length}개 단원 · 탐구 시작하기`}</span></div>
           </div>
         </a>`).join('')}

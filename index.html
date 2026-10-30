@@ -26,13 +26,13 @@
   <meta name="twitter:image" content="https://ahntibody87.github.io/assets/social/atll-share-v3.png">
   <meta name="twitter:image:alt" content="ATLL · Ahntibody’s Lifescience Lab · 흰색에서 하늘색으로 이어지는 제목과 단백질 리본">
   <link rel="icon" href="/assets/favicon-light.ico?v=e6f55f7beb56" type="image/x-icon" sizes="16x16 32x32 48x48"><link rel="icon" href="/assets/favicon-light-32.png?v=e6f55f7beb56" type="image/png" sizes="32x32"><link rel="icon" href="/assets/favicon-light.svg?v=e6f55f7beb56" type="image/svg+xml" sizes="any"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=e6f55f7beb56" sizes="180x180">
-  <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=c32113ef4da1" fetchpriority="high">
-  <link rel="stylesheet" href="/assets/home.css?v=c32113ef4da1">
-  <link rel="stylesheet" href="/assets/overview.css?v=c32113ef4da1">
+  <link rel="preload" as="image" href="/assets/home/kinase-poster.webp?v=f45e844b7ecd" fetchpriority="high">
+  <link rel="stylesheet" href="/assets/home.css?v=f45e844b7ecd">
+  <link rel="stylesheet" href="/assets/overview.css?v=f45e844b7ecd">
   <link rel="stylesheet" href="/assets/theme.css?v=b3690f23edc7">
   <script src="/assets/navigation.js?v=b3690f23edc7" defer></script>
-  <script src="/assets/home.js?v=c32113ef4da1" defer></script>
-  <script src="/assets/home-protein.js?v=c32113ef4da1" defer></script>
+  <script src="/assets/home.js?v=f45e844b7ecd" defer></script>
+  <script src="/assets/home-protein.js?v=f45e844b7ecd" defer></script>
   <link rel="stylesheet" href="/assets/course-access.css?v=8dd45461569f"><script id="course-access-config" type="application/json">[{"id":"integrated-science","title":"통합과학","path":"/integrated-science/","salt":"8d5978cb33201a536240ee404feecfc0","iterations":210000,"digest":"1d407c119913ee3dd23faecf87f81891175b2a5614e7fc8ff640deb703e9f8c0"},{"id":"genetics","title":"생물의 유전","path":"/genetics/","salt":"2878e095f88c31cd52abdafc82ed3d15","iterations":210000,"digest":"d513aa13015e34d1ece55da7a239210e1858f5aaa98443aef4800ed8e4fb705b"},{"id":"advanced-life-science","title":"고급 생명과학","path":"/advanced-life-science/","salt":"626fbcf1bc43f969c9aedd5e7d00429e","iterations":210000,"digest":"5452ad343b7a96314566041f9b879a70c9aa78a97e42d2bbc7e91b34f2756f4a"}]</script><script>try{const gates=JSON.parse(document.getElementById('course-access-config').textContent);const gate=gates.find(g=>location.pathname.startsWith(g.path)||location.pathname===g.path.slice(0,-1));if(gate){let valid=false;try{valid=sessionStorage.getItem('atll-course-entry:'+gate.id)===gate.digest;}catch{}try{if(!valid)valid=(function rememberedEntry(gate,storage,now=Date.now()){
   try{
     const key='atll-course-remember:'+gate.id,raw=storage.getItem(key);
@@ -51,7 +51,7 @@
     <section class="hero" aria-labelledby="lab-title">
       <div class="hero-visual" aria-hidden="true">
         <div class="protein-stage">
-          <img class="hero-image" src="/assets/home/kinase-poster.webp?v=c32113ef4da1" width="1000" height="800" alt="" fetchpriority="high">
+          <img class="hero-image" src="/assets/home/kinase-poster.webp?v=f45e844b7ecd" width="1000" height="800" alt="" fetchpriority="high">
           <div id="protein-view" data-model-src="/assets/home/1atp-kinase.pdb" data-renderer-src="/assets/home/vendor/3Dmol-2.5.5.min.js"></div>
         </div>
       </div>
@@ -69,14 +69,13 @@
       </div>
       <div class="hero-courses" id="courses" hidden inert>
       <button class="button button-secondary course-back" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg> 뒤로 가기</button>
-      <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR COURSE</span><span class="sr-only"> · 과목별 수업</span></h2></div>
+      <div class="section-heading"><h2 id="courses-title"><span lang="en">SELECT YOUR SUBJECT</span><span class="sr-only"> · 과목별 수업</span></h2></div>
       <div class="course-grid">
         <a class="course-card integrated-science" href="/integrated-science/">
           <div class="card-art" aria-hidden="true"></div>
           <div class="card-content">
             <h3 lang="en">Integrated Science</h3>
             <p class="course-name">통합과학</p>
-            <p class="course-description">모든 탐구의 출발점이 되는 과학의 첫 지도</p>
             <div class="card-bottom"><span class="circle-arrow"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></span><span class="course-status">비밀번호 필요 · 콘텐츠 준비 중</span></div>
           </div>
         </a><a class="course-card genetics" href="/genetics/">
@@ -84,7 +83,6 @@
           <div class="card-content">
             <h3 lang="en">Genetics</h3>
             <p class="course-name">생물의 유전</p>
-            <p class="course-description">유전 현상의 원리와 규칙을 풀어가는 생명의 열쇠</p>
             <div class="card-bottom"><span class="circle-arrow"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></span><span class="course-status">비밀번호 필요 · 콘텐츠 준비 중</span></div>
           </div>
         </a><a class="course-card advanced-life-science" href="/advanced-life-science/">
@@ -92,7 +90,6 @@
           <div class="card-content">
             <h3 lang="en">Advanced Lifescience</h3>
             <p class="course-name">고급 생명과학</p>
-            <p class="course-description">교과서 너머 생명의 원리를 깊이 들여다보는 확대경</p>
             <div class="card-bottom"><span class="circle-arrow"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></span><span class="course-status">비밀번호 필요 · 4개 단원 · 탐구 시작하기</span></div>
           </div>
         </a>
@@ -116,10 +113,10 @@
           <p>예측 결과와 공개된 실험 구조를 같은 화면에서 관찰하고, 관심 있는 아미노산을 서열과 구조에 연결해 살펴보면서 PDB 데이터를 비교해 보세요.</p>
           <div class="overview-use"><span>수업에서</span><p>치환 위치를 정한 이유와 구조에서 관찰한 차이를 기록하고, 기능에 관한 가설을 설명해 봅니다.</p></div>
         </div>
-        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/protein-comparison-mobile.svg?v=c32113ef4da1" width="600" height="660"><img src="/assets/overview/protein-comparison.svg?v=c32113ef4da1" width="1000" height="660" loading="lazy" decoding="async" alt="T4 라이소자임 기준 구조와 L99A 치환 변이를 Cα 좌표로 정렬해 겹친 비교 예시. 99번 잔기 위치와 두 서열을 함께 표시합니다."></picture><figcaption>구조 비교 참고 예시 · 공개 실험 구조 4S0W / 7LX7 · 예측 결과가 아닙니다.</figcaption></figure>
+        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/protein-comparison-mobile.svg?v=f45e844b7ecd" width="600" height="660"><img src="/assets/overview/protein-comparison.svg?v=f45e844b7ecd" width="1000" height="660" loading="lazy" decoding="async" alt="T4 라이소자임 기준 구조와 L99A 치환 변이를 Cα 좌표로 정렬해 겹친 비교 예시. 99번 잔기 위치와 두 서열을 함께 표시합니다."></picture><figcaption>구조 비교 참고 예시 · 공개 실험 구조 4S0W / 7LX7 · 예측 결과가 아닙니다.</figcaption></figure>
       </div>
       <div class="overview-feature overview-feature-secondary">
-        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/rna-design-mobile.svg?v=c32113ef4da1" width="600" height="960"><img src="/assets/overview/rna-design.svg?v=c32113ef4da1" width="1000" height="660" loading="lazy" decoding="async" alt="GGGGAAAACCCC 서열의 리보스·인산 골격과 염기를 표시한 헤어핀 2차 구조와, 같은 2차 구조를 조건으로 RNAbpFlow가 예측한 3차 구조."></picture><figcaption>RNA 예시 · 2차 구조로 조건화한 3차 구조 예측 · 촉매 활성 검증 결과가 아닙니다.</figcaption></figure>
+        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/rna-design-mobile.svg?v=f45e844b7ecd" width="600" height="960"><img src="/assets/overview/rna-design.svg?v=f45e844b7ecd" width="1000" height="660" loading="lazy" decoding="async" alt="GGGGAAAACCCC 서열의 리보스·인산 골격과 염기를 표시한 헤어핀 2차 구조와, 같은 2차 구조를 조건으로 RNAbpFlow가 예측한 3차 구조."></picture><figcaption>RNA 예시 · 2차 구조로 조건화한 3차 구조 예측 · 촉매 활성 검증 결과가 아닙니다.</figcaption></figure>
         <div class="overview-copy">
           <p class="overview-representative">[대표 활동]</p>
           <h4 class="overview-topic">② RNA 구조 설계</h4>
@@ -133,7 +130,7 @@
     <section class="overview-section" aria-labelledby="overview-simulation-title">
       <header class="overview-section-heading"><span class="overview-number" aria-hidden="true">02</span><h3 id="overview-simulation-title" lang="en">Interactive Simulation</h3></header>
       <div class="overview-feature overview-feature-wide">
-        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/bbb-simulation-mobile.svg?v=c32113ef4da1" width="600" height="760"><img src="/assets/overview/bbb-simulation.svg?v=c32113ef4da1" width="1000" height="660" loading="lazy" decoding="async" alt="혈액·내피세포·뇌 조직으로 나눈 혈액–뇌 장벽 개념도와, 동일 조건의 원래 약물 및 전구약물에 대한 뇌 속 활성 약물 비율 그래프."></picture><figcaption>BBB 약물 설계 · 기존 활동의 교육용 구획 모형 계산값 · 실제 시간이나 임상 도달률이 아닙니다.</figcaption></figure>
+        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/bbb-simulation-mobile.svg?v=f45e844b7ecd" width="600" height="760"><img src="/assets/overview/bbb-simulation.svg?v=f45e844b7ecd" width="1000" height="660" loading="lazy" decoding="async" alt="혈액·내피세포·뇌 조직으로 나눈 혈액–뇌 장벽 개념도와, 동일 조건의 원래 약물 및 전구약물에 대한 뇌 속 활성 약물 비율 그래프."></picture><figcaption>BBB 약물 설계 · 기존 활동의 교육용 구획 모형 계산값 · 실제 시간이나 임상 도달률이 아닙니다.</figcaption></figure>
         <div class="overview-copy">
           <p class="overview-representative">[대표 활동]</p>
           <h4 class="overview-topic">BBB 약물 설계</h4>
@@ -154,7 +151,7 @@
           <p>같은 ATP 합성 감소가 나타나더라도 산소 소비와 H⁺ 기울기는 다를 수 있습니다. 판정의 근거를 설명하고, 더 확인해야 할 점을 찾아가는 탐구를 경험합니다.</p>
           <div class="overview-use"><span>수업에서</span><p>모둠별로 검사 선택의 이유를 논의하고, 결과 해석과 판정의 근거를 비교합니다.</p></div>
         </div>
-        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/inquiry-evidence-mobile.svg?v=c32113ef4da1" width="600" height="1050"><img src="/assets/overview/inquiry-evidence.svg?v=c32113ef4da1" width="1000" height="660" loading="lazy" decoding="async" alt="세 처리 조건에서 산소 소비 속도, 산화적 ATP 합성 속도, H⁺ 기울기의 증가·감소를 정상 대조군과 비교한 개념 그래프."></picture><figcaption>약물 처리와 산화적 인산화 · 정상 대조군 대비 변화의 방향을 나타내는 교육용 정성 모형</figcaption></figure>
+        <figure class="overview-figure"><picture><source media="(max-width:600px)" srcset="/assets/overview/inquiry-evidence-mobile.svg?v=f45e844b7ecd" width="600" height="1050"><img src="/assets/overview/inquiry-evidence.svg?v=f45e844b7ecd" width="1000" height="660" loading="lazy" decoding="async" alt="세 처리 조건에서 산소 소비 속도, 산화적 ATP 합성 속도, H⁺ 기울기의 증가·감소를 정상 대조군과 비교한 개념 그래프."></picture><figcaption>약물 처리와 산화적 인산화 · 정상 대조군 대비 변화의 방향을 나타내는 교육용 정성 모형</figcaption></figure>
       </div>
       <ol class="overview-process" aria-label="탐구 활동의 흐름">
         <li><span aria-hidden="true">01</span><h4>상황 파악</h4><p>무엇이 달라졌고, 무엇을 알아내야 할까요?</p></li>
