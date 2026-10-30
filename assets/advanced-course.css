@@ -13,10 +13,10 @@ body[data-page="advanced-course"] .breadcrumbs a{padding:0;margin:0;font-size:12
 .research-eyebrow{font-size:10px;letter-spacing:.16em;color:#69717e;font-weight:650;margin:0 0 24px}
 body[data-page="advanced-course"] h1{font-size:clamp(42px,4.4vw,82px);line-height:1.2;letter-spacing:-.065em;font-weight:720;margin:0 0 35px}
 .research-description{font-size:clamp(14px,1vw,18px);line-height:1.95;color:var(--muted);word-break:keep-all;margin:0 0 18px}
-.course-open{display:inline-flex;align-items:center;justify-content:space-between;gap:68px;background:#315efb;color:#fff;border:1px solid #315efb;padding:17px 24px;border-radius:4px;font-size:14px;margin-top:19px;transition:background .2s,transform .2s}
-.course-open:hover{background:#244bdb;transform:translateY(-2px)}
-.course-open span{font-size:22px;line-height:1}
-.course-index-note{font-size:10px;letter-spacing:.12em;color:#69717e;margin:26px 0 0}
+.course-open{display:inline-flex;align-items:center;justify-content:space-between;gap:44px;background:#eaf0fb;color:#30466b;border:1px solid #ccd7ea;padding:16px 22px;border-radius:7px;font-family:var(--font-sans);font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.5;margin-top:19px;transition:background .2s,border-color .2s,transform .2s}
+.course-open:hover{background:#dfe8f8;border-color:#aabddc;transform:translateY(-2px)}
+.course-open svg{display:block;width:20px;height:20px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
 .course-cell{position:relative;margin:0;min-width:0;isolation:isolate;perspective:1000px}
 .cell-halo{position:absolute;inset:5% 0 10%;z-index:-1;background:radial-gradient(ellipse,#e2e8fa9c,transparent 67%);border-radius:50%}
 .cell-parallax{position:relative;transition:transform .5s ease-out}
