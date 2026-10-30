@@ -52,21 +52,12 @@ function bindForm(form,onSuccess){
   return clear;
 }
 
-function installExit(gate){
- if(document.querySelector('.course-entry-menu'))return;
- const menu=document.createElement('details');menu.className='course-entry-menu';
- menu.innerHTML='<summary>수업 메뉴</summary><button type="button">수업에서 나가기</button>';
- menu.querySelector('button').addEventListener('click',()=>{try{forgetEntry(gate,localStorage);}catch{}try{sessionStorage.removeItem(key(gate));}catch{}grants.delete(gate.id);location.assign('/'+gate.id+'/');});
- document.querySelector('.site-header').append(menu);
- document.addEventListener('click',e=>{if(!menu.contains(e.target))menu.open=false;});
-}
 const screen=document.querySelector('.course-entry-screen');
 if(screen){
   const gate=gates.get(screen.dataset.entryCourse);
   const content=document.querySelector('.course-access-content');
   const showContent=(focus=true,result)=>{
     screen.hidden=true;content.hidden=false;content.inert=false;if(focus)content.focus({preventScroll:true});
-    installExit(gate);
     if(result?.remember&&!result.persisted){const note=document.createElement('p');note.className='course-storage-warning';note.setAttribute('role','status');note.textContent='이 기기에서는 입장 기록을 저장할 수 없어 현재 탭에서만 유지됩니다.';content.prepend(note);}
 
   };

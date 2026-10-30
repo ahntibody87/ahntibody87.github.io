@@ -16,9 +16,8 @@
  document.addEventListener('atll-entry-granted',e=>{if(e.detail.id==='advanced-life-science')show(true);});
  document.querySelector('.course-intro-back').addEventListener('click',()=>{history.replaceState(null,'',location.pathname);show(false);});
  if(location.hash==='#units')show(true);
- const figure=document.querySelector('.course-cell'),plane=document.querySelector('.cell-parallax'),toggle=document.querySelector('.cell-motion-toggle');
- toggle.addEventListener('click',()=>{const paused=toggle.getAttribute('aria-pressed')!=='true';toggle.setAttribute('aria-pressed',String(paused));toggle.textContent=paused?'모션 재생':'모션 일시정지';figure.classList.toggle('motion-paused',paused);plane.style.transform='';});
- figure.addEventListener('pointermove',e=>{if(reduce.matches||e.pointerType!=='mouse'||figure.classList.contains('motion-paused'))return;const r=figure.getBoundingClientRect();plane.style.transform=`perspective(1000px) rotateY(${(e.clientX-r.left-r.width/2)/r.width*7}deg) rotateX(${-(e.clientY-r.top-r.height/2)/r.height*5}deg)`;});
+ const figure=document.querySelector('.course-cell'),plane=document.querySelector('.cell-parallax');
+ figure.addEventListener('pointermove',e=>{if(reduce.matches||e.pointerType!=='mouse')return;const r=figure.getBoundingClientRect();plane.style.transform=`perspective(1000px) rotateY(${(e.clientX-r.left-r.width/2)/r.width*7}deg) rotateX(${-(e.clientY-r.top-r.height/2)/r.height*5}deg)`;});
  figure.addEventListener('pointerleave',()=>plane.style.transform='');
  document.addEventListener('visibilitychange',()=>figure.classList.toggle('motion-background',document.hidden));
 })();
