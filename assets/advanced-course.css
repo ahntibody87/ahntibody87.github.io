@@ -8,25 +8,30 @@ body[data-page="advanced-course"] .breadcrumbs a{padding:0;margin:0;font-size:12
 .advanced-stage [hidden]{display:none!important}
 /* Structural focus targets receive focus after transitions without a frame. */
 .advanced-stage :is(.research-units,.course-access-content,#course-title):focus{outline:none}
-.research-intro{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:3vw;min-height:calc(100svh - 230px);padding:25px 0 50px;scroll-margin-top:120px}
-.research-intro-copy{max-width:620px;padding:15px 0}
+.research-intro{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:2vw;min-height:calc(100svh - var(--header-height,89px) - 124px);padding:20px 0 28px;scroll-margin-top:120px}
+.research-intro-copy{max-width:660px;padding:0 0 0 12px}
 .research-eyebrow{font-size:10px;letter-spacing:.16em;color:#69717e;font-weight:650;margin:0 0 24px}
-body[data-page="advanced-course"] h1{font-size:clamp(42px,4.4vw,82px);line-height:1.2;letter-spacing:-.065em;font-weight:720;margin:0 0 35px}
+body[data-page="advanced-course"] h1{font-size:clamp(42px,4vw,76px);line-height:1.2;letter-spacing:-.065em;font-weight:720;margin:0 0 26px}
 .research-description{font-size:clamp(14px,1vw,18px);line-height:1.95;color:var(--muted);word-break:keep-all;margin:0 0 18px}
 .course-open{display:inline-flex;align-items:center;justify-content:space-between;gap:44px;background:#bdceff;color:#203c7a;border:1px solid #97b0f0;padding:16px 22px;border-radius:7px;font-family:var(--font-sans);font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.5;margin-top:0;transition:background .2s,border-color .2s,transform .2s}
 .course-open:hover{background:#abc2ff;border-color:#7e9ee9;transform:translateY(-2px)}
 .course-entry-actions{display:flex;align-items:center;gap:24px;margin-top:30px}.course-unit-count{font-size:11px;font-weight:600;letter-spacing:.12em;color:#66758f;white-space:nowrap}
 .course-open svg{display:block;width:20px;height:20px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
-.course-cell{position:relative;margin:0;min-width:0;isolation:isolate;perspective:1000px}
-.cell-halo{position:absolute;inset:5% 0 10%;z-index:-1;background:radial-gradient(ellipse,#e2e8fa9c,transparent 67%);border-radius:50%}
-.cell-parallax{position:relative;transition:transform .5s ease-out}
-.course-cell-art{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:contain;animation:cell-drift 14s ease-in-out infinite;filter:drop-shadow(0 24px 22px #243b6412)}
-.cell-traces{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.45}.cell-traces path{fill:none;stroke:#8ba1e6;stroke-width:2;stroke-dasharray:2 48;animation:cell-flow 16s linear infinite}.cell-traces path+path{stroke:#c4a06c;animation-duration:21s}
-
-
-@keyframes cell-drift{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-10px) rotate(.5deg)}}@keyframes cell-flow{to{stroke-dashoffset:-500}}
-.motion-background *{animation-play-state:paused!important}
+.course-cell{position:relative;margin:0;min-width:0;isolation:isolate;perspective:1200px;height:clamp(440px,calc(100svh - var(--header-height,89px) - 130px),780px)}
+.scene-atmosphere{position:absolute;inset:0 -5% 0 -4%;background:radial-gradient(ellipse at 38% 48%,#d5dcf0b3 0%,#e8eaf385 48%,transparent 73%);pointer-events:none}
+.scene-layers{position:absolute;inset:0;overflow:hidden;transition:transform .65s ease-out;mask-image:linear-gradient(90deg,transparent,#000 5%,#000 87%,transparent),linear-gradient(0deg,transparent,#000 8%,#000 92%,transparent);mask-composite:intersect}
+.scene-far-layer{position:absolute;inset:-2%;transform:translate3d(calc(var(--scene-x,0px)*.3),calc(var(--scene-y,0px)*.3),0)}
+.nuclear-landscape{display:block;width:100%;height:100%;object-fit:cover;object-position:48% 50%;animation:nuclear-breath 22s ease-in-out infinite}
+.scene-depth-light{position:absolute;inset:0;background:radial-gradient(ellipse at 18% 16%,#edf0ff33,transparent 60%);pointer-events:none}
+.scene-front-layer{position:absolute;width:64%;aspect-ratio:3/2;right:-2%;bottom:3%;transform:translate3d(var(--scene-x,0px),var(--scene-y,0px),0);pointer-events:none}
+.scene-front-layer img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 18px 16px #2b315330);animation:ribosome-drift 17s ease-in-out infinite}
+.nuclear-transport{position:absolute;inset:0;width:100%;height:100%;opacity:.65;pointer-events:none}
+.nuclear-transport path{stroke:#e8c67e;stroke-width:3;stroke-linecap:round;stroke-dasharray:1 155;animation:nuclear-transfer 24s linear infinite}
+@keyframes nuclear-breath{0%,100%{transform:scale(1.015) translateY(0)}50%{transform:scale(1.025) translateY(-3px)}}
+@keyframes ribosome-drift{0%,100%{transform:translate3d(0,0,0) rotate(-.3deg)}50%{transform:translate3d(-3px,-7px,0) rotate(.4deg)}}
+@keyframes nuclear-transfer{to{stroke-dashoffset:-780}}
+.motion-background *,.motion-offscreen *{animation-play-state:paused!important}
 .research-units{padding:24px 0 40px;scroll-margin-top:110px}.research-section-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:28px}.research-section-heading .research-eyebrow{font-size:12px;font-weight:650;letter-spacing:.16em;margin:0}
 .course-intro-back{font:inherit;font-size:12px;color:#525866;border:1px solid #d5dae3;border-radius:4px;padding:10px 16px;background:transparent;cursor:pointer;white-space:nowrap}
 .research-unit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.research-unit{display:block;min-width:0;padding:22px 28px 0;background:#fff;border:1px solid #d5dae3;border-radius:9px;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden}
@@ -36,9 +41,9 @@ body[data-page="advanced-course"] h1{font-size:clamp(42px,4.4vw,82px);line-heigh
 body[data-page="advanced-course"] .portal-footer{margin-top:24px;padding:20px 0 24px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
 .advanced-stage :is(a,button):focus-visible{outline:3px solid #315efb;outline-offset:5px}
 @media(min-width:1800px){.research-card-body{min-height:230px}.research-card-body p{font-size:16px}.research-card-footer{font-size:13px}}
-@media(max-width:900px){.research-intro{grid-template-columns:1fr;gap:15px;padding-top:25px}.research-intro-copy{max-width:650px}.course-cell{max-width:680px;width:100%;margin:auto}.research-intro h1{margin-bottom:25px}.research-unit{padding:20px 20px 0}.research-card-body{grid-template-columns:minmax(0,1fr) 38%}.research-card-body h3{font-size:22px}}
-@media(max-width:600px){.research-unit-grid{grid-template-columns:1fr;gap:18px}.research-section-heading{align-items:flex-start;gap:12px}.course-intro-back{padding:8px;font-size:11px}.research-intro{padding-top:12px}.research-eyebrow{font-size:9px;margin-bottom:20px}.research-description{font-size:14px}.course-open{padding:14px 20px}.course-entry-actions{margin-top:24px;gap:20px}.course-cell{margin-top:0;max-width:480px}.research-card-body{min-height:160px}.research-card-heading{font-size:9px;gap:10px}.research-card-body p{font-size:12px}}
-@media(prefers-reduced-motion:reduce){.advanced-stage *{animation:none!important;transition:none!important}.cell-parallax{transform:none!important}}
+@media(max-width:900px){.research-intro{grid-template-columns:1fr;gap:15px;padding-top:25px}.research-intro-copy{max-width:650px;padding:0}.course-cell{max-width:760px;width:100%;height:clamp(350px,65vw,580px);margin:auto}.research-intro h1{margin-bottom:25px}.research-unit{padding:20px 20px 0}.research-card-body{grid-template-columns:minmax(0,1fr) 38%}.research-card-body h3{font-size:22px}}
+@media(max-width:600px){.research-unit-grid{grid-template-columns:1fr;gap:18px}.research-section-heading{align-items:flex-start;gap:12px}.course-intro-back{padding:8px;font-size:11px}.research-intro{padding-top:12px}.research-eyebrow{font-size:9px;margin-bottom:20px}.research-description{font-size:14px}.course-open{padding:14px 20px}.course-entry-actions{margin-top:24px;gap:20px}.course-cell{margin-top:0;max-width:none;height:360px;margin-bottom:10px}.research-card-body{min-height:160px}.research-card-heading{font-size:9px;gap:10px}.research-card-body p{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.advanced-stage *{animation:none!important;transition:none!important}.cell-parallax,.scene-front-layer,.scene-far-layer{transform:none!important}}
 
 /* Four current units fit the desktop viewport; larger catalogs remain scrollable. */
 @media(min-width:961px) and (min-height:600px){

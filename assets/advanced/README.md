@@ -1,5 +1,7 @@
 # Advanced biology course hero
 
+The current course entrance uses the molecular nuclear-envelope scene documented in [MOLECULAR-HERO.md](MOLECULAR-HERO.md). The original whole-cell illustration below is retained as a previous asset.
+
 `cell-cutaway.webp` is a new original conceptual animal-cell cutaway, generated with the built-in image_gen tool on 2026-10-30 (transparent PNG), converted to 1536×1024 WebP with alpha preserved. It is an educational illustration, not microscopy or a molecular-coordinate rendering. Source PNG remains in the local generated-images archive. Mitochondria, nucleus, ER, Golgi and plasma membrane were visually checked before use. Organelle sizes, positions and colours are schematic.
 
 ## Final generation prompt
