@@ -4,6 +4,8 @@ body[data-page="advanced-course"] main{max-width:none;padding:0 var(--site-gutte
 body[data-page="advanced-course"] .topbar{min-height:50px;border:0;background:transparent}
 .advanced-stage{min-height:calc(100svh - 230px)}
 .advanced-stage [hidden]{display:none!important}
+/* Structural focus targets receive focus after transitions without a frame. */
+.advanced-stage :is(.research-units,.course-access-content,#course-title):focus{outline:none}
 .research-intro{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:3vw;min-height:calc(100svh - 230px);padding:25px 0 50px;scroll-margin-top:120px}
 .research-intro-copy{max-width:620px;padding:15px 0}
 .research-eyebrow{font-size:10px;letter-spacing:.16em;color:#69717e;font-weight:650;margin:0 0 24px}
