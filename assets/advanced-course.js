@@ -4,14 +4,17 @@
  const reduce=matchMedia('(prefers-reduced-motion:reduce)');let switching=false;
  async function show(units){
   if(switching)return;
-  if(units&&!document.documentElement.dataset.courseEntryGranted){panel.hidden=false;intro.hidden=true;return;}
+  if(units&&!document.documentElement.dataset.courseEntryGranted){panel.hidden=false;intro.hidden=true;window.scrollTo({top:0,behavior:'instant'});return;}
   const from=units?intro:panel,to=units?panel:intro;if(!to.hidden)return;
   switching=true;
   if(!reduce.matches)await from.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-12px)'}],{duration:180,easing:'ease-out'}).finished;
-  from.hidden=true;to.hidden=false;to.scrollIntoView({block:'start',behavior:'instant'});
+  from.hidden=true;to.hidden=false;window.scrollTo({top:0,behavior:'instant'});
   if(!reduce.matches)await to.animate([{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}],{duration:420,easing:'cubic-bezier(.2,.7,.2,1)'}).finished;
   (units?document.querySelector('#units'):document.querySelector('#course-title')).focus({preventScroll:true});switching=false;
  }
+ document.addEventListener('atll-open-units',()=>show(true));
+ addEventListener('popstate',()=>show(location.hash==='#units'));
+ addEventListener('load',()=>{if(location.hash==='#units')requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));},{once:true});
  addEventListener('hashchange',()=>show(location.hash==='#units'));
  document.addEventListener('atll-entry-granted',e=>{if(e.detail.id==='advanced-life-science')show(true);});
  document.querySelector('.course-intro-back').addEventListener('click',()=>{history.replaceState(null,'',location.pathname);show(false);});

@@ -73,7 +73,11 @@ dialog.innerHTML='<div class="course-entry-card"><p class="entry-eyebrow" lang="
 document.body.append(dialog);
 const form=dialog.querySelector('form');
 let destination=null,opener=null;
-const clear=bindForm(form,()=>{const url=destination;dialog.close();if(url)location.assign(url.href);});
+function openDestination(url){
+  if(url.pathname===location.pathname&&url.hash==='#units'&&document.querySelector('#course-units-panel')){history.pushState(null,'',url.pathname+url.hash);document.dispatchEvent(new Event('atll-open-units'));}
+  else location.assign(url.href);
+}
+const clear=bindForm(form,()=>{const url=destination;dialog.close();if(url)openDestination(url);});
 dialog.querySelector('.course-dialog-cancel').addEventListener('click',()=>{clear();dialog.close();});
 dialog.addEventListener('cancel',()=>clear());
 dialog.addEventListener('close',()=>{clear();destination=null;if(opener?.isConnected)opener.focus({preventScroll:true});opener=null;});
@@ -86,6 +90,7 @@ document.addEventListener('click',event=>{
   const gate=config.find(g=>url.pathname.startsWith(g.path)||url.pathname===g.path.slice(0,-1));
   // Without tab storage, enter at the destination screen to avoid a second prompt.
   if(gate?.id==='advanced-life-science'&&(url.pathname===gate.path||url.pathname===gate.path.slice(0,-1))&&!anchor.hasAttribute('data-course-open-units'))return;
+  if(anchor.hasAttribute('data-course-open-units')&&gate&&unlocked(gate)){event.preventDefault();openDestination(url);return;}
   if(!gate || unlocked(gate) || !storageAvailable)return;
   event.preventDefault();clear();destination=url;opener=anchor;form.dataset.entryCourse=gate.id;
   dialog.querySelector('h2').textContent=gate.title;

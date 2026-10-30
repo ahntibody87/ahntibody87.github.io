@@ -1,7 +1,9 @@
 @font-face{font-family:"Pretendard ATLL";src:url("/assets/fonts/PretendardVariable.woff2") format("woff2");font-weight:100 900;font-display:swap}
 body[data-page="advanced-course"]{--font-sans:"Pretendard ATLL",Pretendard,"Segoe UI","Malgun Gothic",sans-serif;--bg:#f7f8fa;--surface:#fff;--text:#202124;--muted:#525866;--cyan:#315efb;--line:#e5e7eb;--tint:#f0f3ff;--ink:var(--text);--paper:var(--bg);--green:var(--cyan);font-family:var(--font-sans);background:var(--bg);line-height:1.6}
 body[data-page="advanced-course"] main{max-width:none;padding:0 var(--site-gutter)}
-body[data-page="advanced-course"] .topbar{min-height:50px;border:0;background:transparent}
+body[data-page="advanced-course"] .page>.topbar{min-height:58px;height:auto;max-width:none;margin:auto;border:0;background:transparent}
+body[data-page="advanced-course"] .breadcrumbs{line-height:1.65}
+body[data-page="advanced-course"] .breadcrumbs a{padding:0;margin:0;font-size:12px}
 .advanced-stage{min-height:calc(100svh - 230px)}
 .advanced-stage [hidden]{display:none!important}
 /* Structural focus targets receive focus after transitions without a frame. */
@@ -36,3 +38,18 @@ body[data-page="advanced-course"] .portal-footer{margin-top:24px;padding:20px 0 
 @media(max-width:900px){.research-intro{grid-template-columns:1fr;gap:15px;padding-top:25px}.research-intro-copy{max-width:650px}.course-cell{max-width:680px;width:100%;margin:auto}.research-intro h1{margin-bottom:25px}.research-unit{padding:20px 20px 0}.research-card-body{grid-template-columns:minmax(0,1fr) 38%}.research-card-body h3{font-size:22px}}
 @media(max-width:600px){.research-unit-grid{grid-template-columns:1fr;gap:18px}.research-section-heading{align-items:flex-start;gap:12px}.course-intro-back{padding:8px;font-size:11px}.research-intro{padding-top:12px}.research-eyebrow{font-size:9px;margin-bottom:20px}.research-description{font-size:14px}.course-open{margin-top:10px;padding:14px 20px}.course-cell{margin-top:15px}.research-card-body{min-height:160px}.research-card-heading{font-size:9px;gap:10px}.research-card-body p{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.advanced-stage *{animation:none!important;transition:none!important}.cell-parallax{transform:none!important}}
+
+/* Four current units fit the desktop viewport; larger catalogs remain scrollable. */
+@media(min-width:961px) and (min-height:600px){
+ .research-units-fit{height:calc(100svh - var(--header-height,88px) - 74px);padding:18px 0 20px;display:flex;flex-direction:column}
+ .research-units-fit .research-section-heading{flex:none;margin-bottom:20px;min-height:40px}
+ .research-units-fit .research-unit-grid{flex:1;min-height:0;grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(14px,2vh,22px)}
+ .research-units-fit .research-unit{display:flex;flex-direction:column;min-height:0;padding:clamp(14px,2vh,22px) 24px 0}
+ .research-units-fit .research-card-heading{flex:none}
+ .research-units-fit .research-card-body{flex:1;min-height:0;grid-template-rows:minmax(0,1fr);gap:12px}
+ .research-units-fit .research-card-body>div{min-width:0}
+ .research-units-fit .research-card-body img{height:100%;min-height:0;max-height:100%;width:100%;aspect-ratio:auto;object-fit:contain;padding:8px 0}
+ .research-units-fit .research-card-body h3{font-size:clamp(21px,1.6vw,30px);margin:6px 0 10px}
+ .research-units-fit .research-card-body p{margin:0;font-size:clamp(12px,.85vw,16px);line-height:1.7}
+ .research-units-fit .research-card-footer{flex:none;padding:11px 0}
+}
