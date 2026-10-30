@@ -197,3 +197,11 @@ Node.js가 있는 작업 환경에서 진행합니다. npm 패키지 설치는 �
 - `scripts/overview.mjs`: 대표 활동 소개와 사용자가 승인한 제작자 소개. Overview 안에는 활동 이동 링크를 두지 않습니다. `assets/overview.css`: 메인에만 적용되는 반응형 스타일. 공통 헤더와 기존 Hero의 구조는 유지합니다.
 - 단백질 기준·L99A 비교, 실제 엔진으로 계산한 RNA 예시, 기존 BBB 모형의 분포 그래프, 산화적 인산화의 정성적 변화 자료를 표시합니다. 출처·조건·원본 좌표는 `assets/overview/README.md`와 `provenance.json`에 기록합니다.
 - `node scripts/generate-overview.mjs`로 그림을 재생성한 후 `node scripts/build.mjs`, `node scripts/check.mjs`, `node scripts/check-overview.mjs`, `node scripts/check-home-protein.mjs`로 검증합니다. 그림과 스타일 변경은 메인 파일 버전에도 반영됩니다.
+
+## 고급 생명과학 교과 입구 — 2026-10-30
+
+- `scripts/advanced-course.mjs`, `assets/advanced-course.css`, `assets/advanced-course.js`: 공개 교과 소개 → 비밀번호 확인 → 같은 페이지의 네 단원 화면. 단원과 활동 URL에는 기존 입장 확인을 유지합니다.
+- 전환, 그림의 느린 움직임, 마우스 기울기, 카드 확대를 적용합니다. 일시정지·기기의 동작 줄이기·백그라운드 정지를 지원합니다.
+- 세 과목 공통으로 7일 입장 유지가 선택 사항이며 기본은 미선택입니다. 기존 30일 기록은 새 기간 범위를 넘으면 삭제되고, 현재 탭의 정상 입장은 유지됩니다. 반복 상태 안내 대신 상단 보조 메뉴에 수업에서 나가기를 제공합니다.
+- 상태 모듈의 URL 버전도 함께 갱신해야 오래된 30일 코드가 캐시에 남지 않습니다.
+- `node scripts/build.mjs`, `node scripts/check.mjs`, `node scripts/check-course-access.mjs`, `node scripts/check-home-protein.mjs`로 검사합니다. 운영 비밀번호 설정은 변경하지 않습니다.

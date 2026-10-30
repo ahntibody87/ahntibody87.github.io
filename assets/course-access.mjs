@@ -1,5 +1,5 @@
 import {verifyPassword} from './course-password.mjs?v=f95ecdd82a1f';
-import {rememberedEntry,rememberEntry,forgetEntry} from './course-entry-state.mjs?v=6e6ae4154dae';
+import {rememberedEntry,rememberEntry,forgetEntry} from './course-entry-state.mjs?v=d21901121ebf';
 
 const config=JSON.parse(document.getElementById('course-access-config').textContent);
 const gates=new Map(config.map(g=>[g.id,g]));
@@ -14,12 +14,14 @@ function unlocked(gate){
 }
 function grant(gate,remember=false){
   grants.add(gate.id);
+  document.documentElement.dataset.courseEntryGranted=gate.id;
   try{if(storageAvailable)sessionStorage.setItem(key(gate),gate.digest);}catch{}
   let persisted=false;
   try{if(remember)persisted=rememberEntry(gate,localStorage);else forgetEntry(gate,localStorage);}catch{}
+  document.dispatchEvent(new CustomEvent('atll-entry-granted',{detail:{id:gate.id}}));
   return {remember,persisted};
 }
-function rememberChoice(id){return '<label class="course-remember-choice" for="'+id+'"><input type="checkbox" id="'+id+'" name="remember"> <span>이 브라우저에서 30일간 입장 유지</span></label>';}
+function rememberChoice(id){return '<label class="course-remember-choice" for="'+id+'"><input type="checkbox" id="'+id+'" name="remember"> <span>이 브라우저에서 7일간 입장 유지</span></label>';}
 function bindForm(form,onSuccess){
   const input=form.querySelector('[name="password"]');
   const submit=form.querySelector('button[type="submit"]');
@@ -50,22 +52,25 @@ function bindForm(form,onSuccess){
   return clear;
 }
 
+function installExit(gate){
+ if(document.querySelector('.course-entry-menu'))return;
+ const menu=document.createElement('details');menu.className='course-entry-menu';
+ menu.innerHTML='<summary>수업 메뉴</summary><button type="button">수업에서 나가기</button>';
+ menu.querySelector('button').addEventListener('click',()=>{try{forgetEntry(gate,localStorage);}catch{}try{sessionStorage.removeItem(key(gate));}catch{}grants.delete(gate.id);location.assign('/'+gate.id+'/');});
+ document.querySelector('.site-header').append(menu);
+ document.addEventListener('click',e=>{if(!menu.contains(e.target))menu.open=false;});
+}
 const screen=document.querySelector('.course-entry-screen');
 if(screen){
   const gate=gates.get(screen.dataset.entryCourse);
   const content=document.querySelector('.course-access-content');
   const showContent=(focus=true,result)=>{
     screen.hidden=true;content.hidden=false;content.inert=false;if(focus)content.focus({preventScroll:true});
-    if(!content.querySelector('.course-entry-tools')){
-      const tools=document.createElement('div');tools.className='course-entry-tools';
-      const status=document.createElement('p');status.setAttribute('role','status');
-      if(result?.remember&&!result.persisted)status.textContent='브라우저의 저장 제한으로 현재 탭에서만 입장 상태가 유지됩니다.';
-      else {let saved=false;try{saved=rememberedEntry(gate,localStorage);}catch{}status.textContent=saved?'이 브라우저에서 입장 상태를 기억하고 있습니다.':'현재 탭에서 입장 상태를 유지합니다.';}
-      const forget=document.createElement('button');forget.type='button';forget.textContent='입장 기억 지우기';
-      forget.onclick=()=>{try{forgetEntry(gate,localStorage);}catch{}try{sessionStorage.removeItem(key(gate));}catch{}grants.delete(gate.id);location.reload();};
-      tools.append(status,forget);content.append(tools);
-    }
+    installExit(gate);
+    if(result?.remember&&!result.persisted){const note=document.createElement('p');note.className='course-storage-warning';note.setAttribute('role','status');note.textContent='이 기기에서는 입장 기록을 저장할 수 없어 현재 탭에서만 유지됩니다.';content.prepend(note);}
+
   };
+  document.addEventListener('atll-entry-granted',e=>{if(e.detail.id===gate?.id)showContent(false);});
   if(gate&&unlocked(gate))showContent(false);
   else bindForm(screen.querySelector('form'),(_,result)=>showContent(true,result));
 }
@@ -89,6 +94,7 @@ document.addEventListener('click',event=>{
   if(url.origin!==location.origin)return;
   const gate=config.find(g=>url.pathname.startsWith(g.path)||url.pathname===g.path.slice(0,-1));
   // Without tab storage, enter at the destination screen to avoid a second prompt.
+  if(gate?.id==='advanced-life-science'&&(url.pathname===gate.path||url.pathname===gate.path.slice(0,-1))&&!anchor.hasAttribute('data-course-open-units'))return;
   if(!gate || unlocked(gate) || !storageAvailable)return;
   event.preventDefault();clear();destination=url;opener=anchor;form.dataset.entryCourse=gate.id;
   dialog.querySelector('h2').textContent=gate.title;

@@ -65,7 +65,7 @@ assert.match(css,/html\[data-course-entry-granted\] \.course-entry-screen\{displ
 console.log('과목 입장: 비밀번호 확인·오입력, 세 과목 잠금, 과목별 salt, 설정 검증 통과');
 console.log('첫 표시: 인증된 탭 즉시 본문 표시, 만료·미인증·저장 차단 시 잠금 유지 검사 통과');
 const saved=new Map(),storage={getItem:k=>saved.get(k)??null,setItem:(k,v)=>saved.set(k,v),removeItem:k=>saved.delete(k)};
-const now=1700000000000,ttl=30*86400000,gate=gates[2];
+const now=1700000000000,ttl=7*86400000,gate=gates[2];
 assert.equal(rememberedEntry(gate,storage,now),false);
 assert.equal(rememberEntry(gate,storage,now),true);
 assert.equal(rememberedEntry(gate,storage,now+ttl-1),true);
@@ -80,4 +80,4 @@ const blocked={getItem:()=>{throw Error('denied');},setItem:()=>{throw Error('de
 assert.equal(rememberEntry(gate,blocked,now),false);assert.equal(rememberedEntry(gate,blocked,now),false);assert.doesNotThrow(()=>forgetEntry(gate,blocked));
 assert.match(accessContent(site.courses[2],''),/type="checkbox" id="course-entry-remember" name="remember">/);
 assert.doesNotMatch(accessContent(site.courses[2],''),/name="remember"[^>]*checked/);
-console.log('30일 입장 유지: 만료 경계·과목 격리·비밀번호 변경·기억 지우기·손상/차단 저장소·기본 미선택 검사 통과');
+console.log('7일 입장 유지: 만료 경계·과목 격리·비밀번호 변경·기억 지우기·손상/차단 저장소·기본 미선택 검사 통과');

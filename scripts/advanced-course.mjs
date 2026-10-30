@@ -1,25 +1,14 @@
-// The course index has its own presentation; unit and activity pages keep their shells.
-const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const types = { simulation: 'INTERACTIVE SIMULATION', inquiry: 'INQUIRY ACTIVITY', design: 'MOLECULAR DESIGN STUDIO', resource: 'LEARNING RESOURCE', external: 'EXTERNAL ACTIVITY' };
-export const advancedDescription = '세포 대사부터 유전자 발현까지. 생명과학 자료를 분석하고, 분자 구조와 생체 시스템을 탐색합니다.';
-
-// Approved conceptual artwork; not measured data or molecular-coordinate renders.
-const unitArt = {
-  'cell-energy': '미토콘드리아의 이중막과 크리스타를 보여주는 개념도',
-  'regulation-defense': '신경세포와 혈액–뇌 장벽을 보여주는 개념도',
-  'gene-expression': 'DNA 전사와 RNA 생성을 보여주는 개념도',
-  biotechnology: '플라스미드와 유전자 삽입을 보여주는 개념도'
+import {accessContent} from './course-access.mjs';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export const advancedDescription='대학의 일반생물학 수준에서 생명 현상을 깊이 있게 다루고, 실험 자료와 모형으로 탐구하는 고급 생명과학';
+const summaries={
+ 'cell-energy':'효소와 물질대사, 세포 호흡과 에너지 전환',
+ 'regulation-defense':'신경·호르몬 조절과 면역 반응',
+ 'gene-expression':'유전 정보의 저장, 발현과 조절',
+ biotechnology:'유전자 분석과 조작, 생명공학의 활용'
 };
-function diagram(id) {
-  return `<img class="research-unit-art" src="/assets/biology-art-v2/unit-${esc(id)}.webp" alt="${esc(unitArt[id] || '')}" width="800" height="600" loading="lazy" decoding="async">`;
-}
-
-export function advancedCourse(course) {
-  const cards = course.units.map((unit, i) => {
-    const activities = unit.activities;
-    const typeLabels = [...new Set(activities.map(a => types[a.type]))];
-    const topics = activities.length ? `<ul class="research-activity-list">${activities.slice(0, 2).map(a => `<li>${esc(a.title)}</li>`).join('')}</ul>${activities.length > 2 ? `<p class="research-more">외 ${activities.length - 2}개 활동</p>` : ''}` : '<p class="research-preparing">새로운 자료와 탐구 도구를<br>준비하고 있습니다.</p>';
-    return `<a class="research-unit research-unit-${esc(unit.id)}" href="/${esc(course.id)}/${esc(unit.id)}/"><div class="research-card-heading"><span class="research-unit-number">${String(i + 1).padStart(2, '0')}</span><span class="research-unit-english" lang="en">${esc(unit.english)}</span><span class="research-arrow" aria-hidden="true">↗</span></div><h3>${esc(unit.title)}</h3><div class="research-card-content"><div class="research-card-details">${topics}<div class="research-types" lang="en">${typeLabels.map(t => `<span>${esc(t)}</span>`).join('')}</div></div><div class="research-card-figure">${diagram(unit.id)}</div></div><div class="research-card-footer"><span>${activities.length ? `${activities.length}개 활동` : '준비 중'}</span><span class="research-card-action">단원 살펴보기 <span aria-hidden="true">→</span></span></div></a>`;
-  }).join('');
-  return `<section class="research-intro"><p class="research-eyebrow" lang="en">ADVANCED LIFESCIENCE</p><h1>${esc(course.title)}</h1><p class="research-description">세포 대사부터 유전자 발현까지.<br>생명과학 자료를 분석하고, 분자 구조와 생체 시스템을 탐색합니다.</p></section><section id="units" class="research-units"><div class="research-section-heading"><h2 lang="en">Select a unit</h2><span>${course.units.length}개 단원</span></div><div class="research-unit-grid">${cards}</div></section>`;
+export function advancedCourse(course){
+ const cards=course.units.map((u,i)=>`<a class="research-unit research-unit-${u.id}" href="/${course.id}/${u.id}/"><div class="research-card-heading"><span>${String(i+1).padStart(2,'0')}</span><span lang="en">${esc(u.english)}</span><span aria-hidden="true">↗</span></div><div class="research-card-body"><div><h3>${esc(u.title)}</h3><p>${summaries[u.id]}</p></div><img src="/assets/biology-art-v2/unit-${u.id}.webp" width="800" height="600" alt="${esc(u.title)} 개념도" loading="lazy"></div><div class="research-card-footer"><span>${u.activities.length?`${u.activities.length}개 활동`:'자료 준비 중'}</span><span>단원 살펴보기 →</span></div></a>`).join('');
+ const units=`<section class="research-units" id="units" aria-labelledby="units-title" tabindex="-1"><header class="research-section-heading"><div><p class="research-eyebrow">COURSE CONTENTS</p><h2 id="units-title">고급 생명과학의 네 영역</h2></div><button class="course-intro-back" type="button">← 교과 소개</button></header><div class="research-unit-grid">${cards}</div></section>`;
+ return `<div class="advanced-stage"><section class="research-intro" id="course-intro" aria-labelledby="course-title"><div class="research-intro-copy"><p class="research-eyebrow">ATLL / ADVANCED LIFESCIENCE</p><h1 id="course-title" tabindex="-1">고급 생명과학</h1><p class="research-description">고급 생명과학은 대학의 일반생물학 수준에서 생명 현상을 깊이 있게 다루며, 생화학·분자생물학·생리학 등으로 이어지는 기초를 쌓는 과목입니다.</p><p class="research-description">세포의 에너지 전환, 생물의 조절과 방어, 유전자의 구조와 발현, 생명공학의 원리를 배우고, 실험 자료와 모형을 통해 그 원리가 실제 현상을 어떻게 설명하는지 탐구합니다.</p><a class="course-open" href="/advanced-life-science/#units" data-course-open-units>단원 보기 <span aria-hidden="true">→</span></a><p class="course-index-note">04 UNITS <span>세포에서 생명공학까지</span></p></div><figure class="course-cell"><div class="cell-halo" aria-hidden="true"></div><div class="cell-parallax"><img class="course-cell-art" src="/assets/advanced/cell-cutaway.webp" width="1536" height="1024" alt="핵과 소포체, 골지체, 미토콘드리아를 보여주는 동물세포 절개 개념도" fetchpriority="high"><svg class="cell-traces" viewBox="0 0 800 650" aria-hidden="true"><path d="M160 380 Q250 180 430 280 T640 400"/><path d="M200 450 Q350 540 530 350"/></svg></div><figcaption>ANIMAL CELL <span>동물세포의 구조 · 개념도</span></figcaption><button class="cell-motion-toggle" type="button" aria-pressed="false">모션 일시정지</button></figure></section><div id="course-units-panel" hidden>${accessContent(course,units)}</div><noscript><p>단원을 열려면 자바스크립트를 켜 주세요.</p></noscript></div>`;
 }
