@@ -24,6 +24,6 @@
 ## 메인 Platform Overview
 
 - `#about`은 Molecular Design Studio → Interactive Simulation → Inquiry Activity → 제작자 소개 순서의 연속 스크롤입니다. `scripts/overview.mjs`, `assets/overview.css`에서 관리하며 기존 첫 화면과 공통 헤더의 배치를 유지합니다.
-- 대표 예시는 단백질 기준·치환 변이 비교와 RNA 설계, BBB 약물 설계와 고정 분포 그래프, 약물 처리에 따른 정성적 관찰 자료입니다. 시뮬레이션 소개에 조건 전환 UI를 추가하지 않습니다.
+- 대표 예시는 단백질 기준·치환 변이 비교와 RNA 설계, BBB 약물 설계와 고정 분포 그래프, 약물 처리에 따른 정성적 관찰 자료입니다. 대표 활동은 01에 두 개, 02·03에 하나씩 표시합니다. Overview 안에는 활동 이동 링크나 다른 시뮬레이션 목록을 두지 않으며, 시뮬레이션 소개에 조건 전환 UI를 추가하지 않습니다.
 - 과학 그림·예시 좌표·출처는 `assets/overview/README.md`와 `provenance.json`에 기록합니다. 실험 구조·예측 구조·정성 모형을 정확히 구분하고 수치나 예측 결과를 임의로 만들지 않습니다. 그림 재생성은 `node scripts/generate-overview.mjs`, 검사는 `node scripts/check-overview.mjs`입니다.
 - 제작자 소개는 사용자가 승인한 두 문단을 유지합니다. 주인공은 학생들의 연구 경험과 생명과학적 사고이며, 구체적 도구 기능을 제작자 소개에 나열하지 않습니다.

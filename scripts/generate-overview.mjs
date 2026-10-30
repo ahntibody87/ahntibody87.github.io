@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import {parsePdb,fitPoints} from '../assets/activities/protein-lab/core.js';
 import {defaults,simulate} from '../assets/activities/bbb-lab/model.mjs';
+import {layout,BASES,pairInfo,partners} from '../assets/activities/rna-lab/molecule.js';
 const dir=new URL('../assets/overview/',import.meta.url);
 const read=name=>fs.readFileSync(new URL(name,dir),'utf8');
 const write=(name,value)=>fs.writeFileSync(new URL(name,dir),value);
@@ -11,13 +12,6 @@ const text=(x,y,s,opts='')=>`<text x="${x}" y="${y}" ${opts}>${xml(s)}</text>`;
 const line=(x1,y1,x2,y2,opts='')=>`<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}" ${opts}/>`;
 const circle=(x,y,r,opts='')=>`<circle cx="${n(x)}" cy="${n(y)}" r="${r}" ${opts}/>`;
 function svg(title,body,width=1000,height=660){return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}"><title>${title}</title><defs><radialGradient id="surface"><stop stop-color="#0e2637"/><stop offset="1" stop-color="#06121d"/></radialGradient><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M50 0H0V50" fill="none" stroke="#7aa4bd" stroke-opacity=".055"/></pattern></defs><style>text{font-family:'Segoe UI','Malgun Gothic',Arial,sans-serif;fill:${ink};font-size:18px}path,polyline,line{stroke-linecap:round;stroke-linejoin:round}.label{font-size:13px;letter-spacing:2px;fill:${muted}}.muted{fill:${muted}}.small{font-size:14px}.mono{font-family:Consolas,monospace;font-size:19px;letter-spacing:3px}</style><rect width="${width}" height="${height}" fill="url(#surface)"/><rect width="${width}" height="${height}" fill="url(#grid)"/>${body}</svg>`;}
-function projector(points,box,angles=[.55,-.35]){
- const [ay,ax]=angles;
- const rotate=([x,y,z])=>{let xx=x*Math.cos(ay)+z*Math.sin(ay),zz=-x*Math.sin(ay)+z*Math.cos(ay);return [xx,y*Math.cos(ax)-zz*Math.sin(ax),y*Math.sin(ax)+zz*Math.cos(ax)];};
- const p=points.map(rotate),min=[0,1,2].map(k=>Math.min(...p.map(v=>v[k]))),max=[0,1,2].map(k=>Math.max(...p.map(v=>v[k])));
- const scale=Math.min(box[2]/(max[0]-min[0]),box[3]/(max[1]-min[1])),center=min.map((v,k)=>(v+max[k])/2);
- return xyz=>{let v=rotate(xyz);return [box[0]+box[2]/2+(v[0]-center[0])*scale,box[1]+box[3]/2-(v[1]-center[1])*scale,v[2]];};
-}
 const reference=parsePdb(read('t4-reference.pdb')).chains.get('A').filter(r=>r.resi>=1&&r.resi<=162);
 const variantMap=new Map(parsePdb(read('t4-l99a.pdb')).chains.get('A').map(r=>[r.resi,r]));
 const pairs=reference.filter(r=>variantMap.has(r.resi)),a=pairs.map(r=>r.point),b=pairs.map(r=>variantMap.get(r.resi).point),fit=fitPoints(a,b);
@@ -35,15 +29,38 @@ write('protein-comparison.svg',svg('T4 라이소자임 기준 구조와 L99A 치
 const rnaMeta=JSON.parse(read('rna-hairpin.json'));
 const atoms=read('rna-hairpin.pdb').split(/\r?\n/).filter(l=>l.startsWith('ATOM  ')).map(l=>({name:l.slice(12,16).trim(),base:l.slice(17,20).trim(),resi:Number(l.slice(22,26)),p:[30,38,46].map(i=>Number(l.slice(i,i+8)))}));
 if(atoms.some(a=>a.p.some(x=>!Number.isFinite(x))))throw Error('Invalid RNA example coordinates');
+// Reuse the activity's nucleotide positions, base ring shapes and bond counts.
+// Only the palette changes to match the dark overview figures.
+function secondaryStructure(x,y,width,height){
+ const points=layout(rnaMeta.secondary),pair=partners(rnaMeta.secondary);
+ const xs=points.map(p=>p.x),ys=points.map(p=>p.y),left=Math.min(...xs)-62,top=Math.min(...ys)-62;
+ const viewWidth=Math.max(...xs)-left+62,viewHeight=Math.max(...ys)-top+62;
+ let out=`<svg x="${x}" y="${y}" width="${width}" height="${height}" viewBox="${left} ${top} ${viewWidth} ${viewHeight}" aria-label="리보스·인산 골격과 염기를 표시한 RNA 2차 구조">`;
+ points.slice(1).forEach((b,i)=>{
+  const a=points[i],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+  out+=line(a.x+ux*7,a.y+uy*7,mx-ux*4,my-uy*4,'stroke="#6e95a5" stroke-width="1.8"')+line(mx+ux*4,my+uy*4,b.x-ux*7,b.y-uy*7,'stroke="#6e95a5" stroke-width="1.8"')+circle(mx,my,3.8,'class="rna-phosphate" fill="#e7bc7c" stroke="#f1d2a4" stroke-width="1"');
+ });
+ pair.forEach((j,i)=>{
+  if(j<=i)return;
+  const a=points[i],b=points[j],extentA=BASES[rnaMeta.sequence[i]].rings===2?61:46,extentB=BASES[rnaMeta.sequence[j]].rings===2?61:46;
+  const ax=a.x+Math.cos(a.angle)*extentA,ay=a.y+Math.sin(a.angle)*extentA,bx=b.x+Math.cos(b.angle)*extentB,by=b.y+Math.sin(b.angle)*extentB;
+  const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy)||1,count=pairInfo(rnaMeta.sequence[i],rnaMeta.sequence[j]).count;
+  for(let k=0;k<count;k++){const off=(k-(count-1)/2)*4;out+=line(ax-dy/len*off,ay+dx/len*off,bx-dy/len*off,by+dx/len*off,'stroke="#7ca9a6" stroke-width="1.2" stroke-dasharray="2 3"');}
+ });
+ points.forEach((p,i)=>{
+  const base=rnaMeta.sequence[i],info=BASES[base],color=base==='G'?cyan:base==='A'?gold:'#98cdbb',purine=info.rings===2,offset=purine?47:31;
+  const hex='-7,-7 5,-14 17,-7 17,7 5,14 -7,7',pent='-7,-7 -18,-11 -25,0 -18,11 -7,7',pyr='-13,-7 0,-14 13,-7 13,7 0,14 -13,7';
+  out+=`<g transform="translate(${n(p.x)} ${n(p.y)})"><polygon class="rna-ribose" points="-5,-5 3,-6 7,1 1,7 -6,3" fill="#193747" stroke="#91b4c5" stroke-width="1.5"/><g transform="rotate(${n(p.angle*180/Math.PI)})">${line(7,0,17,0,'stroke="#6e95a5" stroke-width="1.4"')}<g transform="translate(${purine?42:31} 0)" fill="#102634" stroke="${color}" stroke-width="1.5"><polygon points="${purine?hex:pyr}"/>${purine?`<polygon points="${pent}"/>`:''}</g></g>${text(Math.cos(p.angle)*offset,Math.sin(p.angle)*offset+4,base,`text-anchor="middle" style="fill:${color};font-size:12px;font-weight:600"`)}</g>`;
+ });
+ for(const [label,p]of [['5′',points[0]],['3′',points.at(-1)]])out+=text(p.x-Math.cos(p.angle)*37,p.y-Math.sin(p.angle)*37+5,label,'class="small muted" text-anchor="middle"');
+ return out+'</svg>';
+}
+const backboneLegend=(x,y)=>`<g transform="translate(${x} ${y})"><polygon points="-6,-5 3,-7 8,1 1,8 -7,3" fill="#193747" stroke="#91b4c5" stroke-width="1.5"/>${text(17,5,'리보스 (당)','class="small muted"')}${circle(160,0,4.5,'fill="#e7bc7c"')}${text(177,5,'인산','class="small muted"')}</g>`;
 let rna=text(36,40,'RNA / SECONDARY & TERTIARY STRUCTURE','class="label"')+text(964,40,'12 nt','class="small muted" text-anchor="end"');
-rna+=text(250,96,'목표 이차 구조','text-anchor="middle"')+text(745,96,'예측 삼차 구조','text-anchor="middle"')+line(500,124,500,530,'stroke="#25404e"');
-const flat=[[150,443],[150,380],[150,317],[150,254],[173,193],[223,165],[277,165],[327,193],[350,254],[350,317],[350,380],[350,443]];
-rna+=`<polyline points="${flat.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#456676" stroke-width="3"/>`;
-for(let i=0;i<4;i++)rna+=line(flat[i][0]+20,flat[i][1],flat[11-i][0]-20,flat[11-i][1],`stroke="${cyan}" stroke-width="2" stroke-dasharray="4 5" opacity=".65"`);
-flat.forEach(([x,y],i)=>{let color=i<4?cyan:i<8?gold:'#98cdbb';rna+=circle(x,y,18,`fill="#0b2431" stroke="${color}" stroke-width="1.7"`)+text(x,y+6,rnaMeta.sequence[i],`text-anchor="middle" style="fill:${color};font-size:17px"`);});
-rna+=text(130,489,'5′','class="small muted"')+text(359,489,'3′','class="small muted"');
+rna+=text(250,96,'2차 구조','text-anchor="middle"')+text(745,96,'3차 구조','text-anchor="middle"')+line(500,124,500,530,'stroke="#25404e"');
+rna+=secondaryStructure(35,116,430,375)+backboneLegend(135,518);
 rna+=`<image href="data:image/webp;base64,${fs.readFileSync(new URL('rna-fold.webp',dir)).toString('base64')}" x="545" y="132" width="400" height="360" preserveAspectRatio="xMidYMid meet"/>`;
-rna+=text(746,518,'RNAbpFlow · CASP16','class="small muted" text-anchor="middle"')+line(36,550,964,550,'stroke="#25404e"')+text(50,589,'GGGGAAAACCCC','class="mono"')+text(950,589,'((((....))))','class="mono muted" text-anchor="end"')+text(50,631,'설계한 이차 구조를 조건으로 계산한 예시 · 실험 구조가 아닙니다.','class="small muted"');
+rna+=text(746,518,'RNAbpFlow · CASP16','class="small muted" text-anchor="middle"')+line(36,550,964,550,'stroke="#25404e"')+text(50,589,'GGGGAAAACCCC','class="mono"')+text(950,589,'((((....))))','class="mono muted" text-anchor="end"')+text(50,631,'설계한 2차 구조를 조건으로 계산한 예시 · 실험 구조가 아닙니다.','class="small muted"');
 write('rna-design.svg',svg('RNA 목표 헤어핀과 RNAbpFlow로 실제 계산한 삼차 구조 예시',rna));
 
 const direct=simulate(defaults,false),prodrug=simulate(defaults,true),maxValue=Math.max(...direct.map(s=>s.y[4]),...prodrug.map(s=>s.y[4])),axisMax=Math.max(5,Math.ceil(maxValue/5)*5);
@@ -82,12 +99,10 @@ pm+=`<image href="data:image/webp;base64,${proteinImage}" x="22" y="104" width="
 for(let i=94;i<103;i++){let r=pairs.find(p=>p.resi===i+1),x=260+(i-94)*30;if(i===98)pm+=`<rect x="${x-12}" y="542" width="26" height="69" rx="4" fill="#e7bc7c16" stroke="#e7bc7c55"/>`;pm+=text(x,566,r.one,`class="mono" text-anchor="middle" style="fill:${cyan}"`)+text(x,602,variantMap.get(r.resi).one,`class="mono" text-anchor="middle" style="fill:${i===98?gold:muted}"`);}
 pm+=text(24,641,`${pairs.length} Cα · RMSD ${fit.rmsd.toFixed(2)} Å · 공개 실험 구조`,'class="small muted"');
 write('protein-comparison-mobile.svg',svg('T4 라이소자임 기준·L99A 비교, 휴대폰용 그림',pm,600,660));
-let rm=mobileStyle+text(24,36,'RNA STRUCTURE / 12 nt','class="label"')+text(300,88,'목표 이차 구조','text-anchor="middle"');
-const rf=flat.map(([x,y])=>[75+x*.9,45+y*.74]);rm+=`<polyline points="${rf.map(p=>p.map(n).join(',')).join(' ')}" fill="none" stroke="#456676" stroke-width="3"/>`;
-for(let i=0;i<4;i++)rm+=line(rf[i][0]+19,rf[i][1],rf[11-i][0]-19,rf[11-i][1],`stroke="${cyan}" stroke-width="2" stroke-dasharray="4 5" opacity=".65"`);
-rf.forEach(([x,y],i)=>{let color=i<4?cyan:i<8?gold:'#98cdbb';rm+=circle(x,y,18,`fill="#0b2431" stroke="${color}" stroke-width="1.7"`)+text(x,y+7,rnaMeta.sequence[i],`text-anchor="middle" style="fill:${color};font-size:21px"`);});
-rm+=text(186,411,'5′','class="small muted"')+text(400,411,'3′','class="small muted"')+line(24,443,576,443,'stroke="#25404e"')+text(300,485,'예측 삼차 구조','text-anchor="middle"')+`<image href="data:image/webp;base64,${rnaImage}" x="46" y="507" width="508" height="320" preserveAspectRatio="xMidYMid meet"/>`+text(300,876,rnaMeta.sequence,'class="mono" text-anchor="middle"')+text(300,921,'RNAbpFlow · 목표 이차 구조로 조건화한 예측','class="small muted" text-anchor="middle"');
-write('rna-design-mobile.svg',svg('동일 RNA의 목표 이차 구조와 예측 삼차 구조, 휴대폰용 그림',rm,600,960));
+let rm=mobileStyle+text(24,36,'RNA STRUCTURE / 12 nt','class="label"')+text(300,88,'2차 구조','text-anchor="middle"');
+rm+=secondaryStructure(70,102,460,300)+backboneLegend(168,418);
+rm+=line(24,443,576,443,'stroke="#25404e"')+text(300,485,'3차 구조','text-anchor="middle"')+`<image href="data:image/webp;base64,${rnaImage}" x="46" y="507" width="508" height="320" preserveAspectRatio="xMidYMid meet"/>`+text(300,876,rnaMeta.sequence,'class="mono" text-anchor="middle"')+text(300,921,'RNAbpFlow · 2차 구조로 조건화한 예측','class="small muted" text-anchor="middle"');
+write('rna-design-mobile.svg',svg('동일 RNA의 당·인산 골격을 포함한 2차 구조와 예측 3차 구조, 휴대폰용 그림',rm,600,960));
 let bm=mobileStyle+text(24,36,'BLOOD–BRAIN BARRIER','class="label"')+text(24,67,'pH 7.4 · pKa 7.8','class="small muted"');
 bm+=`<rect x="24" y="88" width="552" height="65" rx="12" fill="#102838"/><rect x="24" y="251" width="552" height="50" rx="12" fill="#0d2930"/>`+text(40,121,'혈액','class="small"')+text(40,283,'뇌 조직','class="small"');
 for(let i=0;i<6;i++){let x=24+i*92;bm+=`<rect x="${x}" y="165" width="90" height="73" rx="16" fill="#13343e" stroke="#487d88"/>`+`<ellipse cx="${x+45}" cy="200" rx="14" ry="9" fill="#254c56"/>`;if(i<5)bm+=line(x+91,178,x+91,224,'stroke="#a7c9c6" stroke-width="3"');}
