@@ -10,12 +10,34 @@ export function freshTip(state) { state.tip={used:false,contacts:[]}; }
 export function addReagent(state, id, reagent, dispose=true) {
   const tube=state.tubes[id];
   if(!tube?.received || !state.tip) return false;
-  tube.additions.push({reagent, reused:state.tip.used, cold:state.ice, contacts:[...state.tip.contacts]});
+  tube.additions.push({reagent, reused:state.tip.used, cold:state.ice, contacts:[...state.tip.contacts],
+    previousTransfer:state.tip.lastTransfer});
   state.tip.used=true;
   state.tip.contacts.push(id);
+  state.tip.lastTransfer={tube:id,reagent};
   if(dispose) state.tip=null;
   tube.mixed=false; tube.spun=false;
   return true;
+}
+// Resume only clean, in-order preparations. The student handles every sample.
+export function planSharedReagents(state,scenario) {
+  const recipe=scenario.reagents.map(reagent=>reagent.id);
+  const transfers=[];
+  let exampleReady=false;
+  for(const {id} of scenario.samples){
+    const tube=state.tubes[id];
+    if(!tube.received)return null;
+    const common=tube.additions.filter(addition=>!addition.reagent.startsWith('sample:'));
+    const hasSample=common.length!==tube.additions.length;
+    const invalid=tube.additions.some((addition,index)=>
+      addition.reagent!==(recipe[index]??`sample:${id}`) ||
+      addition.reused || (scenario.reagents.find(r=>r.id===addition.reagent)?.enzyme&&!addition.cold));
+    if(invalid||common.length>recipe.length||tube.additions.length>recipe.length+1)return null;
+    if(common.length===recipe.length)exampleReady=true;
+    if(hasSample)continue;
+    for(const reagent of recipe.slice(common.length))transfers.push({tube:id,reagent});
+  }
+  return exampleReady?transfers:null;
 }
 export function resetTube(state,id) {
   state.tubes[id]={...freshTube(),received:state.tubes[id].received};

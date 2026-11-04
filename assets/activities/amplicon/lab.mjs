@@ -1,12 +1,17 @@
-import {createState,freshTip,addReagent,resetTube,issues,nextIssues,timeline,frameAt,bands} from './model.mjs';
-import {stations,project,unproject,labMap,equipmentArt,handArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs';
+import {createState,freshTip,addReagent,resetTube,planSharedReagents,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=2';
+import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs';
+
+import {mountWorkbench} from './workbench.mjs?v=2';
+import {preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=2';
 
 const root=document.getElementById('amp-lab');
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=(text,action,extra='')=>`<button type="button" data-action="${action}" ${extra}>${text}</button>`;
 const tick=(done,text)=>`<li class="${done?'amp-done':''}"><span aria-hidden="true">${done?'✓':'○'}</span> ${esc(text)}</li>`;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A',source='buffer',dispose=true;
+let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
+let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
+const parkedPipette={x:5.1,y:.32,z:-1.25};
 let player={x:4.8,y:4.8},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
 const $=selector=>root.querySelector(selector);
 const all=selector=>[...root.querySelectorAll(selector)];
@@ -44,7 +49,7 @@ function render(){
   <div class="amp-main">${state.step===0?brief():station?workstation():explore()}</div></div>
   <p class="amp-status" id="amp-status" role="status" aria-live="polite"></p>
   <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>`;
-  bind();if(!station&&state.step>0)updatePlayer();
+  bind();benchScene=null;bindBenchScene();if(!station&&state.step>0)updatePlayer();
   if(whyOpen)$('.amp-progress details').open=true;
   const restored=focusId?root.querySelector(`[id="${focusId}"]`):focusAction?root.querySelector(`[data-action="${focusAction}"]${focusItem?`[data-id="${focusItem}"]`:''}`):null;
   if(restored&&!restored.disabled)restored.focus({preventScroll:true});
@@ -59,12 +64,34 @@ function workstation(){
   const relevant=station===expected||(state.step===3&&station==='spin');
   return `<section class="amp-work"><div class="amp-panel-head"><div class="amp-work-heading">${equipmentArt(station)}<div><span class="amp-kicker">작업 모드 · ${state.step}단계</span><h3 tabindex="-1" id="amp-work-title">${s.label}</h3></div></div>${button('← 과학실로','close',busy?'disabled':'')}</div>${!relevant?`<div class="amp-empty"><p>지금은 ‘${esc(scenario.steps[state.step].title)}’ 단계입니다.</p>${button('현재 단계 기기로 이동','goto','class="amp-primary"')}</div>`:station==='ice'?iceView():station==='bench'?benchView():station==='vortex'||station==='spin'?mixView():station==='pcr'?pcrView():station==='gel'?gelView():uvView()}</section>`;
 }
-function iceView(){return `<p>추출 RNA와 증류수를 <strong>하나씩 눌러 랙에 놓으세요.</strong> 아래 랙으로 끌어 놓아도 됩니다.</p><div class="amp-ice-samples">${scenario.samples.map(s=>`<button type="button" data-action="receive" data-id="${s.id}" draggable="${!state.tubes[s.id].received}" data-drag-sample="${s.id}" ${state.tubes[s.id].received?'disabled':''}><span aria-hidden="true">${state.tubes[s.id].received?'✓':'❄'}</span><strong>${esc(s.label)}</strong><small>${esc(s.material)}</small></button>`).join('')}</div><div class="amp-rack" data-drop="receipt">튜브 랙${tubeCards()}</div><p class="amp-small">NTC는 RNA 대신 증류수를 넣는 음성 대조군입니다.</p>`;}
+
+function prepScene(){
+  return sceneMarkup(preparationObjects(state,scenario),'prep',esc,busy);
+}
+function iceView(){
+  const count=Object.values(state.tubes).filter(tube=>tube.received).length;
+  return '<p>얼음 위의 원본 시료 네 개를 눌러 라벨을 확인하세요. 가운데 랙에는 빈 반응 튜브가 준비되어 있습니다.</p>'+
+    '<div class="amp-actions"><strong>원본 확인 '+count+' / 4</strong>'+
+    button('반응액 준비하기 →','next','class="amp-primary" '+(count!==4?'disabled':''))+'</div>'+prepScene();
+}
 function benchView(){
   const t=state.tubes[selected];
-  return `<p class="amp-instruction">용액 선택 → 새 팁 끼우기 → 대상 튜브 선택 → 분주하기</p><div class="amp-recipe">${scenario.reagents.map((r,i)=>`<span>${i+1}. ${esc(r.label)}</span>`).join('<b>→</b>')}<b>→</b><span>5. 해당 시료</span></div><div class="amp-bench-controls"><label>분주할 용액<select id="amp-source">${scenario.reagents.map(r=>`<option value="${r.id}" ${r.id===source?'selected':''}>${esc(r.label)}</option>`).join('')}<optgroup label="시료 · 맨 마지막에 넣기">${scenario.samples.map(s=>`<option value="sample:${s.id}" ${source===`sample:${s.id}`?'selected':''}>${esc(s.label)} — ${esc(s.material)}</option>`).join('')}</optgroup></select></label><label class="amp-inline"><input id="amp-ice" type="checkbox" ${state.ice?'checked':''}> 효소를 얼음 위에서 다루기</label></div>
-  ${handArt()}<div class="amp-tip-row"><span id="amp-tip-status">${state.tip?(state.tip.used?'사용한 팁 · 교체 필요':'새 팁 장착 완료'):'팁 없음'}</span>${button('새 팁 끼우기','tip',busy?'disabled':'')}${button('팁 버리기','discard',!state.tip||busy?'disabled':'')}<label class="amp-inline"><input id="amp-dispose" type="checkbox" ${dispose?'checked':''}> 분주 후 팁 버리기</label></div>
-  ${tubeCards()}<div class="amp-contents"><h4>${esc(label(selected))} 튜브 성분</h4><ol>${t.additions.length?t.additions.map(a=>`<li>${esc(material(a.reagent))}</li>`).join(''):'<li>빈 튜브</li>'}</ol></div><div class="amp-actions">${button(`${esc(label(selected))}에 분주하기`,'dispense',`class="amp-primary" ${busy||!state.tip?'disabled':''}`)}${button('선택 튜브 버리고 새로 만들기','resetTube',busy?'disabled':'')}</div><p class="amp-small">팁 교체는 직접 선택합니다. 사용한 팁을 재사용하면 다음 단계 검사에서 진행이 막힙니다. 순서·중복·오염 오류는 해당 튜브를 새로 만들어 고치세요.</p>`;
+  const plan=planSharedReagents(state,scenario);
+  return '<p>피펫을 <strong>팁 박스 → 시약병 → 반응 튜브 → 폐기통</strong> 순으로 옮기세요. 피펫을 끌거나 기구를 차례로 누를 수 있습니다. 팁이 끼워져 있다면 병에서 반응 튜브로 바로 끌어도 됩니다.</p>'+
+    '<div class="amp-recipe">'+scenario.reagents.map((r,i)=>'<span>'+(i+1)+'. '+esc(r.label)+'</span>').join('<b>→</b>')+
+    '<b>→</b><span>5. 해당 원본 시료</span></div>'+prepScene()+
+    '<div class="amp-bench-readout" role="status" aria-live="polite" id="amp-scene-status">'+
+    esc(prepLiquid?material(prepLiquid)+' 흡입됨':state.tip?(state.tip.used?'사용한 팁 · 폐기통에서 버리세요':'새 팁 장착 · 시약병에서 흡입하세요'):'팁 박스를 눌러 새 팁을 끼우세요')+'</div>'+
+    '<div class="amp-actions">'+button('나머지 튜브에 공통 시약 넣기','autoCommon','class="amp-primary" '+(busy||!plan?.length||!state.ice||state.tip?'disabled':''))+
+    (plan?.length?'<span>'+plan.length+'회 분주</span>':'')+
+    (plan?.length===0?button('시료 넣기 ↓','samples','class="amp-soft"'):'')+
+    '<label class="amp-inline"><input id="amp-ice" type="checkbox" '+(state.ice?'checked':'')+' '+(busy?'disabled':'')+'> 효소병을 얼음 위에 두기</label></div>'+
+    '<p class="amp-small">한 튜브에 공통 시약을 순서대로 넣고 팁을 버리면 자동 분주를 시작할 수 있습니다. 원본 시료는 각각 직접 넣으세요.</p>'+
+    '<div class="amp-actions">'+scenario.samples.map(s=>button(esc(s.label)+' 성분 보기','tube','data-id="'+s.id+'" aria-pressed="'+(selected===s.id)+'" '+(busy?'disabled':''))).join('')+'</div>'+
+    '<div class="amp-contents"><h4>'+esc(label(selected))+' 반응 튜브 · '+t.additions.length+'개 성분</h4><ol>'+
+    (t.additions.length?t.additions.map(a=>'<li>'+esc(material(a.reagent))+'</li>').join(''):'<li>빈 반응 튜브</li>')+
+    '</ol>'+button('이 반응 튜브 새로 만들기','resetTube',busy?'disabled':'')+'</div>'+
+    '<div class="amp-actions">'+button('혼합·스핀다운으로 →','next','class="amp-primary" '+(busy?'disabled':''))+'</div>';
 }
 function mixView(){
   const spinning=station==='spin';
@@ -80,8 +107,14 @@ function gelSvg(showBands=false,moving=false){
   const y=bp=>70+230*(1-Math.log(bp/75)/Math.log(8));
   return `<svg class="amp-gel ${moving?'amp-migrating':''}" viewBox="0 0 620 365" role="img" aria-label="${showBands?'레인별 전기영동 밴드 결과':'전기영동 겔과 다섯 레인의 웰'}"><rect x="70" y="40" width="480" height="280" rx="12" fill="${showBands?'#172942':'#e4edf7'}"/><text x="20" y="60" fill="#315efb" font-size="18">−</text><text x="20" y="310" fill="#c04566" font-size="18">+</text><path d="M35 85V280m-7-10 7 10 7-10" stroke="#8ca1ba" stroke-width="2" fill="none"/><text x="47" y="348" fill="#61718c" font-size="12">DNA 이동 ↓ · 웰은 − 극 쪽</text>${state.lanes.map((id,i)=>{const x=125+i*90;return `<g><text x="${x}" y="20" text-anchor="middle" fill="#354861" font-size="12">${i+1} ${esc(id?label(id):'빈 레인')}</text><rect x="${x-20}" y="50" width="40" height="9" rx="2" fill="${id?'#80a9ed':'#b5c4d6'}"/>${showBands&&id?bands(scenario,id).map(bp=>`<rect class="amp-band" x="${x-19}" y="${y(bp)}" width="38" height="5" rx="2" fill="#b0efdc" style="--amp-band-y:${y(bp)-56}px"/>`).join(''):''}</g>`;}).join('')}${showBands?scenario.markerBp.map(bp=>`<text x="78" y="${y(bp)+4}" fill="#a9bfce" font-size="10">${bp}</text>`).join(''):''}</svg>`;
 }
+function gelLoading(){
+  return '<p>마커나 PCR 산물에서 흡입한 뒤 웰을 누르세요. 병에서 웰로 끌어 놓아도 됩니다. 로딩할 때마다 새 팁을 사용합니다.</p>'+
+    sceneMarkup(electrophoresisObjects(state,scenario),'gel',esc,busy)+
+    '<div class="amp-bench-readout" id="amp-scene-status" role="status">'+(gelLiquid?esc(label(gelLiquid))+' 흡입됨':'마커 또는 PCR 산물을 고르세요.')+'</div>'+
+    '<div class="amp-actions">'+state.lanes.map((id,i)=>id?button((i+1)+'번 웰 비우기','clearLane','data-lane="'+i+'" aria-label="'+(i+1)+'번 웰 비우기"'):'').join('')+'</div>';
+}
 function gelView(){
-  return `<p>레인 1은 DNA 크기 마커입니다. 나머지 레인의 순서를 정하고 <strong>기록한 뒤</strong> 로딩하세요.</p><div class="amp-lane-plan">${state.lanePlan.map((id,i)=>`<label>레인 ${i+1}<select data-lane-plan="${i}" ${state.gelRun?'disabled':''}>${['marker',...scenario.samples.map(s=>s.id)].map(v=>`<option value="${v}" ${v===id?'selected':''}>${esc(label(v))}</option>`).join('')}</select></label>`).join('')}</div><div class="amp-actions">${button('로딩 순서 기록','record',state.gelRun?'disabled':'')}<span>${state.recorded?'✓ 기록됨: '+state.lanePlan.map(label).join(' → '):'순서를 기록해 주세요.'}</span></div>${gelSvg(state.gelRun)}<div class="amp-loading"><label>로딩할 용액<select id="amp-load-source" ${state.gelRun?'disabled':''}>${['marker',...scenario.samples.map(s=>s.id)].map(id=>`<option value="${id}">${esc(label(id))}</option>`).join('')}</select></label><div class="amp-load-lanes">${state.lanes.map((id,i)=>`<div>${button(`${i+1}번에 로딩`,'load',`data-lane="${i}" ${state.gelRun?'disabled':''}`)}${button('비우기','clearLane',`data-lane="${i}" ${state.gelRun?'disabled':''}`)}</div>`).join('')}</div></div><label class="amp-inline">전극 연결<select id="amp-polarity" ${state.gelRun?'disabled':''}><option value="normal" ${state.polarity==='normal'?'selected':''}>웰 쪽 − / 겔 아래쪽 +</option><option value="reverse" ${state.polarity==='reverse'?'selected':''}>웰 쪽 + / 겔 아래쪽 −</option></select></label><p>DNA의 인산기는 음전하를 띱니다. DNA는 + 극으로 이동하며 작은 조각일수록 빠릅니다.</p><div class="amp-actions">${state.gelRun?'<strong class="amp-success">✓ 전기영동 완료 · UV 관찰기로 이동하세요.</strong>':button('전원 켜기','runGel','class="amp-primary" '+(busy?'disabled':''))}</div>`;
+  return `<p>레인 1은 DNA 크기 마커입니다. 나머지 레인의 순서를 정하고 <strong>기록한 뒤</strong> 로딩하세요.</p><div class="amp-lane-plan">${state.lanePlan.map((id,i)=>`<label>레인 ${i+1}<select data-lane-plan="${i}" ${state.gelRun?'disabled':''}>${['marker',...scenario.samples.map(s=>s.id)].map(v=>`<option value="${v}" ${v===id?'selected':''}>${esc(label(v))}</option>`).join('')}</select></label>`).join('')}</div><div class="amp-actions">${button('로딩 순서 기록','record',state.gelRun?'disabled':'')}<span>${state.recorded?'✓ 기록됨: '+state.lanePlan.map(label).join(' → '):'순서를 기록해 주세요.'}</span></div>${state.gelRun?gelSvg(true):gelLoading()}<label class="amp-inline">전극 연결<select id="amp-polarity" ${state.gelRun?'disabled':''}><option value="normal" ${state.polarity==='normal'?'selected':''}>웰 쪽 − / 겔 아래쪽 +</option><option value="reverse" ${state.polarity==='reverse'?'selected':''}>웰 쪽 + / 겔 아래쪽 −</option></select></label><p>DNA의 인산기는 음전하를 띱니다. DNA는 + 극으로 이동하며 작은 조각일수록 빠릅니다.</p><div class="amp-actions">${state.gelRun?'<strong class="amp-success">✓ 전기영동 완료 · UV 관찰기로 이동하세요.</strong>':button('전원 켜기','runGel','class="amp-primary" '+(busy?'disabled':''))}</div>`;
 }
 function uvView(){
   if(!state.viewed)return `<div class="amp-uv-cover">${equipmentArt('uv')}<h4>겔을 UV 관찰기에 놓으세요</h4><p>보호 덮개가 닫힌 관찰기로 밴드를 확인합니다.</p>${button('덮개 닫고 밴드 관찰','view','class="amp-primary"')}</div>`;
@@ -91,7 +124,9 @@ function uvView(){
 function warn(found){
   if(!found.length)return false;
   const dialog=$('#amp-warning'),focus=document.activeElement;
-  dialog.innerHTML=`<h3 id="amp-warning-title">수정한 뒤 진행해 주세요</h3><p>${found.length}개 확인 사항이 있습니다.</p><div class="amp-warning-list">${found.map(({rule,tube})=>{const w=scenario.warnings[rule];return `<article>${tube?`<strong>${esc(label(tube))} 튜브</strong>`:''}<p><b>① 문제 원인</b> ${esc(w.cause)}</p><p><b>② 분자 수준</b> ${esc(w.molecule)}</p><p><b>③ 판정 영향</b> ${esc(w.consequence)}</p></article>`;}).join('')}</div>${button('돌아가서 수정하기','fix','class="amp-primary"')}`;
+  dialog.innerHTML=`<h3 id="amp-warning-title">수정한 뒤 진행해 주세요</h3><p>${found.length}개 확인 사항이 있습니다.</p><div class="amp-warning-list">${found.map(({rule,tube})=>{const w=scenario.warnings[rule];const reuse=rule==='tip'&&state.tubes[tube]?.additions.find(a=>a.reused&&a.previousTransfer);
+  const evidence=reuse?' '+label(reuse.previousTransfer.tube)+' 반응 튜브에 '+material(reuse.previousTransfer.reagent)+'을 분주한 팁을 '+label(tube)+' 반응 튜브에 다시 사용했습니다.':'';
+  return `<article>${tube?`<strong>${esc(label(tube))} 튜브</strong>`:''}<p><b>① 문제 원인</b> ${esc(w.cause+evidence)}</p><p><b>② 분자 수준</b> ${esc(w.molecule)}</p><p><b>③ 판정 영향</b> ${esc(w.consequence)}</p></article>`;}).join('')}</div>${button('돌아가서 수정하기','fix','class="amp-primary"')}`;
   dialog.oncancel=e=>e.preventDefault();dialog.showModal();
   dialog.querySelector('button').onclick=()=>{dialog.close();focus?.focus();};
   return true;
@@ -99,20 +134,159 @@ function warn(found){
 function open(id){
   if(busy)return;
   keys.clear();target=null;station=id;render();$('#amp-work-title')?.focus({preventScroll:true});
+  if(quality!=='low'&&!reduced.matches){
+    $('[data-bench-scene] canvas')?.animate(
+      [{transform:'scale(.95)',opacity:.72},{transform:'scale(1)',opacity:1}],
+      {duration:300,easing:'ease-out'});
+  }
 }
 function invalidateAfter(step){
   if(step<=3){state.amplified=false;state.pcrLoaded=[];}
   if(step<=4){state.gelRun=false;state.lanes=[null,null,null,null,null];state.recorded=false;}
   state.viewed=false;state.submitted=false;
 }
+
+function sceneStatus(message){
+  const status=$('#amp-scene-status');
+  if(status)status.textContent=message;
+  else announce(message);
+}
+function bindBenchScene(){
+  const container=$('[data-bench-scene]');
+  if(!container)return;
+  const gel=container.dataset.benchScene==='gel';
+  benchScene=mountWorkbench(container,
+    ()=>gel?electrophoresisObjects(state,scenario):preparationObjects(state,scenario),
+    ()=>({position:state.step===1?null:(gel?gelPosition:prepPosition)??parkedPipette,tip:gel?!!gelLiquid:!!state.tip,liquid:gel?!!gelLiquid:!!prepLiquid}),
+    (id,from)=>gel?handleGelTarget(id,from):handlePrepTarget(id,from));
+}
+async function moveTool(id,gel=false,auto=false){
+  const position=await benchScene?.move(id,quality==='low'||reduced.matches?0:auto?110:250);
+  if(gel)gelPosition=position;else prepPosition=position;
+}
+async function handlePrepTarget(id,from){
+  if(busy)return;
+  if(state.step===1){
+    if(id.startsWith('sample:'))await action('receive',{dataset:{id:id.slice(7)}});
+    return;
+  }
+  const sourceTarget=target=>!!target&&(target.startsWith('sample:')||scenario.reagents.some(r=>r.id===target));
+  const tubeTarget=id.startsWith('tube:');
+  if(id==='tips'&&state.tip)return sceneStatus('현재 팁을 폐기통에 버린 뒤 새 팁을 끼우세요.');
+  if(id==='bin'&&!state.tip)return sceneStatus('피펫에 버릴 팁이 없습니다.');
+  if(sourceTarget(id)&&!state.tip)return sceneStatus('먼저 팁 박스에서 팁을 끼우세요.');
+  if(sourceTarget(id)&&prepLiquid)return sceneStatus('피펫에 든 용액을 분주하거나 팁과 함께 버리세요.');
+  if(tubeTarget&&prepLiquid&&sourceTarget(from)&&from!==prepLiquid)
+    return sceneStatus('피펫에 '+material(prepLiquid)+'이 들어 있습니다. 먼저 분주하거나 팁과 함께 버리세요.');
+  if(tubeTarget&&!prepLiquid&&(!state.tip||!sourceTarget(from))){
+    selected=id.slice(5);render();
+    sceneStatus(state.tip?'먼저 시약병이나 원본 시료에서 흡입하세요.':'팁 박스에서 팁을 끼운 뒤 용액을 흡입하세요.');
+    return;
+  }
+  busy=true;
+  let message;
+  try{
+    if(tubeTarget&&!prepLiquid&&sourceTarget(from)){
+      await moveTool(from);
+      prepLiquid=from;
+      benchScene.draw();
+    }
+    await moveTool(id);
+    if(id==='tips'){
+      freshTip(state);message='새 팁을 끼웠습니다. 시약병에서 용액을 흡입하세요.';
+    }else if(id==='bin'){
+      state.tip=null;prepLiquid=null;message='팁을 버렸습니다.';
+    }else if(tubeTarget){
+      selected=id.slice(5);
+      const reagent=prepLiquid;
+      if(addReagent(state,selected,reagent,false)){
+        prepLiquid=null;
+        message=label(selected)+' 반응 튜브에 '+material(reagent)+' 분주 완료. 팁을 버리거나 계속 조작할 수 있습니다.';
+      }
+    }else if(sourceTarget(id)){
+      prepLiquid=id;message=material(id)+' 흡입 완료. 반응 튜브에 분주하세요.';
+    }
+  }finally{
+    busy=false;render();
+    if(message)sceneStatus(message);
+  }
+}
+async function autoCommon(){
+  const plan=planSharedReagents(state,scenario);
+  if(!plan?.length||state.tip||prepLiquid||!state.ice)return;
+  busy=true;render();
+  const low=quality==='low'||reduced.matches;
+  try{
+    for(const [index,{tube,reagent}] of plan.entries()){
+      sceneStatus('자동 분주 '+(index+1)+' / '+plan.length+' · '+material(reagent)+' → '+label(tube));
+      await moveTool('tips',false,true);
+      freshTip(state);benchScene.draw();
+      await moveTool(reagent,false,true);
+      prepLiquid=reagent;benchScene.draw();
+      await moveTool('tube:'+tube,false,true);
+      addReagent(state,tube,reagent,false);
+      prepLiquid=null;benchScene.draw();
+      await moveTool('bin',false,true);
+      state.tip=null;benchScene.draw();
+      if(low)await new Promise(resolve=>setTimeout(resolve,45));
+    }
+  }finally{
+    busy=false;render();
+  }
+  sceneStatus('공통 시약 자동 분주 완료. 원본 시료를 각각의 반응 튜브에 직접 넣으세요.');
+}
+async function handleGelTarget(id,from){
+  if(busy||state.gelRun)return;
+  if(id==='bin'){
+    if(!gelLiquid)return;
+    busy=true;
+    await moveTool(id,true);
+    gelLiquid=null;busy=false;render();sceneStatus('흡입한 용액을 폐기했습니다.');
+    return;
+  }
+  const well=id.startsWith('well:')?Number(id.slice(5)):null;
+  if(well!==null&&state.lanes[well])return sceneStatus('이미 채운 웰입니다. 해당 웰을 비운 뒤 다시 넣으세요.');
+  if(well!==null&&gelLiquid&&from?.startsWith('load:')&&from.slice(5)!==gelLiquid)
+    return sceneStatus('피펫에 '+label(gelLiquid)+'이 들어 있습니다. 먼저 웰에 넣거나 폐기하세요.');
+  if(well!==null&&!gelLiquid&&!from?.startsWith('load:'))return sceneStatus('먼저 마커나 PCR 산물을 골라 흡입하세요.');
+  if(id.startsWith('load:')&&gelLiquid)return sceneStatus('피펫에 든 용액을 웰에 넣거나 폐기통에서 버리세요.');
+  busy=true;
+  let message;
+  try{
+    if(well!==null&&!gelLiquid){
+      await moveTool(from,true);
+      gelLiquid=from.slice(5);benchScene.draw();
+    }
+    await moveTool(id,true);
+    if(well===null){
+      gelLiquid=id.slice(5);
+      message=label(gelLiquid)+' 흡입 완료. 넣을 웰을 고르세요.';
+    }else{
+      state.lanes[well]=gelLiquid;
+      message=(well+1)+'번 웰에 '+label(gelLiquid)+' 로딩 완료.';
+      gelLiquid=null;
+    }
+  }finally{
+    busy=false;render();
+    if(message)sceneStatus(message);
+  }
+}
 async function action(name,node){
   if(busy&&!['skip','pause'].includes(name))return;
   const id=node?.dataset.id;
   if(name==='next'){
     if(warn(nextIssues(state,scenario)))return;
-    state.step=Math.min(6,state.step+1);station=null;render();$('.amp-room')?.focus({preventScroll:true});
+    if(state.step===2&&state.tip){
+      if(station!=='bench')open('bench');
+      sceneStatus('마지막 팁을 폐기통에 버린 뒤 혼합·스핀다운으로 이동하세요.');
+      $('#amp-target-bin')?.focus();
+      return;
+    }
+    const fromIce=state.step===1&&station==='ice';
+    state.step=Math.min(6,state.step+1);station=fromIce?'bench':null;prepLiquid=null;gelLiquid=null;render();
+    if(fromIce)$('#amp-work-title')?.focus({preventScroll:true});$('.amp-room')?.focus({preventScroll:true});
   }else if(name==='previous'){
-    state.step=Math.max(0,state.step-1);invalidateAfter(state.step);station=null;render();
+    prepLiquid=null;gelLiquid=null;state.tip=null;state.step=Math.max(0,state.step-1);invalidateAfter(state.step);station=null;render();
   }else if(name==='close'){station=null;render();$('.amp-room')?.focus({preventScroll:true});}
   else if(name==='goto')open(scenario.steps[state.step].station);
   else if(name==='open')open(id);
@@ -120,16 +294,9 @@ async function action(name,node){
   else if(name==='receive'){
     state.tubes[id].received=true;render();announce(`${label(id)} 시료를 랙에 놓았습니다.`);
   }else if(name==='tube'){selected=id;render();announce(`${label(id)}: ${state.tubes[id].additions.map(a=>material(a.reagent)).join(', ')||'빈 튜브'}`);}
-  else if(name==='tip'){freshTip(state);render();announce('새 팁을 끼웠습니다.');}
-  else if(name==='discard'){state.tip=null;render();announce('팁을 폐기통에 버렸습니다.');}
-  else if(name==='resetTube'){resetTube(state,selected);render();announce(`${label(selected)} 튜브를 새로 만들었습니다. 사용한 팁도 교체해 주세요.`);}
-  else if(name==='dispense'){
-    if(!state.tip)return;
-    const used=state.tip.used;
-    busy=true;all('button,select,input').forEach(n=>n.disabled=true);
-    const hand=$('#amp-hand');
-    if(quality==='normal'&&!reduced.matches&&hand){await hand.animate([{transform:'translate(65px, 10px)'},{transform:'translate(209px, 14px)',offset:.33},{transform:'translate(375px, 14px)',offset:.70},{transform:`translate(${dispose?534:375}px, 0px)`}],{duration:1500,easing:'ease-in-out',fill:'forwards'}).finished;}
-    addReagent(state,selected,source,dispose);busy=false;render();announce(`${label(selected)}에 ${material(source)} 분주 완료. ${used?'사용한 팁을 재사용했습니다.':dispose?'팁을 버렸습니다.':'팁이 남아 있습니다. 다음 용액 전에 교체하세요.'}`);
+  else if(name==='autoCommon'){await autoCommon();}
+  else if(name==='samples'){$('[data-bench-target^="sample:"]')?.focus();}
+  else if(name==='resetTube'){resetTube(state,selected);render();sceneStatus(label(selected)+' 반응 튜브를 새로 만들었습니다. 사용한 팁은 폐기통에 버리세요.');
   }else if(['mixTube','mixAll','spinTube','spinAll'].includes(name)){
     const spin=name.startsWith('spin'),ids=name.endsWith('All')?scenario.samples.map(s=>s.id):[id];
     if(warn(issues(state,scenario,2)))return;
@@ -144,23 +311,18 @@ async function action(name,node){
   }else if(name==='skip'){finishPcr();}
   else if(name==='pause'){molecularPaused=!molecularPaused;node.textContent=molecularPaused?'계속 재생':'일시정지';if(motion)motion.last=0;}
   else if(name==='record'){state.recorded=true;render();announce('레인 순서를 기록했습니다.');}
-  else if(name==='load'){
-    const lane=Number(node.dataset.lane);if(state.lanes[lane]){announce('이미 채운 레인입니다. 비우기를 누른 뒤 다시 로딩하세요.');return;}
-    const source=$('#amp-load-source').value;state.lanes[lane]=source;render();$('#amp-load-source').value=source;announce(`${lane+1}번 레인에 ${label(source)}를 로딩했습니다.`);
-  }else if(name==='clearLane'){state.lanes[Number(node.dataset.lane)]=null;render();}
+  else if(name==='clearLane'){state.lanes[Number(node.dataset.lane)]=null;render();}
   else if(name==='runGel'){
     if(warn(issues(state,scenario,5)))return;
     busy=true;all('button,select,input').forEach(n=>n.disabled=true);
-    $('.amp-gel').outerHTML=gelSvg(true,true);await new Promise(resolve=>setTimeout(resolve,2200));
+    const scene=$('[data-bench-scene]');if(scene)scene.outerHTML=gelSvg(true,true);await new Promise(resolve=>setTimeout(resolve,2200));
     state.gelRun=true;busy=false;render();announce('DNA가 + 극으로 이동했습니다. 전기영동 완료.');
   }else if(name==='view'){state.viewed=true;render();announce('밴드를 관찰하고 대조군과 비교해 보세요.');}
 }
 function bind(){
   all('[data-action]').forEach(n=>n.onclick=()=>action(n.dataset.action,n));
   $('#amp-quality').onchange=e=>{quality=e.target.value;root.dataset.quality=quality;};
-  if($('#amp-source'))$('#amp-source').onchange=e=>source=e.target.value;
-  if($('#amp-ice'))$('#amp-ice').onchange=e=>state.ice=e.target.checked;
-  if($('#amp-dispose'))$('#amp-dispose').onchange=e=>dispose=e.target.checked;
+  if($('#amp-ice'))$('#amp-ice').onchange=e=>{if(!busy){state.ice=e.target.checked;render();}};
   all('[data-program]').forEach(n=>n.oninput=()=>{state.program[n.dataset.program]=n.value===''?NaN:Number(n.value);updateChecks();});
   all('[data-pcr-tube]').forEach(n=>n.onchange=()=>{const id=n.dataset.pcrTube;state.pcrLoaded=state.pcrLoaded.filter(s=>s!==id);if(n.checked)state.pcrLoaded.push(id);updateChecks();});
   if($('#amp-rt-enabled'))$('#amp-rt-enabled').onchange=e=>{state.program.rtEnabled=e.target.checked;updateChecks();};
