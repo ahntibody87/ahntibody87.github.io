@@ -1,4 +1,4 @@
-# AMPLICON · 교사용 운영 및 수정 안내
+# AMPLICON으로 추적하는 바이러스 감염 · 교사용 운영 및 수정 안내
 
 - 저장소: https://github.com/ahntibody87/ahntibody87.github.io
 - 공개 경로: https://ahntibody87.github.io/advanced-life-science/biotechnology/amplicon/
@@ -41,9 +41,9 @@
 | `warnings` | 규칙 ID → `cause`(원인), `molecule`(분자 변화), `consequence`(판정 영향·복구 안내) |
 | `markerBp`, `answer`, `modelInterpretation`, `sources` | 마커, 감염자 선택 정답, 모범 해석 문단, 과학 출처 |
 
-같은 One-step RT-PCR 흐름의 다른 상황은 JSON을 복사하고 위 필드를 바꾼 뒤 활동 HTML의 `data-scenario` 경로를 바꾼다. 시료 역할 ID A·B·positive·NTC는 유지하고 표시 이름·정답·재료를 변경한다. 경고 ID는 모델에서 참조하므로 유지한다. 새 경고 조건은 `model.mjs`의 `issues()`와 검사를 함께 추가한다.
+같은 RT-PCR 흐름의 다른 상황은 JSON을 복사하고 위 필드를 바꾼 뒤 활동 HTML의 `data-scenario` 경로를 바꾼다. 시료 역할 ID A·B·positive·NTC는 유지하고 표시 이름·정답·재료를 변경한다. 경고 ID는 모델에서 참조하므로 유지한다. 새 경고 조건은 `model.mjs`의 `issues()`와 검사를 함께 추가한다.
 
-친자 확인처럼 여러 유전자좌를 비교하거나, DNA 기반 GMO 검출처럼 역전사를 생략하는 활동은 JSON 추가와 함께 해당 실험 흐름·분자 뷰를 확장해야 한다. 현 버전은 요청한 RNA 바이러스 One-step RT-PCR을 정확하게 표현하는 엔진이다. 단순히 제목만 바꾸어 다른 검사로 사용하지 않는다.
+친자 확인처럼 여러 유전자좌를 비교하거나, DNA 기반 GMO 검출처럼 역전사를 생략하는 활동은 JSON 추가와 함께 해당 실험 흐름·분자 뷰를 확장해야 한다. 현 버전은 요청한 RNA 바이러스 RT-PCR을 정확하게 표현하는 엔진이다. 단순히 제목만 바꾸어 다른 검사로 사용하지 않는다.
 
 ## 로컬 실행
 
@@ -68,7 +68,7 @@ python -m http.server 8000 --bind 127.0.0.1
 
 - [ ] 04 카드에 1개 활동이 표시되고 AMPLICON 카드가 열린다. 미입장 상태에서는 기존 비밀번호 화면이 먼저 나온다.
 - [ ] 과학실에서 WASD·방향키 이동, E 상호작용, 바닥 클릭/탭 이동, 기기 클릭/탭, 터치 방향 패드가 작동한다. 바로 이동 버튼도 사용 가능하다.
-- [ ] 아이스박스에서 A·B·양성 대조군·NTC 원본을 눌러 확인한다. ‘반응액 준비하기’를 누르면 같은 배치의 3D 작업대에서 실험을 이어간다.
+- [ ] 아이스박스의 뚜껑을 열고 A·B·양성 대조군·NTC용 증류수가 꽂힌 냉각 랙을 꺼낸다. ‘랙을 들고 작업대로’를 누르면 원본 시료 랙과 빈 반응 튜브 랙이 구분되어 보인다.
 - [ ] 팁 박스 → 시약병 → 반응 튜브 → 폐기통을 차례로 누른다. 팁을 끼운 상태에서 병을 반응 튜브로 끌어도 흡입과 분주가 이어진다.
 - [ ] 한 튜브에 버퍼·dNTP → 프라이머 → 역전사 효소 → Taq 순으로 넣고 팁을 버린 뒤 ‘나머지 튜브에 공통 시약 넣기’를 선택한다. 이후 네 원본 시료를 각각 직접 분주한다. 공통 시약도 모두 직접 분주할 수 있다.
 - [ ] 표준 품질에서 손이 팁 박스→용액→튜브→폐기통으로 이동한다. 각 튜브를 눌러 성분을 확인한다.
@@ -108,4 +108,6 @@ python -m http.server 8000 --bind 127.0.0.1
 
 이 활동의 300bp 크기와 온도 허용 범위는 학습용이다. 실제 B 시료의 채취·추출 적절성을 검증하는 내부 대조군을 생략했음을 모범 해석에서 명시한다. 실제 진단의 실시간 RT-PCR과 전기영동 교육 활동도 구분한다.
 
-출처: [NEB One-step RT-PCR](https://www.neb-online.de/en/pcr-and-dna-amplification/reverse-transcription-cdna-synthesis/onetaq-one-step/), [NIST 프라이머 정의](https://www.nist.gov/glossary-term/29811).
+출처: [NEB RT-PCR](https://www.neb-online.de/en/pcr-and-dna-amplification/reverse-transcription-cdna-synthesis/onetaq-one-step/), [NIST 프라이머 정의](https://www.nist.gov/glossary-term/29811).
+
+카드 삽화는 기본 이미지 생성 도구로 만들고 `assets/biology-art-v1/tool-amplicon.webp`에 저장했다. 그림 프롬프트는 옅은 회청색 배경의 16:9 과학 교재 수채화, 왼쪽의 열린 써멀 사이클러와 반응 튜브, 오른쪽의 전기영동 겔과 크기 마커를 지정했다. 예시 밴드는 시료 식별자 없이 그렸다.

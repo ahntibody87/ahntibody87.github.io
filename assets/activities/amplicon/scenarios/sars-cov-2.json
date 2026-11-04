@@ -132,8 +132,7 @@
       "station": "ice",
       "why": "핵산 추출과 겔 제작은 마친 상태입니다. 대조군도 A·B와 같은 과정을 거쳐야 실험을 검증할 수 있습니다.",
       "tasks": [
-        "A·B의 추출 RNA 수령",
-        "양성 대조군·NTC용 증류수 수령"
+        "아이스박스에서 원본 시료가 든 냉각 랙 꺼내기"
       ]
     },
     {
@@ -333,7 +332,7 @@
   ],
   "sources": [
     {
-      "label": "NEB · One-step RT-PCR 원리",
+      "label": "NEB · RT-PCR 원리",
       "url": "https://www.neb-online.de/en/pcr-and-dna-amplification/reverse-transcription-cdna-synthesis/onetaq-one-step/"
     },
     {

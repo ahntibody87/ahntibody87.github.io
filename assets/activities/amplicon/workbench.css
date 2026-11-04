@@ -44,6 +44,29 @@
   color: white;
   pointer-events: none;
 }
+.amp-lab .amp-bench-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: .12rem .32rem;
+  border-radius: 4px;
+  background: #173644;
+  color: #fff;
+  font-size: clamp(.65rem, 1.05vw, .86rem);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.amp-lab [data-bench-scene="cooler"] {
+  background: #d6e6ef;
+}
+.amp-lab .amp-bench-scene .amp-target-cooler {
+  width: 38%;
+  min-height: 94px;
+}
+.amp-lab .amp-bench-scene .amp-target-coldRack,
+.amp-lab .amp-bench-scene .amp-target-receivingPad {
+  width: 28%;
+  min-height: 68px;
+}
 .amp-lab .amp-bench-scene .amp-bench-target:disabled {
   opacity: .79;
 }

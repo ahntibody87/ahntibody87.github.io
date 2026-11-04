@@ -1,8 +1,8 @@
 import {createState,freshTip,addReagent,resetTube,planSharedReagents,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=2';
 import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs';
 
-import {mountWorkbench} from './workbench.mjs?v=2';
-import {preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=2';
+import {mountWorkbench} from './workbench.mjs?v=3';
+import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=3';
 
 const root=document.getElementById('amp-lab');
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -11,6 +11,7 @@ const tick=(done,text)=>`<li class="${done?'amp-done':''}"><span aria-hidden="tr
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
 let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
+let coolerOpen=false,coolerTransfer=0;
 const parkedPipette={x:5.1,y:.32,z:-1.25};
 let player={x:4.8,y:4.8},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
 const $=selector=>root.querySelector(selector);
@@ -18,6 +19,7 @@ const all=selector=>[...root.querySelectorAll(selector)];
 const label=id=>id==='marker'?'DNA 크기 마커':scenario.samples.find(s=>s.id===id)?.label||id;
 const material=id=>scenario.reagents.find(r=>r.id===id)?.label||scenario.samples.find(s=>`sample:${s.id}`===id)?.material||id;
 const announce=text=>{const node=$('#amp-status');if(node)node.textContent=text;};
+const rackReceived=()=>Object.values(state.tubes).every(tube=>tube.received);
 
 async function init(){
   try{
@@ -33,7 +35,7 @@ async function init(){
 }
 function checklist(){
   const tubes=Object.values(state.tubes),s=state.step;
-  const flags=s===0?[true,true]:s===1?[state.tubes.A.received&&state.tubes.B.received,state.tubes.positive.received&&state.tubes.NTC.received]:s===2?[tubes.every(t=>t.additions.length>0&&!t.additions.some(a=>a.reused)),issues(state,scenario,2).length===0,tubes.every(t=>t.additions.length===5)]:s===3?[tubes.every(t=>t.mixed),tubes.every(t=>t.spun)]:s===4?[state.pcrLoaded.length===4,issues(state,scenario,4).length===0,state.amplified]:s===5?[state.recorded,state.lanes.every((x,i)=>x&&x===state.lanePlan[i]),state.polarity==='normal',state.gelRun]:[state.viewed,!!state.answer&&!!state.reason.trim(),state.submitted];
+  const flags=s===0?[true,true]:s===1?[rackReceived()]:s===2?[tubes.every(t=>t.additions.length>0&&!t.additions.some(a=>a.reused)),issues(state,scenario,2).length===0,tubes.every(t=>t.additions.length===5)]:s===3?[tubes.every(t=>t.mixed),tubes.every(t=>t.spun)]:s===4?[state.pcrLoaded.length===4,issues(state,scenario,4).length===0,state.amplified]:s===5?[state.recorded,state.lanes.every((x,i)=>x&&x===state.lanePlan[i]),state.polarity==='normal',state.gelRun]:[state.viewed,!!state.answer&&!!state.reason.trim(),state.submitted];
   return scenario.steps[s].tasks.map((t,i)=>tick(flags[i],t)).join('');
 }
 function render(){
@@ -54,7 +56,7 @@ function render(){
   const restored=focusId?root.querySelector(`[id="${focusId}"]`):focusAction?root.querySelector(`[data-action="${focusAction}"]${focusItem?`[data-id="${focusItem}"]`:''}`):null;
   if(restored&&!restored.disabled)restored.focus({preventScroll:true});
 }
-function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><span class="amp-kicker">사건 01 · 분자 진단</span><h3>${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + NTC</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>One-step RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p>${button('실험 시작하기 →','next','class="amp-primary"')}</section>`;}
+function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><span class="amp-kicker">사건 01 · 분자 진단</span><h3>${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + NTC</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p>${button('실험 시작하기 →','next','class="amp-primary"')}</section>`;}
 function explore(){return `<section class="amp-explore"><div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3>기기로 이동해 실험하세요</h3></div>${button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div><div class="amp-room-wrap">${labMap()}<div class="amp-dpad" aria-label="터치 이동"><button type="button" data-move="up" aria-label="위로 이동">↑</button><button type="button" data-move="left" aria-label="왼쪽 이동">←</button><button type="button" data-action="interact" aria-label="가까운 기기 열기">E</button><button type="button" data-move="right" aria-label="오른쪽 이동">→</button><button type="button" data-move="down" aria-label="아래로 이동">↓</button></div></div><p class="amp-controls-note">WASD / 방향키 이동 · E로 조작 · 바닥을 클릭하거나 탭해 이동 · 기기를 누르면 가까이 이동해 열기</p><div class="amp-station-links" aria-label="기기 바로 이동">${stations.map(s=>button(s.label,'open',`data-id="${s.id}"`)).join('')}</div></section>`;}
 function tubeCards(action='tube',ids=scenario.samples.map(s=>s.id)){
   return `<div class="amp-tubes">${ids.map(id=>{const t=state.tubes[id];return button(`<span class="amp-tube-drawing ${t.additions.length?'amp-filled':''}" aria-hidden="true"><i></i></span><strong>${esc(label(id))}</strong><small>${!t.received?'수령 전':`${t.additions.length}/5 성분`}${t.spun?' · 스핀 완료':t.mixed?' · 혼합 완료':''}</small>`,action,`data-id="${id}" class="amp-tube ${id===selected?'amp-selected':''}" aria-pressed="${id===selected}"`);}).join('')}</div>`;
@@ -69,10 +71,13 @@ function prepScene(){
   return sceneMarkup(preparationObjects(state,scenario),'prep',esc,busy);
 }
 function iceView(){
-  const count=Object.values(state.tubes).filter(tube=>tube.received).length;
-  return '<p>얼음 위의 원본 시료 네 개를 눌러 라벨을 확인하세요. 가운데 랙에는 빈 반응 튜브가 준비되어 있습니다.</p>'+
-    '<div class="amp-actions"><strong>원본 확인 '+count+' / 4</strong>'+
-    button('반응액 준비하기 →','next','class="amp-primary" '+(count!==4?'disabled':''))+'</div>'+prepScene();
+  const received=rackReceived();
+  const instructions=received?'냉각 랙을 꺼냈습니다. 원본 네 개를 랙째 작업대로 옮기세요.':
+    coolerOpen?'냉각 랙을 눌러 꺼내세요. 오른쪽 받침으로 끌어 놓아도 됩니다.':'아이스박스 뚜껑을 열어 준비된 냉각 랙을 꺼내세요.';
+  return '<p>'+instructions+'</p>'+
+    sceneMarkup(coolerObjects(scenario,coolerOpen,coolerTransfer),'cooler',esc,busy)+
+    '<div class="amp-actions">'+(received?button('랙을 들고 작업대로 →','next','class="amp-primary"'):
+      button(coolerOpen?'냉각 랙 꺼내기':'아이스박스 뚜껑 열기',coolerOpen?'liftRack':'openCooler','class="amp-primary" '+(busy?'disabled':'')))+'</div>';
 }
 function benchView(){
   const t=state.tubes[selected];
@@ -155,6 +160,16 @@ function bindBenchScene(){
   const container=$('[data-bench-scene]');
   if(!container)return;
   const gel=container.dataset.benchScene==='gel';
+  if(container.dataset.benchScene==='cooler'){
+    benchScene=mountWorkbench(container,
+      ()=>coolerObjects(scenario,coolerOpen,coolerTransfer),
+      ()=>({position:null,tip:false,liquid:false}),
+      id=>{
+        if(id==='lid')action('openCooler');
+        if(id==='rack'||id==='shelf')action('liftRack');
+      });
+    return;
+  }
   benchScene=mountWorkbench(container,
     ()=>gel?electrophoresisObjects(state,scenario):preparationObjects(state,scenario),
     ()=>({position:state.step===1?null:(gel?gelPosition:prepPosition)??parkedPipette,tip:gel?!!gelLiquid:!!state.tip,liquid:gel?!!gelLiquid:!!prepLiquid}),
@@ -166,10 +181,6 @@ async function moveTool(id,gel=false,auto=false){
 }
 async function handlePrepTarget(id,from){
   if(busy)return;
-  if(state.step===1){
-    if(id.startsWith('sample:'))await action('receive',{dataset:{id:id.slice(7)}});
-    return;
-  }
   const sourceTarget=target=>!!target&&(target.startsWith('sample:')||scenario.reagents.some(r=>r.id===target));
   const tubeTarget=id.startsWith('tube:');
   if(id==='tips'&&state.tip)return sceneStatus('현재 팁을 폐기통에 버린 뒤 새 팁을 끼우세요.');
@@ -210,6 +221,29 @@ async function handlePrepTarget(id,from){
     busy=false;render();
     if(message)sceneStatus(message);
   }
+}
+async function liftRack(){
+  if(!coolerOpen||rackReceived())return;
+  busy=true;render();
+  try{
+    if(quality!=='low'&&!reduced.matches){
+      const start=performance.now();
+      await new Promise(resolve=>{
+        function lift(now){
+          coolerTransfer=Math.min(1,(now-start)/470);
+          benchScene.refresh();
+          if(coolerTransfer<1)requestAnimationFrame(lift);else resolve();
+        }
+        requestAnimationFrame(lift);
+      });
+    }
+    coolerTransfer=1;
+    for(const tube of Object.values(state.tubes))tube.received=true;
+  }finally{
+    busy=false;render();
+  }
+  $('.amp-main [data-action="next"]')?.focus({preventScroll:true});
+  announce('원본 시료 네 개가 들어 있는 냉각 랙을 꺼냈습니다.');
 }
 async function autoCommon(){
   const plan=planSharedReagents(state,scenario);
@@ -282,7 +316,7 @@ async function action(name,node){
       $('#amp-target-bin')?.focus();
       return;
     }
-    const fromIce=state.step===1&&station==='ice';
+    const fromIce=state.step===1;
     state.step=Math.min(6,state.step+1);station=fromIce?'bench':null;prepLiquid=null;gelLiquid=null;render();
     if(fromIce)$('#amp-work-title')?.focus({preventScroll:true});$('.amp-room')?.focus({preventScroll:true});
   }else if(name==='previous'){
@@ -291,8 +325,11 @@ async function action(name,node){
   else if(name==='goto')open(scenario.steps[state.step].station);
   else if(name==='open')open(id);
   else if(name==='interact'&&near)open(near.id);
-  else if(name==='receive'){
-    state.tubes[id].received=true;render();announce(`${label(id)} 시료를 랙에 놓았습니다.`);
+  else if(name==='openCooler'){
+    if(state.step!==1||station!=='ice')return;
+    coolerOpen=true;render();$('#amp-target-rack')?.focus({preventScroll:true});
+  }else if(name==='liftRack'){
+    if(state.step===1&&station==='ice')await liftRack();
   }else if(name==='tube'){selected=id;render();announce(`${label(id)}: ${state.tubes[id].additions.map(a=>material(a.reagent)).join(', ')||'빈 튜브'}`);}
   else if(name==='autoCommon'){await autoCommon();}
   else if(name==='samples'){$('[data-bench-target^="sample:"]')?.focus();}
@@ -333,8 +370,8 @@ function bind(){
     $('#amp-reason').oninput=e=>{state.reason=e.target.value;state.submitted=false;$('.amp-comparison')?.remove();updateChecks();};
     $('#amp-conclusion').onsubmit=e=>{e.preventDefault();if(!state.reason.trim()){announce('관찰한 근거를 한 문장 이상 적어 주세요.');$('#amp-reason').focus();return;}state.submitted=true;render();$('.amp-comparison')?.focus({preventScroll:true});announce('탐구 완료. 내 해석과 모범 해석을 비교하세요.');};
   }
-  all('[draggable="true"]').forEach(n=>n.ondragstart=e=>e.dataTransfer.setData('text/plain',n.dataset.dragSample||n.dataset.dragTube));
-  all('[data-drop]').forEach(n=>{n.ondragover=e=>e.preventDefault();n.ondrop=e=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');if(!state.tubes[id])return;action(n.dataset.drop==='receipt'?'receive':n.dataset.drop==='spin'?'spinTube':'mixTube',{dataset:{id}});};});
+  all('[draggable="true"]').forEach(n=>n.ondragstart=e=>e.dataTransfer.setData('text/plain',n.dataset.dragTube));
+  all('[data-drop]').forEach(n=>{n.ondragover=e=>e.preventDefault();n.ondrop=e=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');if(!state.tubes[id])return;action(n.dataset.drop==='spin'?'spinTube':'mixTube',{dataset:{id}});};});
   const room=$('.amp-room');
   if(room){
     room.onpointerdown=e=>{

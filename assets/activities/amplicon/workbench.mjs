@@ -48,14 +48,39 @@ function paintScene(canvas,objects,tool,tip,liquid){
     }else cylinder(x,y+height,z,radius*1.17,.12,o.color);
     box(x,y+.27,z+radius*.96,radius*1.5,.18,.025,'#f4f6f3');
   }
-  box(0,-1.55,2.35,12.4,1.35,.45,'#5e7379');
-  box(0,-.21,0,13,.21,6.2,'#bdc8c6');
-  box(0,-.04,-2.88,13,.13,.14,'#d5dddd');
+  const coolerScene=objects.some(object=>object.kind==='cooler');
+  if(!coolerScene){
+    box(0,-1.55,2.35,12.4,1.35,.45,'#5e7379');
+    box(0,-.21,0,13,.21,6.2,'#bdc8c6');
+    box(0,-.04,-2.88,13,.13,.14,'#d5dddd');
+  }
   const furniture=faces.splice(0);
   const supports=[];
   for(const o of objects){
     const {x,z}=o;
-    if(o.kind==='ice'){
+    if(o.kind==='cooler'){
+      box(x,0,z,5.8,.38,3.7,'#4f8eab');
+      box(x,.38,z,5.46,.055,3.37,'#c4e9ef');
+      box(x,.36,z+1.69,5.8,.40,.28,'#549abb');
+      box(x-2.75,.35,z,.29,.45,3.35,'#6babc4');
+      box(x+2.75,.35,z,.29,.45,3.35,'#5b9cb8');
+      box(x,.4,z-1.68,5.8,.42,.25,'#80b6ca');
+      box(x,.52,z+1.86,.75,.18,.16,'#e1eef3');
+      if(o.open){
+        box(x,.78,z-1.70,5.87,2.10,.25,'#a6cbd8');
+        box(x,1.04,z-1.53,5.36,1.60,.08,'#d7e8e9');
+        for(let i=0;i<9;i++)box(x-2.16+i*.54,.44,z+.96,.25,.12,.24,'#e1f2f5');
+      }else{
+        box(x,.79,z,6.04,.28,3.87,'#aacbd9');
+        box(x,.79,z+1.97,.95,.20,.11,'#4f829f');
+      }
+    }else if(o.kind==='receivingPad'){
+      box(x,0,z,4.65,.20,1.52,'#97b3bf');
+    }else if(o.kind==='coldRack'){
+      const y=o.base??.33, width=o.width??6.15;
+      box(x,y,z,width,.17,.86,'#3c92a2');
+      box(x,y+.17,z,width,.08,.81,'#b3dfe3');
+    }else if(o.kind==='ice'){
       box(x,0,z,8.7,.25,2.6,'#5aa9bc');
       box(x,.25,z,8.45,.045,2.36,'#afdeea');
       for(let i=0;i<20;i++)box(x-3.9+(i%10)*.84,.30,z-.94+Math.floor(i/10)*1.77,.28,.12,.22,'#c6e9f2');
@@ -79,7 +104,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
     }else if(o.kind==='well'){
       box(x,.45,z,.64,.035,.23,o.color);
     }else tube(o,o.kind==='bottle');
-    if(['ice','rack','tank'].includes(o.kind))supports.push(...faces.splice(0));
+    if(['cooler','receivingPad','coldRack','ice','rack','tank'].includes(o.kind))supports.push(...faces.splice(0));
   }
   if(tool){
     const {x,y,z}=tool;
@@ -94,9 +119,9 @@ function paintScene(canvas,objects,tool,tip,liquid){
     box(x+.54,y+1.20,z-.10,.35,.20,.34,'#b8d9e4');
   }
   const background=ctx.createLinearGradient(0,0,0,HEIGHT);
-  background.addColorStop(0,'#182d3b');
-  background.addColorStop(.60,'#345363');
-  background.addColorStop(1,'#1b303b');
+  background.addColorStop(0,coolerScene?'#d6e6ef':'#182d3b');
+  background.addColorStop(.60,coolerScene?'#eaf3f7':'#345363');
+  background.addColorStop(1,coolerScene?'#c3d8e3':'#1b303b');
   ctx.fillStyle=background;
   ctx.fillRect(0,0,WIDTH,HEIGHT);
   ctx.fillStyle='#ffffff0b';
@@ -119,6 +144,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
 export function mountWorkbench(scene,getObjects,getToolState,onTarget){
   const canvas=scene.querySelector('canvas');
   const targets=scene.querySelectorAll('[data-bench-target]');
+  const anchored=scene.querySelectorAll('[data-bench-target],[data-bench-label]');
   let drag=null;
   let suppressClickUntil=0;
   let tool=getToolState().position;
@@ -128,8 +154,8 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
   }
   function positionTargets(){
     const objects=getObjects();
-    for(const target of targets){
-      const o=objects.find(object=>object.id===target.dataset.benchTarget);
+    for(const target of anchored){
+      const o=objects.find(object=>object.id===(target.dataset.benchTarget??target.dataset.benchLabel));
       if(!o)continue;
       const p=project([o.x,o.labelHeight??.35,o.z]);
       target.style.left=(100*p.x/WIDTH)+'%';
@@ -187,6 +213,7 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
   draw();
   return {
     draw,
+    refresh(){draw();positionTargets();},
     async move(id,duration){
       const target=getObjects().find(o=>o.id===id);
       if(!target)return;
