@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "id": "sars-cov-2-n",
+  "title": "보이지 않는 감염의 단서를 찾아라",
+  "virus": "SARS-CoV-2",
+  "genome": "RNA",
+  "target": "N 유전자",
+  "productBp": 300,
+  "brief": "코로나19 감염이 의심되는 A와 B의 핵산을 이미 추출했습니다. 같은 튜브에서 역전사와 PCR을 진행하고, 준비된 겔에서 산물을 분리해 두 사람의 결과를 비교하세요.",
+  "samples": [
+    {
+      "id": "A",
+      "label": "A",
+      "material": "A의 추출 RNA",
+      "positive": true,
+      "control": false
+    },
+    {
+      "id": "B",
+      "label": "B",
+      "material": "B의 추출 RNA",
+      "positive": false,
+      "control": false
+    },
+    {
+      "id": "positive",
+      "label": "양성 대조군",
+      "material": "바이러스 RNA",
+      "positive": true,
+      "control": true
+    },
+    {
+      "id": "NTC",
+      "label": "NTC",
+      "material": "증류수",
+      "positive": false,
+      "control": true
+    }
+  ],
+  "reagents": [
+    {
+      "id": "buffer",
+      "label": "버퍼·dNTP 혼합액",
+      "missingRule": "buffer"
+    },
+    {
+      "id": "primer",
+      "label": "N 유전자 프라이머 한 쌍",
+      "missingRule": "primer"
+    },
+    {
+      "id": "rt",
+      "label": "역전사 효소",
+      "enzyme": true,
+      "missingRule": "rt"
+    },
+    {
+      "id": "taq",
+      "label": "Taq DNA 중합효소",
+      "enzyme": true,
+      "missingRule": "taq"
+    }
+  ],
+  "program": {
+    "defaults": {
+      "rtEnabled": true,
+      "rt": 50,
+      "initial": 95,
+      "denature": 95,
+      "anneal": 55,
+      "extend": 72,
+      "cycles": 30,
+      "final": 72
+    },
+    "limits": {
+      "rt": {
+        "min": 48,
+        "max": 52,
+        "rule": "rtTemp"
+      },
+      "initial": {
+        "min": 94,
+        "max": 98,
+        "rule": "denature"
+      },
+      "denature": {
+        "min": 94,
+        "max": 98,
+        "rule": "denature"
+      },
+      "anneal": {
+        "min": 50,
+        "max": 60
+      },
+      "extend": {
+        "min": 70,
+        "max": 74,
+        "rule": "extend"
+      },
+      "final": {
+        "min": 70,
+        "max": 74,
+        "rule": "extend"
+      },
+      "cycles": {
+        "min": 25,
+        "max": 40,
+        "rule": "cycles"
+      }
+    }
+  },
+  "markerBp": [
+    100,
+    200,
+    300,
+    400,
+    500,
+    600
+  ],
+  "steps": [
+    {
+      "title": "브리핑",
+      "station": "ice",
+      "why": "SARS-CoV-2는 RNA 바이러스입니다. 먼저 RNA를 DNA(cDNA)로 바꾼 뒤 DNA를 증폭해야 합니다.",
+      "tasks": [
+        "상황과 표적 확인",
+        "양성 대조군과 NTC의 역할 확인"
+      ]
+    },
+    {
+      "title": "시료 수령",
+      "station": "ice",
+      "why": "핵산 추출과 겔 제작은 마친 상태입니다. 대조군도 A·B와 같은 과정을 거쳐야 실험을 검증할 수 있습니다.",
+      "tasks": [
+        "A·B의 추출 RNA 수령",
+        "양성 대조군·NTC용 증류수 수령"
+      ]
+    },
+    {
+      "title": "반응액 조제",
+      "station": "bench",
+      "why": "효소는 얼음 위에서 뒤쪽에 넣습니다. 시료는 교차 오염을 줄이려고 맨 마지막에 넣고 다른 용액과 시료를 다룰 때마다 새 팁을 씁니다.",
+      "tasks": [
+        "매번 새 팁 사용",
+        "버퍼·dNTP → 프라이머 → 역전사 효소 → Taq → 시료",
+        "네 튜브의 성분 확인"
+      ]
+    },
+    {
+      "title": "혼합·스핀다운",
+      "station": "vortex",
+      "why": "효소가 들어 있어 짧게만 섞습니다. 이어서 스핀다운하면 벽과 뚜껑에 묻은 액체가 바닥으로 모입니다.",
+      "tasks": [
+        "네 튜브를 2~3초 혼합",
+        "혼합 후 네 튜브 스핀다운"
+      ]
+    },
+    {
+      "title": "RT-PCR",
+      "station": "pcr",
+      "why": "역전사로 만든 cDNA가 PCR의 주형이 됩니다. 프라이머가 지정한 구간을 내열성 Taq DNA 중합효소가 반복해서 복제합니다.",
+      "tasks": [
+        "튜브 네 개 넣기",
+        "온도와 사이클 확인",
+        "분자 뷰 관찰 후 반응 완료"
+      ]
+    },
+    {
+      "title": "전기영동",
+      "station": "gel",
+      "why": "DNA는 인산기 때문에 음전하를 띠어 + 극으로 이동합니다. 작은 조각일수록 겔 사이를 더 빨리 통과합니다.",
+      "tasks": [
+        "레인 순서 기록",
+        "마커·네 시료 로딩",
+        "웰은 − 극, 이동 방향은 + 극",
+        "전원 켜기"
+      ]
+    },
+    {
+      "title": "판독·결론",
+      "station": "uv",
+      "why": "밴드가 있다는 사실뿐 아니라 크기와 대조군을 함께 비교해야 합니다. NTC의 밴드는 오염의 신호입니다.",
+      "tasks": [
+        "UV 관찰기에서 밴드 확인",
+        "감염자 선택·근거 작성",
+        "모범 해석과 비교"
+      ]
+    }
+  ],
+  "warnings": {
+    "tip": {
+      "cause": "사용한 팁을 다시 썼습니다.",
+      "molecule": "팁에 남은 다른 시료의 RNA가 새 튜브로 옮겨갈 수 있습니다.",
+      "consequence": "비감염자나 NTC에서도 밴드가 나타나는 위양성이 생길 수 있습니다. 해당 튜브를 다시 만들고 매번 새 팁을 사용하세요."
+    },
+    "buffer": {
+      "cause": "버퍼·dNTP 혼합액이 없습니다.",
+      "molecule": "dNTP가 없으면 새 DNA 가닥의 재료가 부족하고, 버퍼가 없으면 반응 조건이 맞지 않습니다.",
+      "consequence": "증폭되지 않아 감염 시료도 위음성이 될 수 있습니다."
+    },
+    "primer": {
+      "cause": "프라이머 한 쌍이 없습니다.",
+      "molecule": "DNA 중합효소가 합성을 시작할 프라이머의 3′ 말단이 없습니다.",
+      "consequence": "표적 DNA가 증폭되지 않아 위음성이 될 수 있습니다."
+    },
+    "rt": {
+      "cause": "역전사 효소가 없습니다.",
+      "molecule": "RNA를 cDNA로 바꾸지 못해 Taq DNA 중합효소가 쓸 DNA 주형이 만들어지지 않습니다.",
+      "consequence": "감염 시료도 위음성이 될 수 있습니다."
+    },
+    "taq": {
+      "cause": "Taq DNA 중합효소가 없습니다.",
+      "molecule": "연장 단계에서 프라이머의 3′ 말단에 뉴클레오타이드를 붙일 효소가 없습니다.",
+      "consequence": "표적 DNA가 증폭되지 않아 위음성이 될 수 있습니다."
+    },
+    "sample": {
+      "cause": "시료가 없거나, 중복되었거나, 튜브 이름과 다릅니다.",
+      "molecule": "반응할 주형이 없거나 다른 사람의 RNA가 섞입니다.",
+      "consequence": "어떤 결과가 누구의 것인지 판정할 수 없습니다. 중복·혼동 시 해당 튜브를 다시 만드세요."
+    },
+    "duplicate": {
+      "cause": "같은 시약을 두 번 이상 넣었습니다.",
+      "molecule": "시약의 비율과 반응액 농도가 달라집니다.",
+      "consequence": "증폭 결과를 신뢰할 수 없습니다. 해당 튜브를 다시 만드세요."
+    },
+    "order": {
+      "cause": "시약을 넣은 순서가 다릅니다.",
+      "molecule": "시료를 먼저 넣으면 교차 오염 위험이 커지고 효소를 먼저 두면 상온 노출이 길어질 수 있습니다.",
+      "consequence": "위양성이나 증폭 실패로 이어질 수 있습니다. 해당 튜브를 다시 만들고 안내된 순서를 지켜 주세요."
+    },
+    "ice": {
+      "cause": "효소를 얼음 밖에서 분주했습니다.",
+      "molecule": "효소가 상온에 오래 노출되면 활성이 떨어질 수 있습니다.",
+      "consequence": "증폭이 약해져 위음성이 될 수 있습니다. 이 활동에서는 튜브를 다시 만들고 얼음 위에서 효소를 다룹니다."
+    },
+    "mix": {
+      "cause": "아직 섞지 않은 튜브가 있습니다.",
+      "molecule": "시약과 주형이 반응액 전체에 고르게 퍼지지 않았습니다.",
+      "consequence": "증폭 결과를 신뢰하기 어렵습니다. 볼텍스로 짧게 섞어 주세요."
+    },
+    "spin": {
+      "cause": "스핀다운하지 않은 튜브가 있습니다.",
+      "molecule": "튜브 벽에 묻은 액체가 바닥으로 모이지 않아 반응액의 부피와 농도가 맞지 않을 수 있습니다.",
+      "consequence": "증폭이 약해져 위음성이 될 수 있습니다. 혼합 뒤 스핀다운해 주세요."
+    },
+    "controls": {
+      "cause": "대조군 튜브가 빠졌습니다.",
+      "molecule": "양성 대조군은 증폭 반응의 작동을, NTC는 표적 핵산 오염 여부를 확인합니다.",
+      "consequence": "대조군이 없으면 시약·기기가 정상인지, 오염이 없는지 검증할 수 없습니다."
+    },
+    "receipt": {
+      "cause": "네 가지 시료를 모두 받지 않았습니다.",
+      "molecule": "주형 RNA 또는 NTC용 증류수가 준비되지 않았습니다.",
+      "consequence": "A·B와 대조군을 함께 비교할 수 없습니다. 아이스박스에서 빠진 시료를 받으세요."
+    },
+    "pcrLoad": {
+      "cause": "PCR 기기에 네 튜브가 모두 들어 있지 않습니다.",
+      "molecule": "빠진 튜브에서는 역전사와 증폭이 진행되지 않습니다.",
+      "consequence": "시료와 대조군을 비교할 수 없습니다. 네 튜브를 모두 넣으세요."
+    },
+    "rtDeleted": {
+      "cause": "역전사 단계가 꺼져 있습니다.",
+      "molecule": "RNA를 cDNA로 바꾸는 과정이 없어 DNA 주형이 만들어지지 않습니다.",
+      "consequence": "감염 시료도 증폭되지 않아 위음성이 됩니다."
+    },
+    "rtTemp": {
+      "cause": "역전사 온도가 이 활동의 범위를 벗어났습니다.",
+      "molecule": "선택한 효소가 cDNA를 합성하기에 맞지 않는 조건입니다.",
+      "consequence": "증폭 실패로 위음성이 될 수 있습니다. 학습용 권장값 50°C로 되돌리세요."
+    },
+    "denature": {
+      "cause": "변성 온도가 이 활동의 범위를 벗어났습니다.",
+      "molecule": "너무 낮으면 염기쌍 사이 수소 결합이 충분히 끊어지지 않아 이중 가닥이 풀리지 않습니다. 지나친 고온도 반응에 부적절합니다.",
+      "consequence": "증폭이 실패해 위음성이 될 수 있습니다. 학습용 권장값 95°C를 확인하세요."
+    },
+    "annealHigh": {
+      "cause": "결합 온도가 너무 높거나 값이 없습니다.",
+      "molecule": "프라이머가 주형에 안정적으로 상보적 결합을 하지 못합니다.",
+      "consequence": "표적 DNA가 증폭되지 않아 위음성이 될 수 있습니다."
+    },
+    "annealLow": {
+      "cause": "결합 온도가 너무 낮습니다.",
+      "molecule": "프라이머가 표적 이외의 비슷한 서열에도 비특이적으로 결합할 수 있습니다.",
+      "consequence": "엉뚱한 크기의 밴드나 위양성으로 해석이 어려워질 수 있습니다."
+    },
+    "extend": {
+      "cause": "연장 온도가 이 활동의 범위를 벗어났습니다.",
+      "molecule": "Taq DNA 중합효소가 새 가닥을 충분히 연장하기 어렵습니다.",
+      "consequence": "증폭이 약해져 위음성이 될 수 있습니다. 학습용 권장값 72°C를 확인하세요."
+    },
+    "cycles": {
+      "cause": "사이클 수가 적거나 학습용 범위(25~40회)를 벗어났습니다.",
+      "molecule": "반복이 너무 적으면 DNA 양이 충분히 늘지 않습니다. 과도한 반복은 비특이적 산물을 늘릴 수 있습니다.",
+      "consequence": "밴드를 놓쳐 위음성이 되거나 판독이 어려워질 수 있습니다. 기본값은 30회입니다."
+    },
+    "polarity": {
+      "cause": "웰 쪽 전극이 + 극으로 연결되어 있습니다.",
+      "molecule": "음전하를 띤 DNA는 여전히 + 극으로 이동합니다. 극성이 뒤집혀 겔 안쪽의 원래 + 극 방향이 아니라, 웰 바깥쪽(원래 − 극 위치)으로 빠져나갑니다.",
+      "consequence": "시료가 겔을 벗어나 밴드를 판독할 수 없습니다. 웰 쪽을 − 극으로 바꾸세요."
+    },
+    "marker": {
+      "cause": "DNA 크기 마커를 로딩하지 않았습니다.",
+      "molecule": "이동 거리를 이미 아는 크기의 DNA 조각과 비교할 수 없습니다.",
+      "consequence": "밴드가 표적 크기인지 확인할 수 없습니다."
+    },
+    "laneRecord": {
+      "cause": "레인 순서를 기록하지 않았거나 기록이 올바르지 않습니다.",
+      "molecule": "각 레인에 어떤 DNA를 넣었는지 비교 기준이 없습니다.",
+      "consequence": "밴드의 주인과 크기를 판정할 수 없습니다. 1번은 마커, 나머지는 네 시료를 한 번씩 기록하세요."
+    },
+    "laneMismatch": {
+      "cause": "레인 로딩이 기록과 다르거나 비어 있습니다.",
+      "molecule": "실제 넣은 DNA와 레인의 이름이 일치하지 않습니다.",
+      "consequence": "감염자를 잘못 판정할 수 있습니다. 해당 레인을 비우고 기록대로 다시 넣으세요."
+    },
+    "pcrRun": {
+      "cause": "RT-PCR이 아직 완료되지 않았습니다.",
+      "molecule": "cDNA 합성과 DNA 증폭을 끝내야 겔에 넣을 산물이 생깁니다.",
+      "consequence": "증폭 전 시료로는 목표 밴드를 판독할 수 없습니다."
+    },
+    "gelRun": {
+      "cause": "전기영동을 아직 완료하지 않았습니다.",
+      "molecule": "DNA 조각이 크기에 따라 분리되지 않았습니다.",
+      "consequence": "밴드의 위치와 크기를 판독할 수 없습니다. 전원을 켜 주세요."
+    }
+  },
+  "answer": "A",
+  "modelInterpretation": [
+    "A는 양성 대조군과 같은 약 300bp 밴드가 나타납니다. SARS-CoV-2 N 유전자가 증폭되었으므로 이 활동에서 A는 감염자입니다.",
+    "B는 밴드가 없습니다. 양성 대조군은 정상 증폭되고 NTC에는 밴드가 없으므로 실험이 신뢰할 만하며, 이 활동에서 B는 비감염자입니다.",
+    "실제 검사에서는 시료가 제대로 채취됐는지 확인하려고 사람 유전자도 함께 증폭합니다(내부 대조군).",
+    "실제 진단 현장에서는 전기영동 대신 실시간 RT-PCR로 형광을 측정합니다. 이 활동의 산물 크기(약 300bp)는 학습용으로 설정한 값입니다."
+  ],
+  "sources": [
+    {
+      "label": "NEB · One-step RT-PCR 원리",
+      "url": "https://www.neb-online.de/en/pcr-and-dna-amplification/reverse-transcription-cdna-synthesis/onetaq-one-step/"
+    },
+    {
+      "label": "NIST · 프라이머와 합성 방향",
+      "url": "https://www.nist.gov/glossary-term/29811"
+    }
+  ]
+}
