@@ -81,3 +81,15 @@ assert.equal(rememberEntry(gate,blocked,now),false);assert.equal(rememberedEntry
 assert.match(accessContent(site.courses[2],''),/type="checkbox" id="course-entry-remember" name="remember">/);
 assert.doesNotMatch(accessContent(site.courses[2],''),/name="remember"[^>]*checked/);
 console.log('7일 입장 유지: 만료 경계·과목 격리·비밀번호 변경·기억 지우기·손상/차단 저장소·기본 미선택 검사 통과');
+
+// The whole advanced entrance now sits behind the existing course gate.
+// A direct link must not expose an unguarded intro or a second, nested gate.
+const entrance=fs.readFileSync(new URL('../advanced-life-science/index.html',import.meta.url),'utf8');
+assert.equal((entrance.match(/class="course-entry-screen"/g)||[]).length,1);
+assert.equal((entrance.match(/class="course-access-content" hidden inert/g)||[]).length,1);
+assert.ok(entrance.indexOf('class="course-access-content" hidden inert')<entrance.indexOf('id="course-intro"'));
+assert.ok(entrance.indexOf('id="course-intro"')<entrance.indexOf('id="units"'));
+assert.doesNotMatch(entrance,/course-units-panel|data-course-open-units|course-intro-back/);
+assert.match(entrance,/<h2 id="units-title">단원 선택<\/h2>/);
+assert.match(entrance,/<p lang="en">COURSE CONTENTS<\/p>/);
+console.log('고급 생명과학 직접 입장 잠금, 소개·단원 동시 표시, 중복 입장 화면 없음 검사 통과');
