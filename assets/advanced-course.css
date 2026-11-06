@@ -25,16 +25,16 @@ body[data-page="advanced-course"] .scene-front-layer img{display:block;width:100
 @keyframes advanced-nuclear-breath{0%,100%{transform:scale(1.015) translate3d(0,0,0)}50%{transform:scale(1.045) translate3d(-3px,-5px,0)}}
 @keyframes advanced-ribosome-drift{0%,100%{transform:translate3d(0,0,0) rotate(-.4deg)}50%{transform:translate3d(-5px,-10px,0) rotate(.5deg)}}
 body[data-page="advanced-course"] :is(.motion-background,.motion-offscreen) *{animation-play-state:paused!important}
-body[data-page="advanced-course"] .research-units{flex:none;padding:8px 0 16px}
+body[data-page="advanced-course"] .research-units{flex:none;padding:8px 0 clamp(34px,4.8svh,48px)}
 body[data-page="advanced-course"] .research-section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin-bottom:clamp(12px,1.8svh,20px)}
 body[data-page="advanced-course"] .research-section-heading h2{font-size:clamp(18px,1.3vw,24px);font-weight:550;letter-spacing:-.035em;line-height:1.4}
 body[data-page="advanced-course"] .research-section-heading p{font-size:11px;letter-spacing:.15em;color:#9aaabd;margin:0}
 body[data-page="advanced-course"] .research-unit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(16px,1.7vw,32px)}
-body[data-page="advanced-course"] .research-unit{min-width:0;display:flex;flex-direction:column;padding:7px clamp(10px,1.05vw,20px) 13px;border:1px solid #8195ac66;border-radius:4px;background:var(--bg);transition:border-color .25s}
+body[data-page="advanced-course"] .research-unit{min-width:0;display:flex;flex-direction:column;padding:7px clamp(10px,1.05vw,20px) 16px;border:1px solid #8195ac66;border-radius:4px;background:var(--bg);transition:border-color .25s}
 body[data-page="advanced-course"] .research-card-heading{display:flex;align-items:center;gap:10px;min-height:32px;font-size:10px;letter-spacing:.07em;color:#a8b7c8;line-height:1.3}
 body[data-page="advanced-course"] .research-card-heading>span:first-child{font-size:12px;color:#dbe6f2;font-variant-numeric:tabular-nums}
 body[data-page="advanced-course"] .research-card-heading>span:last-child{margin-left:auto;font-size:18px;color:#c1d2e6}
-body[data-page="advanced-course"] .research-card-art{height:clamp(110px,18svh,190px);overflow:hidden;background:var(--bg)}
+body[data-page="advanced-course"] .research-card-art{height:clamp(90px,14svh,150px);overflow:hidden;background:var(--bg)}
 body[data-page="advanced-course"] .research-card-art img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;filter:brightness(.76) saturate(.58);transition:filter .65s}
 body[data-page="advanced-course"] .research-card-body{flex:1;padding-top:clamp(10px,1.6svh,18px)}
 body[data-page="advanced-course"] .research-card-body h3{font-size:clamp(17px,1.32vw,25px);line-height:1.35;letter-spacing:-.035em;font-weight:550;word-break:keep-all;margin:0}
@@ -56,7 +56,7 @@ body[data-page="advanced-course"] .course-entry-screen{min-height:calc(100svh - 
  body[data-page="advanced-course"] .research-description+.research-description{margin-top:15px}
  body[data-page="advanced-course"] .course-cell{min-height:244px}
  body[data-page="advanced-course"] .research-section-heading{margin-bottom:10px}
- body[data-page="advanced-course"] .research-card-art{height:clamp(96px,16.5svh,124px)}
+ body[data-page="advanced-course"] .research-card-art{height:clamp(78px,13svh,102px)}
  body[data-page="advanced-course"] .research-card-body{padding-top:9px}
  body[data-page="advanced-course"] .research-card-body h3{font-size:18px}
 }
@@ -65,9 +65,9 @@ body[data-page="advanced-course"] .course-entry-screen{min-height:calc(100svh - 
  body[data-page="advanced-course"] .research-intro{gap:24px;padding:16px 0 30px}
  body[data-page="advanced-course"] h1{font-size:36px}
  body[data-page="advanced-course"] .research-unit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 22px}
- body[data-page="advanced-course"] .research-card-art{height:clamp(120px,18vw,190px)}
+ body[data-page="advanced-course"] .research-card-art{height:clamp(104px,15vw,154px)}
  body[data-page="advanced-course"] .research-card-body h3{font-size:21px}
- body[data-page="advanced-course"] .research-units{padding-bottom:28px}
+ body[data-page="advanced-course"] .research-units{padding-bottom:36px}
 }
 @media(max-width:700px){
  body[data-page="advanced-course"] .research-intro{grid-template-columns:1fr;gap:0;padding-top:0}
@@ -79,9 +79,9 @@ body[data-page="advanced-course"] .course-entry-screen{min-height:calc(100svh - 
  body[data-page="advanced-course"] .research-description+.research-description{margin-top:15px}
  body[data-page="advanced-course"] .research-card-heading{font-size:9px;gap:7px;min-height:38px}
  body[data-page="advanced-course"] .research-card-heading span:nth-child(2){overflow-wrap:anywhere}
- body[data-page="advanced-course"] .research-card-art{height:120px}
+ body[data-page="advanced-course"] .research-card-art{height:106px}
  body[data-page="advanced-course"] .research-card-body h3{font-size:18px}
  body[data-page="advanced-course"] .research-card-footer{align-items:flex-start;flex-direction:column;gap:4px}
 }
-@media(max-width:370px){body[data-page="advanced-course"] .research-unit-grid{grid-template-columns:1fr}body[data-page="advanced-course"] .research-card-art{height:150px}}
+@media(max-width:370px){body[data-page="advanced-course"] .research-unit-grid{grid-template-columns:1fr}body[data-page="advanced-course"] .research-card-art{height:132px}}
 @media(prefers-reduced-motion:reduce){body[data-page="advanced-course"] .advanced-stage *{animation:none!important;transition:none!important}body[data-page="advanced-course"] :is(.cell-parallax,.scene-front-layer,.scene-far-layer){transform:none!important}}
