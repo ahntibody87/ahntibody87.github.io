@@ -175,3 +175,5 @@
 .amp-screening-intro video{display:block;width:100%;height:auto;aspect-ratio:1080/608;border-radius:10px;background:#091926}
 .amp-screening-actions{display:flex;justify-content:flex-end;margin-top:.7rem}
 .amp-screening-intro #amp-intro-status{color:#ffcbab}
+
+.amp-lab .amp-screening-caption{margin:0 0 .7rem;color:#e9f3f9;font-size:.94rem;line-height:1.5;text-align:center}
