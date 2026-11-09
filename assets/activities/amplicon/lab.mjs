@@ -1,12 +1,12 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
-import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=gel12';
+import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=walk19';
 
 import {mountWorkbench} from './workbench.mjs?v=gel18';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=gel18';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 
-import {pcrEquipment} from './pcr-equipment.mjs?v=pcr17';
+import {pcrEquipment} from './pcr-equipment.mjs?v=walk19';
 
 import {electrodeDiagram,uvEquipment} from './gel-equipment.mjs';
 
@@ -70,7 +70,32 @@ function render(){
 }
 function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><span class="amp-kicker">사건 01 · 분자 진단</span><h3>${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + 음성 대조군</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p>${button('실험 시작하기 →','next','class="amp-primary"')}</section>`;}
 function movePad(){return `<div class="amp-dpad" aria-label="터치 이동"><button type="button" data-move="up" aria-label="위로 이동">↑</button><button type="button" data-move="left" aria-label="왼쪽 이동">←</button><button type="button" data-action="interact" aria-label="가까운 기기 열기">E</button><button type="button" data-move="right" aria-label="오른쪽 이동">→</button><button type="button" data-move="down" aria-label="아래로 이동">↓</button></div>`;}
-function explore(){if(transit)return `<section class="amp-explore"><h3>${transit.message}</h3><div class="amp-room-wrap">${labMap(transit.cargo)}</div></section>`;if(carrying)return `<section class="amp-explore"><div class="amp-panel-head"><h3>냉각 랙을 들고 작업대로 이동하세요</h3></div><div class="amp-room-wrap">${labMap(true)}${movePad()}</div><p class="amp-controls-note">방향키 / WASD 또는 바닥을 눌러 이동하세요. 작업대 가까이에서 E를 누르거나 지도에서 작업대를 누르세요.</p></section>`;return `<section class="amp-explore"><div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3>기기로 이동해 실험하세요</h3></div>${button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div><div class="amp-room-wrap">${labMap(carrying)}${movePad()}</div><p class="amp-controls-note">WASD / 방향키 이동 · E로 조작 · 바닥을 클릭하거나 탭해 이동 · 기기를 누르면 가까이 이동해 열기</p><div class="amp-station-links" aria-label="기기 바로 이동">${stations.map(s=>button(s.label,'open',`data-id="${s.id}"`)).join('')}</div></section>`;}
+function expectedStation(){
+  if(transit)return transit.destination;
+  if(carrying)return 'bench';
+  if(state.step===3&&Object.values(state.tubes).every(tube=>tube.mixed))return 'spin';
+  return scenario.steps[state.step].station;
+}
+function routeInstruction(){
+  const destination=stations.find(item=>item.id===expectedStation());
+  return transit?.message??(carrying?'냉각 랙을 들고 작업대로 이동하세요.':destination.label+'로 이동하세요.');
+}
+function routeFeedback(wrong){
+  const guide=$('#amp-route-guide');
+  const message=(wrong?'✕ ':'')+routeInstruction();
+  if(guide&&guide.textContent!==message)guide.textContent=message;
+  all('[data-station-error]').forEach(marker=>marker.setAttribute('opacity',marker.dataset.stationError===wrong?'1':'0'));
+}
+function explore(){
+  const cargo=transit?.cargo??carrying;
+  return `<section class="amp-explore">
+    <div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3 id="amp-route-guide" class="amp-route-guide" role="status">${esc(routeInstruction())}</h3></div>
+      ${cargo?'':button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div>
+    <div class="amp-room-wrap">${labMap(cargo)}${movePad()}</div>
+    <p class="amp-controls-note">방향키 / WASD 또는 바닥을 눌러 이동하세요. 가까이에서 E를 누르거나 기기를 선택해 여세요.</p>
+    ${cargo?'':`<div class="amp-station-links" aria-label="기기 선택">${stations.map(s=>button(s.label,'open',`data-id="${s.id}"`)).join('')}</div>`}
+  </section>`;
+}
 function tubeCards(action='tube',ids=scenario.samples.map(s=>s.id)){
   return `<div class="amp-tubes">${ids.map(id=>{const t=state.tubes[id];return button(`<span class="amp-tube-drawing ${t.additions.length?'amp-filled':''}" aria-hidden="true"><i></i></span><strong>${esc(label(id))}</strong><small>${!t.received?'수령 전':`${t.additions.length}/5 성분`}${t.spun?' · 스핀 완료':t.mixed?' · 혼합 완료':''}</small>`,action,`data-id="${id}" class="amp-tube ${id===selected?'amp-selected':''}" aria-pressed="${id===selected}"`);}).join('')}</div>`;
 }
@@ -93,7 +118,7 @@ function iceView(){
   const received=rackReceived();
   const instructions=received?'냉각 랙을 꺼냈습니다. 원본 네 개를 랙째 작업대로 옮기세요.':
     coolerOpen?'냉각 랙을 눌러 꺼내세요. 오른쪽 받침으로 끌어 놓아도 됩니다.':'아이스박스 뚜껑을 열어 준비된 냉각 랙을 꺼내세요.';
-  return '<p>'+instructions+'</p>'+
+  return '<p'+(received?' class="amp-route-guide"':'')+'>'+instructions+'</p>'+
     sceneMarkup(coolerObjects(scenario,coolerOpen,coolerTransfer),'cooler',esc,busy)+
     '<div class="amp-actions">'+(received?button('랙을 들고 작업대로 →','carryRack','class="amp-primary"'):
       button(coolerOpen?'냉각 랙 꺼내기':'아이스박스 뚜껑 열기',coolerOpen?'liftRack':'openCooler','class="amp-primary" '+(busy?'disabled':'')))+'</div>';
@@ -203,7 +228,7 @@ function gelView(){
   return `<p>지정된 웰에 마커와 PCR 산물을 로딩하세요. 피펫으로 병을 누른 뒤 웰을 누르거나 병에서 웰로 끌어 놓으세요.</p>
     <ol class="amp-fixed-lanes" aria-label="고정 레인 배치">${state.lanePlan.map(id=>`<li>${esc(label(id))}</li>`).join('')}</ol>
     ${sceneMarkup(electrophoresisObjects(state,scenario,gelProgress),'gel',esc,locked,locked?
-      `<div class="amp-gel-scene-state" role="status">
+      `<div class="amp-gel-scene-state" data-complete="${state.gelRun}" role="status">
         <strong>${state.gelRun?'✓ 전기영동 완료':'전기영동 가동 중'}</strong>
         <span>${state.gelRun?'겔을 UV 관찰기로 옮기세요.':'추적 색소가 + 극 쪽으로 이동합니다.'}</span>
       </div>`:'')}
@@ -249,12 +274,16 @@ function warn(found){
 }
 function open(id){
   if(busy)return;
-  if(carrying){
-    const bench=stations.find(s=>s.id==='bench');
-    if(id!==bench.id||Math.hypot(player.x-bench.x,player.y-bench.y-.9)>1.8){
-      announce('랙을 들고 작업대 가까이로 이동하세요.');return;
+  if(id!==expectedStation()){
+    target=null;routeFeedback(id);return;
+  }
+  if(transit||carrying){
+    const destination=stations.find(item=>item.id===id);
+    if(Math.hypot(player.x-destination.x,player.y-destination.y-.9)>1.8){
+      routeFeedback();return;
     }
-    carrying=false;state.step=2;
+    if(carrying){carrying=false;state.step=2;}
+    transit=null;
   }
   keys.clear();target=null;station=id;render();
   if(!$('#amp-auto-prompt:not([hidden])'))$('#amp-work-title')?.focus({preventScroll:true});
@@ -453,12 +482,12 @@ async function handleGelTarget(id,from){
   }
 }
 async function action(name,node){
-  if(transit||busy&&!['skip','pause'].includes(name))return;
+  if((transit&&name!=='interact')||(busy&&!['skip','pause'].includes(name)))return;
   const id=node?.dataset.id;
   if(name==='next'){
     if(state.step===3&&station!=='spin'&&!Object.values(state.tubes).every(t=>t.spun)){
       if(issues(state,scenario,3).some(issue=>issue.rule!=='spin'))return guideNext(nextInstruction());
-      transferTo('vortex','spin','tubes','혼합한 반응관을 들고 원심분리기로 이동 중');
+      prepareTransfer('vortex','spin','tubes','혼합한 반응관을 들고 원심분리기로 이동하세요.');
       return;
     }
     if(nextIssues(state,scenario).length)return guideNext(nextInstruction());
@@ -471,7 +500,7 @@ async function action(name,node){
     if(state.step===1)return action('carryRack');
     if(state.step===5){
       state.step=6;
-      transferTo('gel','uv','gel','전기영동 겔을 들고 UV 관찰기로 이동 중');
+      prepareTransfer('gel','uv','gel','전기영동 겔을 들고 UV 관찰기로 이동하세요.');
       return;
     }
     state.step=Math.min(6,state.step+1);station=null;prepLiquid=null;gelLiquid=null;render();
@@ -484,9 +513,9 @@ async function action(name,node){
     carrying=false;vortexTube=null;spinSlots=[null,null,null,null];lidClosed=false;
     prepLiquid=null;gelLiquid=null;state.tip=null;state.step=Math.max(0,state.step-1);invalidateAfter(state.step);station=null;render();
   }else if(name==='close'){station=null;render();$('.amp-room')?.focus({preventScroll:true});}
-  else if(name==='goto')open(scenario.steps[state.step].station);
+  else if(name==='goto')open(expectedStation());
   else if(name==='open')open(id);
-  else if(name==='interact'&&near)open(near.id);
+  else if(name==='interact'){if(near)open(near.id);else routeFeedback();}
   else if(name==='openCooler'){
     if(state.step!==1||station!=='ice')return;
     coolerOpen=true;render();$('#amp-target-rack')?.focus({preventScroll:true});
@@ -597,19 +626,37 @@ function bind(){
     hold.onblur=()=>stopMix();
   }
   const room=$('.amp-room');
-  if(room&&!transit){
+  if(room){
+    function selectEquipment(id){
+      if(id!==expectedStation()||transit){open(id);return;}
+      const equipment=stations.find(item=>item.id===id);
+      routeFeedback();
+      target={x:equipment.x,y:equipment.y+1.2,station:id};
+      startMovement();
+    }
     room.onpointerdown=e=>{
+      room.focus({preventScroll:true});
       const equipment=e.target.closest('[data-station]');
-      if(equipment){const s=stations.find(s=>s.id===equipment.dataset.station);target={x:s.x,y:s.y+1.2,station:s.id};}
-      else{const point=new DOMPoint(e.clientX,e.clientY).matrixTransform(room.getScreenCTM().inverse());const pos=unproject(point.x,point.y);target={x:Math.max(.4,Math.min(9.6,pos.x)),y:Math.max(.4,Math.min(9.6,pos.y))};}
-      room.focus({preventScroll:true});startMovement();
+      if(equipment){selectEquipment(equipment.dataset.station);return;}
+      const point=new DOMPoint(e.clientX,e.clientY).matrixTransform(room.getScreenCTM().inverse());
+      const pos=unproject(point.x,point.y);
+      target={x:Math.max(.4,Math.min(9.6,pos.x)),y:Math.max(.4,Math.min(9.6,pos.y))};
+      routeFeedback();startMovement();
     };
-    all('[data-station]').forEach(n=>n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(carrying){const s=stations.find(s=>s.id===n.dataset.station);target={x:s.x,y:s.y+1.2,station:s.id};startMovement();}else open(n.dataset.station);}});
-    room.onkeydown=e=>{const key=e.key.toLowerCase();if(key==='e'){e.preventDefault();if(near)open(near.id);}else if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(key)){e.preventDefault();keys.add(key);target=null;startMovement();}};
+    all('[data-station]').forEach(n=>n.onkeydown=e=>{
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();selectEquipment(n.dataset.station);}
+    });
+    room.onkeydown=e=>{
+      const key=e.key.toLowerCase();
+      if(key==='e'){e.preventDefault();action('interact');}
+      else if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(key)){
+        e.preventDefault();keys.add(key);target=null;routeFeedback();startMovement();
+      }
+    };
     room.onkeyup=e=>keys.delete(e.key.toLowerCase());
     room.onblur=()=>keys.clear();
   }
-  all('[data-move]').forEach(n=>{const key='arrow'+n.dataset.move;n.onpointerdown=e=>{e.preventDefault();n.setPointerCapture(e.pointerId);keys.add(key);target=null;startMovement();};n.onpointerup=n.onpointercancel=n.onlostpointercapture=()=>keys.delete(key);});
+  all('[data-move]').forEach(n=>{const key='arrow'+n.dataset.move;n.onpointerdown=e=>{e.preventDefault();n.setPointerCapture(e.pointerId);keys.add(key);target=null;routeFeedback();startMovement();};n.onpointerup=n.onpointercancel=n.onlostpointercapture=()=>keys.delete(key);});
 }
 function bindSpinDrop(){
   const rotor=$('.amp-centrifuge');
@@ -640,26 +687,25 @@ function bindSpinDrop(){
     if(state.tubes[id]&&slot)action('spinSlot',{dataset:{id,slot:slot.dataset.slot}});
   };
 }
-function transferTo(from,to,cargo,message){
-  const start=stations.find(s=>s.id===from),end=stations.find(s=>s.id===to);
-  keys.clear();station=null;transit={cargo,message};
+function prepareTransfer(from,to,cargo,message){
+  const start=stations.find(item=>item.id===from);
+  keys.clear();station=null;target=null;transit={cargo,message,destination:to};
   player={x:start.x,y:start.y+1.2};
-  target={x:end.x,y:end.y+1.2,station:to};
-  render();$('.amp-room')?.focus({preventScroll:true});startMovement();
+  render();$('.amp-room')?.focus({preventScroll:true});
 }
 function updateChecks(){const list=$('.amp-checklist');if(list)list.innerHTML=checklist();}
 function updatePlayer(){
   const p=project(player.x,player.y),node=$('#amp-player');if(node)node.setAttribute('transform',`translate(${p.x} ${p.y})`);
   near=stations.map(s=>({...s,distance:Math.hypot(s.x-player.x,s.y+.9-player.y)})).sort((a,b)=>a.distance-b.distance)[0];if(near.distance>1.8)near=null;
   all('[data-station]').forEach(n=>n.querySelector('.amp-station-halo').setAttribute('opacity',n.dataset.station===near?.id?'1':'0'));
-  if($('#amp-near text'))$('#amp-near text').textContent=near?`${near.label} · E / 탭으로 조작`:'';
+  if($('#amp-near text'))$('#amp-near text').textContent=near?.id===expectedStation()?`${near.label} · E / 탭으로 조작`:'';
 }
 function startMovement(){if(!moveFrame){previous=0;moveFrame=requestAnimationFrame(move);}}
 function move(now){
   moveFrame=0;if(station||document.hidden)return;
   const dt=previous?Math.min((now-previous)/1000,.05):.016;previous=now;
   let dx=0,dy=0;
-  if(target){dx=target.x-player.x;dy=target.y-player.y;const d=Math.hypot(dx,dy);if(d<.15){const s=target.station;target=null;if(s){transit=null;open(s);return;}}else{dx/=d;dy/=d;}}
+  if(target){dx=target.x-player.x;dy=target.y-player.y;const d=Math.hypot(dx,dy);if(d<.15){const s=target.station;target=null;if(s){open(s);return;}}else{dx/=d;dy/=d;}}
   else{
     const horizontal=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
     const vertical=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'));

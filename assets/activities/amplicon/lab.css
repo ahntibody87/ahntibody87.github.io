@@ -80,7 +80,7 @@
 .amp-lab[data-quality="low"] .amp-dye-front{animation:none}
 @media(prefers-reduced-motion:reduce){.amp-dye-front{animation:none}}
 
-.amp-lab .amp-next-guide{margin:.6rem 0 0;color:#254962;font-size:.85rem;font-weight:700}
+.amp-lab .amp-next-guide{margin:.6rem 0 0;color:#9d1e2e;font-size:.85rem;font-weight:700}
 
 .amp-aim-at-a::after{content:"↓";position:absolute;bottom:calc(100% + 5px);left:50%;translate:-50% 0;pointer-events:none;background:#ffdc6e;color:#1e3b50;border:2px solid #fff;border-radius:50%;width:2rem;height:2rem;display:grid;place-items:center;font-size:1.5rem;font-weight:800;animation:amp-point-to-a .65s ease-in-out 3 both}
 @keyframes amp-point-to-a{0%,100%{opacity:0;transform:translateY(-8px)}45%,70%{opacity:1;transform:translateY(0)}}
@@ -107,3 +107,5 @@
 .amp-lab .amp-pcr-observation .amp-molecule-pair svg{min-height:0;height:clamp(100px,22vh,170px)}
 .amp-lab .amp-pcr-observation .amp-molecule-legend{margin:.5rem 0}
 @media(max-width:580px){.amp-pcr-overview{grid-template-columns:1fr}.amp-lab .amp-pcr-observation .amp-molecule-pair{grid-template-columns:1fr}}
+
+.amp-lab .amp-route-guide{color:#9d1e2e}.amp-gel-scene-state[data-complete="true"] span{color:#ffb6be}

@@ -22,7 +22,7 @@ export function pcrEquipment({loaded,active,complete,program}){
     <text id="amp-phase" x="132" y="243" fill="#e6ffff" font-weight="700" font-size="16">${complete?'반응 완료':active?'역전사 준비':program.rt+'°C · 역전사 대기'}</text>
     <text id="amp-cycle" x="428" y="243" text-anchor="end" fill="#e6ffff" font-size="12">${complete?program.cycles:0} / ${program.cycles} 사이클</text>
     <text x="132" y="258" fill="#a0e8ef" font-size="11">${program.initial}°C 초기 변성 · ${program.anneal}°C 프라이머 결합 · ${program.extend}°C DNA 신장</text>
-    <text x="132" y="273" fill="#a0e8ef" font-size="11">${program.denature} → ${program.anneal} → ${program.extend}°C × ${program.cycles}회 · ${program.final}°C 최종 신장</text>
+    <text x="132" y="273" fill="#a0e8ef" font-size="11">${program.denature} → ${program.anneal} → ${program.extend}°C · ${program.cycles}회 반복 · ${program.final}°C 최종 신장</text>
     <circle cx="481" cy="227" r="6" fill="${active?'#60f0b4':'#547388'}"/>
   </svg>`;
 }
