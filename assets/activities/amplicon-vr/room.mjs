@@ -127,10 +127,10 @@ function buildRoom() {
       cylinder(x,base+.235,z,.032,.14,'pale',dynamic);
     }
     if(id==='spin'&&status.spinLoaded&&!status.spinClosed){
-      for(let i=0;i<status.spinLoaded;i++){
+      status.spinLoaded.forEach(i=>{
         const a=i*Math.PI/2;
-        cylinder(x+Math.sin(a)*.11,base+.22,z+Math.cos(a)*.11,.023,.11,'pale',dynamic);
-      }
+        cylinder(x+Math.sin(a)*.11,base+.22,z-Math.cos(a)*.11,.023,.11,'pale',dynamic);
+      });
     }
     if(id==='pcr'&&status.pcrLoaded&&!status.pcrRunning){
       for(let i=0;i<status.pcrLoaded;i++)cylinder(x-.12+i*.08,base+.31,z+.1,.023,.10,'pale',dynamic);
@@ -253,6 +253,25 @@ export function createPerspective(){
       if(bench)bench.append(backdrop);
       else work.querySelector('.amp-panel-head').after(backdrop);
       if(renderer)backdrop.append(canvas);
+      const machine=work.querySelector('.amp-machine');
+      if(renderer&&machine){
+        machine.querySelector('svg').remove();
+        if(station==='vortex'&&status.vortexTube){
+          const contact=document.createElement('button');
+          contact.type='button';
+          contact.className='vr-marker vr-work-hotspot';
+          contact.textContent='접촉판에 누르고 있기';
+          contact.setAttribute('aria-hidden','true');
+          contact.tabIndex=-1;
+          const hold=work.querySelector('#amp-vortex-hold');
+          contact.onpointerdown=hold.onpointerdown;
+          contact.onpointerup=hold.onpointerup;
+          contact.onpointercancel=hold.onpointercancel;
+          contact.onlostpointercapture=hold.onlostpointercapture;
+          machine.append(contact);
+        }
+        backdrop.append(machine);
+      }
       const operation = station==='pcr'
         ? (status.pcrLoaded ? 'runPcr' : 'loadPcr')
         : station==='uv' ? (status.uvPlaced ? 'view' : 'placeGel') : null;
@@ -265,7 +284,16 @@ export function createPerspective(){
         hotspot.onclick=()=>control.click();
         backdrop.append(hotspot);
       }
-      const repaint=()=>draw(backdrop,current.x,current.y+(bench?1.4:1.55),0,bench?-.23:-.32);
+      const repaint=()=>{
+        draw(backdrop,current.x,current.y+(bench?1.4:1.55),0,bench?-.23:-.32);
+        if(!renderer||station!=='spin')return;
+        machine.querySelectorAll('[data-slot]').forEach(slot=>{
+          const angle=Number(slot.dataset.slot)*Math.PI/2;
+          const point=new T.Vector3(current.x+Math.sin(angle)*.135,1.17,current.y-Math.cos(angle)*.135).project(camera);
+          slot.style.left=(50+point.x*50)+'%';
+          slot.style.top=(50-point.y*50)+'%';
+        });
+      };
       const observer=new ResizeObserver(repaint); observer.observe(backdrop); repaint();
       cleanup=()=>observer.disconnect();
       lastStation=station;

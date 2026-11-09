@@ -99,7 +99,7 @@ function render(){
   <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>`;
   bind();benchScene=null;bindBenchScene();if(!station&&state.step>0)updatePlayer();
   if(perspective&&state.step>0)perspective.mount({root,station,player,expected:expectedStation(),
-    status:{pcrLoaded:state.pcrLoaded.length,pcrRunning:!!motion,uvPlaced,uvClosed:state.viewed,spinClosed:lidClosed,spinLoaded:spinSlots.filter(Boolean).length,vortexTube:!!vortexTube},cargo:transit?.cargo??carrying,
+    status:{pcrLoaded:state.pcrLoaded.length,pcrRunning:!!motion,uvPlaced,uvClosed:state.viewed,spinClosed:lidClosed,spinLoaded:spinSlots.flatMap((slot,index)=>slot?[index]:[]),vortexTube:!!vortexTube},cargo:transit?.cargo??carrying,
     update:()=>{updatePlayer();return near?.id;},interact:()=>action('interact'),open,feedback:routeFeedback});
   if(whyOpen)$('.amp-progress details').open=true;
   const restored=focusId?root.querySelector(`[id="${focusId}"]`):focusAction?root.querySelector(`[data-action="${focusAction}"]${focusItem?`[data-id="${focusItem}"]`:''}`):null;

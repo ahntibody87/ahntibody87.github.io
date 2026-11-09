@@ -24,3 +24,6 @@
 .amp-vr .amp-bench-scene .amp-gel-scene-state {z-index:2;}
 .amp-vr .amp-pcr-device:has(> .amp-pcr-device-label:only-child) {display:none;}
 .amp-vr .vr-work-hotspot {left:50%; top:69%;}
+.amp-vr .vr-station-view .amp-machine {position:absolute; inset:0; width:100%; max-width:none; height:100%; margin:0; background:transparent; border:0;}
+.amp-vr .vr-station-view .amp-spin-slot {min-width:1.6rem; min-height:1.6rem; padding:.13rem .2rem; white-space:nowrap;}
+.amp-vr .vr-station-view .amp-machine-label {position:absolute; left:.7rem; bottom:.7rem;}
