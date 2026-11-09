@@ -1,5 +1,5 @@
 import {createState,freshTip,addReagent,resetTube,planSharedReagents,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=2';
-import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=batch2';
+import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=batch3';
 
 import {mountWorkbench} from './workbench.mjs?v=3';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=3';
@@ -80,19 +80,20 @@ function iceView(){
     '<div class="amp-actions">'+(received?button('랙을 들고 작업대로 →','carryRack','class="amp-primary"'):
       button(coolerOpen?'냉각 랙 꺼내기':'아이스박스 뚜껑 열기',coolerOpen?'liftRack':'openCooler','class="amp-primary" '+(busy?'disabled':'')))+'</div>';
 }
+function aReady(){return state.tubes.A.additions.length===scenario.reagents.length+1;}
 function benchView(){
   const t=state.tubes[selected];
   const plan=planSharedReagents(state,scenario);
-  return '<p>피펫을 <strong>팁 박스 → 시약병 → 반응 튜브 → 폐기통</strong> 순으로 옮기세요. 피펫을 끌거나 기구를 차례로 누를 수 있습니다. 팁이 끼워져 있다면 병에서 반응 튜브로 바로 끌어도 됩니다.</p>'+
+  return '<p><strong>'+(aReady()?'남은 반응관에는 각각의 원본 시료를 넣으세요.':'A 반응관부터 공통 시약 4종과 A의 추출 RNA를 차례로 넣으세요.')+'</strong></p><p>피펫을 <strong>팁 박스 → 시약병 → 반응 튜브 → 폐기통</strong> 순으로 옮기세요. 피펫을 끌거나 기구를 차례로 누를 수 있습니다. 팁이 끼워져 있다면 병에서 반응 튜브로 바로 끌어도 됩니다.</p>'+
     '<div class="amp-recipe">'+scenario.reagents.map((r,i)=>'<span>'+(i+1)+'. '+esc(r.label)+'</span>').join('<b>→</b>')+
     '<b>→</b><span>5. 해당 원본 시료</span></div>'+prepScene()+
     '<div class="amp-bench-readout" role="status" aria-live="polite" id="amp-scene-status">'+
     esc(prepLiquid?material(prepLiquid)+' 흡입됨':state.tip?(state.tip.used?'사용한 팁 · 폐기통에서 버리세요':'새 팁 장착 · 시약병에서 흡입하세요'):'팁 박스를 눌러 새 팁을 끼우세요')+'</div>'+
-    '<div class="amp-actions">'+button('나머지 튜브에 공통 시약 넣기','autoCommon','class="amp-primary" '+(busy||!plan?.length||!state.ice||state.tip?'disabled':''))+
-    (plan?.length?'<span>'+plan.length+'회 분주</span>':'')+
-    (plan?.length===0?button('시료 넣기 ↓','samples','class="amp-soft"'):'')+
+    '<div class="amp-actions">'+
+    (aReady()&&plan?.length&&!state.tip&&!busy?'<strong>나머지 튜브에 공통시약을 넣을까요?</strong>'+
+      button('네.','autoCommon','class="amp-primary" '+(!state.ice?'disabled':'')):'')+
     '<label class="amp-inline"><input id="amp-ice" type="checkbox" '+(state.ice?'checked':'')+' '+(busy?'disabled':'')+'> 효소병을 얼음 위에 두기</label></div>'+
-    '<p class="amp-small">한 튜브에 공통 시약을 순서대로 넣고 팁을 버리면 자동 분주를 시작할 수 있습니다. 원본 시료는 각각 직접 넣으세요.</p>'+
+    '<p class="amp-small">공통시약 자동 분주 뒤에는 각 반응관에 해당 원본 시료를 직접 넣으세요.</p>'+
     '<div class="amp-actions">'+scenario.samples.map(s=>button(esc(s.label)+' 성분 보기','tube','data-id="'+s.id+'" aria-pressed="'+(selected===s.id)+'" '+(busy?'disabled':''))).join('')+'</div>'+
     '<div class="amp-contents"><h4>'+esc(label(selected))+' 반응 튜브 · '+t.additions.length+'개 성분</h4><ol>'+
     (t.additions.length?t.additions.map(a=>'<li>'+esc(material(a.reagent))+'</li>').join(''):'<li>빈 반응 튜브</li>')+
@@ -161,7 +162,7 @@ function invalidateAfter(step){
 
 function sceneStatus(message){
   const status=$('#amp-scene-status');
-  if(status)status.textContent=message;
+  if(status){status.classList.remove('amp-error');status.textContent=message;}
   else announce(message);
 }
 function bindBenchScene(){
@@ -191,16 +192,30 @@ async function handlePrepTarget(id,from){
   if(busy)return;
   const sourceTarget=target=>!!target&&(target.startsWith('sample:')||scenario.reagents.some(r=>r.id===target));
   const tubeTarget=id.startsWith('tube:');
-  if(id==='tips'&&state.tip)return sceneStatus('현재 팁을 폐기통에 버린 뒤 새 팁을 끼우세요.');
-  if(id==='bin'&&!state.tip)return sceneStatus('피펫에 버릴 팁이 없습니다.');
-  if(sourceTarget(id)&&!state.tip)return sceneStatus('먼저 팁 박스에서 팁을 끼우세요.');
-  if(sourceTarget(id)&&prepLiquid)return sceneStatus('피펫에 든 용액을 분주하거나 팁과 함께 버리세요.');
-  if(tubeTarget&&prepLiquid&&sourceTarget(from)&&from!==prepLiquid)
-    return sceneStatus('피펫에 '+material(prepLiquid)+'이 들어 있습니다. 먼저 분주하거나 팁과 함께 버리세요.');
-  if(tubeTarget&&!prepLiquid&&(!state.tip||!sourceTarget(from))){
-    selected=id.slice(5);render();
-    sceneStatus(state.tip?'먼저 시약병이나 원본 시료에서 흡입하세요.':'팁 박스에서 팁을 끼운 뒤 용액을 흡입하세요.');
-    return;
+  const reject=message=>{
+    const status=$('#amp-scene-status');
+    status.textContent='✕ '+message;
+    status.classList.add('amp-error');
+  };
+  const destination=tubeTarget?id.slice(5):null;
+  const source=sourceTarget(id)?id:tubeTarget?(prepLiquid||(sourceTarget(from)?from:null)):null;
+  const expected=tube=>scenario.reagents[state.tubes[tube].additions.length]?.id??
+    (state.tubes[tube].additions.length===scenario.reagents.length?'sample:'+tube:null);
+  const candidates=(aReady()?scenario.samples.map(s=>s.id):['A']).filter(tube=>expected(tube));
+  if(id==='tips'&&state.tip)return reject('현재 팁을 폐기통에 버린 뒤 새 팁을 끼우세요.');
+  if(id==='bin'&&!state.tip)return reject('팁 박스에서 새 팁을 끼우세요.');
+  if(prepLiquid&&(sourceTarget(id)||sourceTarget(from)&&from!==prepLiquid))return reject('피펫에 든 용액을 먼저 분주하거나 팁과 함께 버리세요.');
+  if(source||destination){
+    if(!aReady()&&destination&&destination!=='A')return reject('A 반응관을 먼저 완성하세요.');
+    if(!state.tip||state.tip.used)return reject(state.tip?'사용한 팁을 버리고 새 팁을 끼우세요.':'팁 박스에서 새 팁을 끼우세요.');
+    if(!source)return reject('먼저 '+(expected(destination)?material(expected(destination))+'을 흡입하세요.':'빈 반응관을 선택하세요.'));
+    if(scenario.reagents.find(r=>r.id===source)?.enzyme&&!state.ice)return reject('효소병을 얼음 위에 둔 뒤 흡입하세요.');
+    if(destination&&expected(destination)!==source)return reject(expected(destination)?
+      label(destination)+' 반응관에는 지금 '+material(expected(destination))+'을 넣으세요. 잘못 흡입했다면 팁과 함께 버리세요.':
+      label(destination)+' 반응관은 완성됐습니다. 다음 반응관을 준비하세요.');
+    if(!destination&&!candidates.some(tube=>expected(tube)===source)){
+      return reject(candidates.length?'지금 넣을 성분은 '+[...new Set(candidates.map(tube=>material(expected(tube))))].join(' 또는 ')+'입니다.':'모든 반응관이 완성됐습니다.');
+    }
   }
   busy=true;
   let message;
@@ -220,7 +235,7 @@ async function handlePrepTarget(id,from){
       const reagent=prepLiquid;
       if(addReagent(state,selected,reagent,false)){
         prepLiquid=null;
-        message=label(selected)+' 반응 튜브에 '+material(reagent)+' 분주 완료. 팁을 버리거나 계속 조작할 수 있습니다.';
+        message=label(selected)+' 반응 튜브에 '+material(reagent)+' 분주 완료. 폐기통에 팁을 버리세요.';
       }
     }else if(sourceTarget(id)){
       prepLiquid=id;message=material(id)+' 흡입 완료. 반응 튜브에 분주하세요.';
@@ -255,7 +270,7 @@ async function liftRack(){
 }
 async function autoCommon(){
   const plan=planSharedReagents(state,scenario);
-  if(!plan?.length||state.tip||prepLiquid||!state.ice)return;
+  if(!aReady()||!plan?.length||state.tip||prepLiquid||!state.ice)return;
   busy=true;render();
   const low=quality==='low'||reduced.matches;
   try{
