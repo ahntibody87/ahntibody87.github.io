@@ -43,11 +43,11 @@ export function preparationObjects(state,scenario){
 
 export function electrophoresisObjects(state,scenario){
   const sources=['marker',...scenario.samples.map(sample=>sample.id)];
-  return [{kind:'tank',x:0,z:.95},
+  return [{kind:'tank',x:0,z:.95,reverse:state.polarity==='reverse'},
     ...sources.map((id,i)=>target('load:'+id,(i-2)*1.7,-1.86,i===0?'크기 마커':sampleName(scenario.samples[i-1],i-1)+' 산물','bottle',
       {color:i===0?'#ac83bc':stockColors[i-1],toolHeight:.9,labelHeight:.26})),
     ...state.lanes.map((id,i)=>target('well:'+i,(i-2)*1.7,.63,(i+1)+'번 웰'+(id?' ✓':''),'well',
-      {color:id?'#387da6':'#516e76',toolHeight:.43,labelHeight:.13})),
+      {color:id?'#53788a':'#395b59',toolHeight:.60,labelHeight:.28,title:(i+1)+'번 웰 · '+(i===0?'DNA 크기 마커':scenario.samples[i-1].label)})),
     target('bin',5.12,1.32,'폐기통','bin',{toolHeight:.65})
   ];
 }

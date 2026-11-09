@@ -3,7 +3,7 @@ export const freshTube = () => ({received:false, additions:[], mixed:false, spun
 export function createState(scenario) {
   return {step:0, tubes:Object.fromEntries(scenario.samples.map(s=>[s.id,freshTube()])),
     tip:null, ice:true, program:{...scenario.program.defaults}, pcrLoaded:[], amplified:false,
-    recorded:false, lanePlan:['marker',...scenario.samples.map(s=>s.id)], lanes:[null,null,null,null,null],
+    lanePlan:['marker',...scenario.samples.map(s=>s.id)], lanes:[null,null,null,null,null],
     polarity:'normal', gelRun:false, viewed:false, answer:'', reason:'', submitted:false};
 }
 export function freshTip(state) { state.tip={used:false,contacts:[]}; }
@@ -83,7 +83,6 @@ export function issues(state,scenario,step=state.step) {
   }
   if(step>=5) {
     if(!state.amplified)add('pcrRun');
-    if(!state.recorded||state.lanePlan[0]!=='marker'||new Set(state.lanePlan).size!==ids.length+1)add('laneRecord');
     if(!state.lanes.includes('marker'))add('marker');
     if(state.lanes.some((id,i)=>id!==state.lanePlan[i])||state.lanes.some(id=>id===null))add('laneMismatch');
     if(state.polarity!=='normal')add('polarity');
