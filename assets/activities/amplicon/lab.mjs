@@ -1,12 +1,14 @@
-import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr8';
-import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr8';
+import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=gel9';
+import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=gel9';
 
-import {mountWorkbench} from './workbench.mjs?v=3';
-import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=3';
+import {mountWorkbench} from './workbench.mjs?v=gel9';
+import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=gel9';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 
 import {pcrEquipment} from './pcr-equipment.mjs';
+
+import {electrodeDiagram,uvEquipment} from './gel-equipment.mjs';
 
 const root=document.getElementById('amp-lab');
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14,6 +16,7 @@ const button=(text,action,extra='')=>`<button type="button" data-action="${actio
 const tick=(done,text)=>`<li class="${done?'amp-done':''}"><span aria-hidden="true">${done?'✓':'○'}</span> ${esc(text)}</li>`;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
+let gelRunning=false,uvPlaced=false;
 let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
 let coolerOpen=false,coolerTransfer=0,carrying=false,transit=null;
 const vortexHoldMs=1500;
@@ -41,7 +44,7 @@ async function init(){
 }
 function checklist(){
   const tubes=Object.values(state.tubes),s=state.step;
-  const flags=s===0?[true,true]:s===1?[rackReceived()]:s===2?[tubes.every(t=>t.additions.length>0&&!t.additions.some(a=>a.reused)),issues(state,scenario,2).length===0,tubes.every(t=>t.additions.length===5)]:s===3?[tubes.every(t=>t.mixed),tubes.every(t=>t.spun)]:s===4?[state.pcrLoaded.length===4,issues(state,scenario,4).length===0,state.amplified]:s===5?[state.recorded,state.lanes.every((x,i)=>x&&x===state.lanePlan[i]),state.polarity==='normal',state.gelRun]:[state.viewed,!!state.answer&&!!state.reason.trim(),state.submitted];
+  const flags=s===0?[true,true]:s===1?[rackReceived()]:s===2?[tubes.every(t=>t.additions.length>0&&!t.additions.some(a=>a.reused)),issues(state,scenario,2).length===0,tubes.every(t=>t.additions.length===5)]:s===3?[tubes.every(t=>t.mixed),tubes.every(t=>t.spun)]:s===4?[state.pcrLoaded.length===4,issues(state,scenario,4).length===0,state.amplified]:s===5?[state.lanes.every((x,i)=>x&&x===state.lanePlan[i]),state.polarity==='normal',state.gelRun]:[state.viewed,!!state.answer&&!!state.reason.trim(),state.submitted];
   return scenario.steps[s].tasks.map((t,i)=>tick(flags[i],t)).join('');
 }
 function render(){
@@ -163,22 +166,39 @@ function pcrView(){
         button('기기 가동 · 분자 뷰 보기','runPcr','class="amp-primary" '+(loaded?'':'disabled'))}</div>`);
 }
 function molecularView(){return `<div class="amp-molecular"><div class="amp-molecule-head"><strong>분자 관찰</strong><div>${button(molecularPaused?'계속 재생':'일시정지','pause')}${button('관찰 건너뛰기','skip')}</div></div><div id="amp-temp-graph"></div><div class="amp-molecule-pair"><article><h4>스파이크 유전자가 있는 튜브</h4><div id="amp-mol-a"></div></article><article><h4>스파이크 유전자가 없는 튜브</h4><div id="amp-mol-b"></div></article></div><div class="amp-molecule-legend"><span style="--amp-key:#ce8430">RNA</span><span style="--amp-key:#2885b3">주형 DNA</span><span style="--amp-key:#ce5a87">새 DNA</span><span style="--amp-key:#a17b0e">프라이머</span></div><div class="amp-molecular-bottom"><div id="amp-quantity"></div><div><strong id="amp-copy-count"></strong><p id="amp-phase-note"></p><p class="amp-small">Taq은 고온에서도 기능을 유지하는 내열성 DNA 중합효소입니다. 이론상 양은 2ⁿ이며 실제 반응은 효율·시약 고갈의 영향을 받습니다.</p></div></div></div>`;}
-function gelSvg(showBands=false,moving=false){
+function gelSvg(){
   const y=bp=>70+230*(1-Math.log(bp/75)/Math.log(8));
-  return `<svg class="amp-gel ${moving?'amp-migrating':''}" viewBox="0 0 620 365" role="img" aria-label="${showBands?'레인별 전기영동 밴드 결과':'전기영동 겔과 다섯 레인의 웰'}"><rect x="70" y="40" width="480" height="280" rx="12" fill="${showBands?'#172942':'#e4edf7'}"/><text x="20" y="60" fill="#315efb" font-size="18">−</text><text x="20" y="310" fill="#c04566" font-size="18">+</text><path d="M35 85V280m-7-10 7 10 7-10" stroke="#8ca1ba" stroke-width="2" fill="none"/><text x="47" y="348" fill="#61718c" font-size="12">DNA 이동 ↓ · 웰은 − 극 쪽</text>${state.lanes.map((id,i)=>{const x=125+i*90;return `<g><text x="${x}" y="20" text-anchor="middle" fill="#354861" font-size="12">${i+1} ${esc(id?label(id):'빈 레인')}</text><rect x="${x-20}" y="50" width="40" height="9" rx="2" fill="${id?'#80a9ed':'#b5c4d6'}"/>${showBands&&id?bands(scenario,id).map(bp=>`<rect class="amp-band" x="${x-19}" y="${y(bp)}" width="38" height="5" rx="2" fill="#b0efdc" style="--amp-band-y:${y(bp)-56}px"/>`).join(''):''}</g>`;}).join('')}${showBands?scenario.markerBp.map(bp=>`<text x="78" y="${y(bp)+4}" fill="#a9bfce" font-size="10">${bp}</text>`).join(''):''}</svg>`;
-}
-function gelLoading(){
-  return '<p>마커나 PCR 산물에서 흡입한 뒤 웰을 누르세요. 병에서 웰로 끌어 놓아도 됩니다. 로딩할 때마다 새 팁을 사용합니다.</p>'+
-    sceneMarkup(electrophoresisObjects(state,scenario),'gel',esc,busy)+
-    '<div class="amp-bench-readout" id="amp-scene-status" role="status">'+(gelLiquid?esc(label(gelLiquid))+' 흡입됨':'마커 또는 PCR 산물을 고르세요.')+'</div>'+
-    '<div class="amp-actions">'+state.lanes.map((id,i)=>id?button((i+1)+'번 웰 비우기','clearLane','data-lane="'+i+'" aria-label="'+(i+1)+'번 웰 비우기"'):'').join('')+'</div>';
+  return `<svg class="amp-gel" viewBox="0 0 620 365" role="img" aria-label="UV 관찰 결과 · 다섯 레인의 DNA 밴드">
+    <rect x="70" y="40" width="480" height="280" rx="12" fill="#172942"/>
+    <text x="20" y="60" fill="#315efb" font-size="18">−</text><text x="20" y="310" fill="#c04566" font-size="18">+</text>
+    <path d="M35 85V280m-7-10 7 10 7-10" stroke="#8ca1ba" stroke-width="2" fill="none"/>
+    <text x="47" y="348" fill="#61718c" font-size="12">DNA 이동 ↓ · 웰은 − 극 쪽</text>
+    ${state.lanes.map((id,i)=>{
+      const x=125+i*90;
+      return `<g><text x="${x}" y="20" text-anchor="middle" fill="#354861" font-size="12">${i+1} ${esc(label(id))}</text>
+        <rect x="${x-20}" y="50" width="40" height="9" rx="2" fill="#5373a0"/>
+        ${bands(scenario,id).map(bp=>`<rect class="amp-band" x="${x-19}" y="${y(bp)}" width="38" height="5" rx="2" fill="#b0efdc"/>`).join('')}</g>`;
+    }).join('')}
+    ${scenario.markerBp.map(bp=>`<text x="78" y="${y(bp)+4}" fill="#a9bfce" font-size="10">${bp}</text>`).join('')}
+  </svg>`;
 }
 function gelView(){
-  return `<p>레인 1은 DNA 크기 마커입니다. 나머지 레인의 순서를 정하고 <strong>기록한 뒤</strong> 로딩하세요.</p><div class="amp-lane-plan">${state.lanePlan.map((id,i)=>`<label>레인 ${i+1}<select data-lane-plan="${i}" ${state.gelRun?'disabled':''}>${['marker',...scenario.samples.map(s=>s.id)].map(v=>`<option value="${v}" ${v===id?'selected':''}>${esc(label(v))}</option>`).join('')}</select></label>`).join('')}</div><div class="amp-actions">${button('로딩 순서 기록','record',state.gelRun?'disabled':'')}<span>${state.recorded?'✓ 기록됨: '+state.lanePlan.map(label).join(' → '):'순서를 기록해 주세요.'}</span></div>${state.gelRun?gelSvg(true):gelLoading()}<label class="amp-inline">전극 연결<select id="amp-polarity" ${state.gelRun?'disabled':''}><option value="normal" ${state.polarity==='normal'?'selected':''}>웰 쪽 − / 겔 아래쪽 +</option><option value="reverse" ${state.polarity==='reverse'?'selected':''}>웰 쪽 + / 겔 아래쪽 −</option></select></label><p>DNA의 인산기는 음전하를 띱니다. DNA는 + 극으로 이동하며 작은 조각일수록 빠릅니다.</p><div class="amp-actions">${state.gelRun?'<strong class="amp-success">✓ 전기영동 완료 · UV 관찰기로 이동하세요.</strong>':button('전원 켜기','runGel','class="amp-primary" '+(busy?'disabled':''))}</div>`;
+  const locked=state.gelRun||gelRunning;
+  return `<p>지정된 웰에 마커와 PCR 산물을 로딩하세요. 피펫으로 병을 누른 뒤 웰을 누르거나 병에서 웰로 끌어 놓으세요.</p>
+    <ol class="amp-fixed-lanes" aria-label="고정 레인 배치">${state.lanePlan.map(id=>`<li>${esc(label(id))}</li>`).join('')}</ol>
+    ${sceneMarkup(electrophoresisObjects(state,scenario),'gel',esc,locked)}
+    <div class="amp-bench-readout" id="amp-scene-status" role="status">${state.gelRun?'전기영동이 끝났습니다. 다음 단계에서 겔을 UV 관찰기로 가져가세요.':gelRunning?'전기영동 중 · DNA가 + 극으로 이동합니다.':gelLiquid?esc(label(gelLiquid))+' 흡입됨':'마커 또는 PCR 산물을 고르세요.'}</div>
+    ${electrodeDiagram(state.polarity==='reverse',gelRunning)}
+    <div class="amp-actions">
+      ${button('전극 연결 바꾸기','swapElectrodes',locked?'disabled':'')}
+      ${state.gelRun?'<strong class="amp-success">✓ 전기영동 완료 · UV에서 밴드를 확인하세요.</strong>':button(gelRunning?'전기영동 중…':'전원 켜기','runGel','class="amp-primary" '+(locked?'disabled':''))}
+    </div>`;
 }
 function uvView(){
-  if(!state.viewed)return `<div class="amp-uv-cover">${equipmentArt('uv')}<h4>겔을 UV 관찰기에 놓으세요</h4><p>보호 덮개가 닫힌 관찰기로 밴드를 확인합니다.</p>${button('덮개 닫고 밴드 관찰','view','class="amp-primary"')}</div>`;
-  return `${gelSvg(true)}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 NTC를 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 모범 해석과 비교</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3>${state.answer===scenario.answer?'판정이 일치합니다':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘NTC’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
+  const equipment=uvEquipment(uvPlaced,state.viewed);
+  if(!state.viewed)return equipment+`<p>${uvPlaced?'겔을 놓았습니다. 보호 덮개를 닫아 밴드를 관찰하세요.':'운반한 겔을 관찰기의 받침 위에 놓으세요.'}</p>
+    <div class="amp-actions">${button(uvPlaced?'보호 덮개 닫기':'겔을 UV 관찰기에 놓기',uvPlaced?'view':'placeGel','class="amp-primary"')}</div>`;
+  return equipment+`${gelSvg()}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 NTC를 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 모범 해석과 비교</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3>${state.answer===scenario.answer?'판정이 일치합니다':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘NTC’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
 }
 
 function warn(found){
@@ -209,8 +229,8 @@ function open(id){
 }
 function invalidateAfter(step){
   if(step<=3){state.amplified=false;state.pcrLoaded=[];}
-  if(step<=4){state.gelRun=false;state.lanes=[null,null,null,null,null];state.recorded=false;}
-  state.viewed=false;state.submitted=false;
+  if(step<=4){state.gelRun=false;state.lanes=[null,null,null,null,null];}
+  uvPlaced=false;state.viewed=false;state.submitted=false;
 }
 
 function sceneStatus(message){
@@ -360,6 +380,9 @@ async function handleGelTarget(id,from){
     return sceneStatus('피펫에 '+label(gelLiquid)+'이 들어 있습니다. 먼저 웰에 넣거나 폐기하세요.');
   if(well!==null&&!gelLiquid&&!from?.startsWith('load:'))return sceneStatus('먼저 마커나 PCR 산물을 골라 흡입하세요.');
   if(id.startsWith('load:')&&gelLiquid)return sceneStatus('피펫에 든 용액을 웰에 넣거나 폐기통에서 버리세요.');
+  if(well!==null&&(gelLiquid??from.slice(5))!==state.lanePlan[well]){
+    return sceneStatus((well+1)+'번 웰에는 '+label(state.lanePlan[well])+'을 넣으세요.');
+  }
   busy=true;
   let message;
   try{
@@ -398,6 +421,11 @@ async function action(name,node){
       return;
     }
     if(state.step===1)return action('carryRack');
+    if(state.step===5){
+      state.step=6;
+      transferTo('gel','uv','gel','전기영동 겔을 들고 UV 관찰기로 이동 중');
+      return;
+    }
     state.step=Math.min(6,state.step+1);station=null;prepLiquid=null;gelLiquid=null;render();
     $('.amp-room')?.focus({preventScroll:true});
   }else if(name==='carryRack'){
@@ -457,21 +485,29 @@ async function action(name,node){
     motion={frames:timeline(state.program),time:0,last:0,raf:0};molecularPaused=false;busy=true;render();paintMolecules();motion.raf=requestAnimationFrame(animateMolecules);
   }else if(name==='skip'){finishPcr();}
   else if(name==='pause'){molecularPaused=!molecularPaused;node.textContent=molecularPaused?'계속 재생':'일시정지';if(motion)motion.last=0;}
-  else if(name==='record'){state.recorded=true;render();announce('레인 순서를 기록했습니다.');}
-  else if(name==='clearLane'){state.lanes[Number(node.dataset.lane)]=null;render();}
-  else if(name==='runGel'){
-    if(warn(issues(state,scenario,5)))return;
-    busy=true;all('button,select,input').forEach(n=>n.disabled=true);
-    const scene=$('[data-bench-scene]');if(scene)scene.outerHTML=gelSvg(true,true);await new Promise(resolve=>setTimeout(resolve,2200));
-    state.gelRun=true;busy=false;render();announce('DNA가 + 극으로 이동했습니다. 전기영동 완료.');
-  }else if(name==='view'){state.viewed=true;render();announce('밴드를 관찰하고 대조군과 비교해 보세요.');}
+  else if(name==='swapElectrodes'){
+    if(state.gelRun)return;
+    state.polarity=state.polarity==='normal'?'reverse':'normal';render();
+  }else if(name==='runGel'){
+    if(state.gelRun||warn(issues(state,scenario,5)))return;
+    busy=true;gelRunning=true;render();
+    await new Promise(resolve=>setTimeout(resolve,2200));
+    state.gelRun=true;gelRunning=false;busy=false;render();
+    announce('전기영동이 끝났습니다. 다음 단계로 겔을 옮기세요.');
+  }else if(name==='placeGel'){
+    if(state.step!==6||station!=='uv'||!state.gelRun)return;
+    uvPlaced=true;render();
+    $('#amp-uv-gel')?.classList.add('amp-inserting');
+    $('[data-action="view"]')?.focus({preventScroll:true});
+  }else if(name==='view'){
+    if(!uvPlaced||state.step!==6||station!=='uv')return;
+    state.viewed=true;render();announce('보호 덮개를 닫았습니다. 밴드를 관찰하고 대조군과 비교해 보세요.');
+  }
 }
 function bind(){
   all('[data-action]').forEach(n=>n.onclick=()=>action(n.dataset.action,n));
   $('#amp-quality').onchange=e=>{quality=e.target.value;root.dataset.quality=quality;};
   if($('#amp-ice'))$('#amp-ice').onchange=e=>{if(!busy){state.ice=e.target.checked;render();}};
-  all('[data-lane-plan]').forEach(n=>n.onchange=()=>{state.lanePlan[Number(n.dataset.lanePlan)]=n.value;state.recorded=false;render();});
-  if($('#amp-polarity'))$('#amp-polarity').onchange=e=>{state.polarity=e.target.value;updateChecks();};
   if($('#amp-conclusion')){
     all('[name="amp-answer"]').forEach(n=>n.onchange=()=>{state.answer=n.value;state.submitted=false;$('.amp-comparison')?.remove();updateChecks();});
     $('#amp-reason').oninput=e=>{state.reason=e.target.value;state.submitted=false;$('.amp-comparison')?.remove();updateChecks();};
