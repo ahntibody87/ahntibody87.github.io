@@ -72,3 +72,4 @@
 @keyframes amp-insert-tube{from{transform:translateY(-24px);opacity:.55}to{transform:translateY(0);opacity:1}}
 .amp-lab[data-quality="low"] .amp-inserting{animation:none}
 @media(prefers-reduced-motion:reduce){.amp-inserting{animation:none}}
+.amp-pcr-machine{display:block;width:min(100%,650px);height:auto;margin:0 auto 1rem;background:linear-gradient(#e7f0f4,#f5f8fb);border-radius:14px}

@@ -78,8 +78,8 @@ test('마커 누락·레인 기록 누락·잘못된 순서·전극 반대 차�
 test('사용자가 정한 레인 순서와 밴드가 일치',()=>{const s=prepared();s.lanePlan=['marker','NTC','positive','B','A'];s.lanes=[...s.lanePlan];assert.deepEqual(issues(s,scenario,5),[]);assert.deepEqual(s.lanes.map(id=>bands(scenario,id)),[scenario.markerBp,[],[300],[],[300]]);});
 test('전기영동 완료 전 다음 단계 차단',()=>{const s=prepared();s.step=5;s.gelRun=false;assert.ok(nextIssues(s,scenario).some(x=>x.rule==='gelRun'));});
 test('경고는 원인→분자 수준→판정 영향으로 완비',()=>{for(const w of Object.values(scenario.warnings))for(const key of ['cause','molecule','consequence'])assert.ok(w[key]?.length>5);});
-test('온도·분자 뷰 공통 시간축과 2분 이내 재생',()=>{
-  const f=timeline(scenario.program.defaults);assert.ok(f.at(-1).end<120000);assert.equal(f.filter(x=>x.phase==='extend').length,30);
+test('온도·분자 뷰 공통 시간축과 약 30초 재생',()=>{
+  const f=timeline(scenario.program.defaults);assert.ok(Math.abs(f.at(-1).end-30000)<=1000);assert.equal(f.filter(x=>x.phase==='extend').length,30);
   for(const frame of f){assert.equal(frameAt(f,frame.start),frame);assert.ok(molecule(frame,.5,true).includes('5′'));assert.ok(molecule(frame,.5,false).includes('표적 RNA 없음'));}
   assert.ok(temperatureGraph(f,0).includes('50°'));assert.equal(f[0].phase,'rt');assert.equal(f[1].phase,'initial');
 });
