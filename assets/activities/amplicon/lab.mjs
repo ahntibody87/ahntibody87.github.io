@@ -1,7 +1,7 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
 import {stations as mapStations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21';
 
-import {mountWorkbench} from './workbench.mjs?v=vr2';
+import {mountWorkbench} from './workbench.mjs?v=vr-photo1';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=rack22';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
@@ -24,6 +24,7 @@ let coolerOpen=false,coolerTransfer=0,carrying=false,transit=null,spinDelivered=
 const vortexHoldMs=1500;
 let vortexTube=null,mixHold=null,spinSlots=[null,null,null,null],lidClosed=false,spinning=false;
 const parkedPipette={x:5.1,y:.32,z:-1.25};
+const vrParkedPipette={x:.9,y:1.16,z:1.4};
 let player={x:4.8,y:4.8},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
 const $=selector=>root.querySelector(selector);
 const all=selector=>[...root.querySelectorAll(selector)];
@@ -376,7 +377,7 @@ function bindBenchScene(){
   }
   benchScene=mountWorkbench(container,
     ()=>gel?electrophoresisObjects(state,scenario,gelProgress):preparationObjects(state,scenario),
-    ()=>({position:state.step===1||gel&&(gelRunning||state.gelRun)?null:(gel?gelPosition:prepPosition)??parkedPipette,tip:gel?!!gelLiquid:!!state.tip,liquid:gel?!!gelLiquid:!!prepLiquid}),
+    ()=>({position:state.step===1||gel&&(gelRunning||state.gelRun)?null:(gel?gelPosition:prepPosition)??(perspective&&!gel?vrParkedPipette:parkedPipette),tip:gel?!!gelLiquid:!!state.tip,liquid:gel?!!gelLiquid:!!prepLiquid}),
     (id,from)=>gel?handleGelTarget(id,from):handlePrepTarget(id,from));
 }
 async function moveTool(id,gel=false,auto=false){

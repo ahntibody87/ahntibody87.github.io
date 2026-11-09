@@ -8,7 +8,7 @@ function project([x,y,z]){
   const scale=68/(1-depth/23);
   return {x:500+x*scale,y:HORIZON+(z*sine-y*cosine)*scale,depth};
 }
-function paintScene(canvas,objects,tool,tip,liquid){
+function paintScene(canvas,objects,tool,tip,liquid,visual,project){
   const ctx=canvas.getContext('2d');
   const immersive=!!canvas.closest('.amp-vr');
   const faces=[];
@@ -50,7 +50,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
     box(x,y+.27,z+radius*.96,radius*1.5,.18,.025,'#f4f6f3');
   }
   const coolerScene=objects.some(object=>object.kind==='cooler');
-  if(!coolerScene||immersive){
+  if(!visual&&(!coolerScene||immersive)){
     box(0,-1.55,2.35,12.4,1.35,.45,immersive?'#41464a':'#5e7379');
     box(0,-.21,0,13,.21,6.2,immersive?'#525a5e':'#bdc8c6');
     box(0,-.04,-2.88,13,.13,.14,immersive?'#626b71':'#d5dddd');
@@ -59,6 +59,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
   const supports=[];
   for(const o of objects){
     const {x,z}=o;
+    if(visual?.replaces(o))continue;
     if(o.kind==='cooler'){
       box(x,0,z,5.8,.38,3.7,'#4f8eab');
       box(x,.38,z,5.46,.055,3.37,'#c4e9ef');
@@ -86,8 +87,15 @@ function paintScene(canvas,objects,tool,tip,liquid){
       box(x,.25,z,8.45,.045,2.36,'#afdeea');
       for(let i=0;i<20;i++)box(x-3.9+(i%10)*.84,.30,z-.94+Math.floor(i/10)*1.77,.28,.12,.22,'#c6e9f2');
     }else if(o.kind==='rack'){
-      box(x,.02,z,6.4,.14,1.28,'#637fa3');
-      box(x,.16,z,6.4,.18,1.13,'#8aa7bf');
+      box(x,.02,z,6.4,.14,visual?2.0:1.28,visual?'#243880':'#637fa3');
+      box(x,.16,z,6.4,.18,visual?1.98:1.13,visual?'#354da7':'#8aa7bf');
+      if(visual){
+        for(let row=0;row<5;row++){
+          for(let col=0;col<15;col++){
+            cylinder(x-2.94+col*.42,.342,z-.76+row*.38,.116,.008,'#15254f',.116,12);
+          }
+        }
+      }
     }else if(o.kind==='tips'){
       box(x,.02,z,1.24,.4,1.22,'#5ea5aa');
       box(x,.42,z,1.21,.08,1.18,'#dbf2ed');
@@ -126,7 +134,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
     if(o.kind==='receivingPad')furniture.push(...faces.splice(0));
     else if(['cooler','coldRack','ice','rack','tank'].includes(o.kind))supports.push(...faces.splice(0));
   }
-  if(tool){
+  if(tool&&!visual?.hasPipette()){
     const {x,y,z}=tool;
     cylinder(x,y+.43,z,.15,.72,'#2f7193',.13);
     cylinder(x,y+1.15,z,.21,.64,'#edf2ef',.17);
@@ -150,6 +158,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
     for(let i=1;i<7;i++)ctx.fillRect(i*145,0,1,214);
     ctx.fillRect(0,145,WIDTH,1);
   }
+  visual?.drawBase(ctx,objects,project);
   const ordered=group=>group.sort((a,b)=>a.depth-b.depth);
   for(const {view,color,light} of [...ordered(furniture),...ordered(supports),...ordered(faces)]){
     const channel=i=>Math.min(255,Math.round(parseInt(color.slice(i,i+2),16)*light));
@@ -162,10 +171,20 @@ function paintScene(canvas,objects,tool,tip,liquid){
     ctx.lineWidth=.55;
     ctx.stroke();
   }
+  visual?.drawForeground(ctx,objects,tool,tip,liquid,project);
 }
 
 export function mountWorkbench(scene,getObjects,getToolState,onTarget){
   const canvas=scene.querySelector('canvas');
+  const visual=scene.closest('.amp-vr')?.perspective?.benchVisual(scene.dataset.benchScene);
+  const offset=visual?.offset??0;
+  const scale=visual?.scale??1;
+  const projectPoint=point=>{
+    const position=project(point);
+    position.x=500+(position.x-500)*scale;
+    position.y=HORIZON+(position.y-HORIZON)*scale+offset;
+    return position;
+  };
   const targets=scene.querySelectorAll('[data-bench-target]');
   const anchored=scene.querySelectorAll('[data-bench-target],[data-bench-label]');
   let drag=null;
@@ -173,14 +192,14 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
   let tool=getToolState().position;
   function draw(position=tool){
     const {tip,liquid}=getToolState();
-    paintScene(canvas,getObjects(),position,tip,liquid);
+    paintScene(canvas,getObjects(),position,tip,liquid,visual,projectPoint);
   }
   function positionTargets(){
     const objects=getObjects();
     for(const target of anchored){
       const o=objects.find(object=>object.id===(target.dataset.benchTarget??target.dataset.benchLabel));
       if(!o)continue;
-      const p=project([o.x,o.labelHeight??.35,o.labelZ??o.z]);
+      const p=projectPoint([o.x,o.labelHeight??.35,o.labelZ??o.z]);
       target.style.left=(100*p.x/WIDTH)+'%';
       target.style.top=(100*p.y/HEIGHT)+'%';
     }
@@ -193,7 +212,7 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
     const target=event.target.closest('[data-bench-target]');
     if(target?.disabled||!event.isPrimary||event.button!==0)return;
     const bounds=canvas.getBoundingClientRect();
-    const grip=tool&&project([tool.x,tool.y+1.32,tool.z]);
+    const grip=tool&&projectPoint([tool.x,tool.y+1.32,tool.z]);
     const onPipette=grip&&Math.hypot(
       bounds.left+grip.x*bounds.width/WIDTH-event.clientX,
       bounds.top+grip.y*bounds.height/HEIGHT-event.clientY
@@ -212,9 +231,9 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
       const screenX=(event.clientX-bounds.left)*WIDTH/bounds.width;
       const screenY=(event.clientY-bounds.top)*HEIGHT/bounds.height;
       const y=1.2;
-      const vertical=(screenY-HORIZON)/68;
+      const vertical=(screenY-HORIZON-offset)/(68*scale);
       const z=(vertical*(1-y*sine/23)+y*cosine)/(sine+vertical*cosine/23);
-      const x=(screenX-500)*(1-(z*cosine+y*sine)/23)/68;
+      const x=(screenX-500)*(1-(z*cosine+y*sine)/23)/(68*scale);
       if(Math.abs(x)<7&&Math.abs(z)<4)draw({x,y,z});
     }
   });
@@ -235,6 +254,7 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
   });
   positionTargets();
   draw();
+  visual?.ready.then(()=>{if(canvas.isConnected)draw();});
   return {
     draw,
     refresh(){draw();positionTargets();},

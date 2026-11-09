@@ -1,3 +1,4 @@
+import {benchVisual} from './photo-bench.mjs?v=1';
 import * as T from '../embryo-atlas/vendor/three.module.min.js';
 
 const stations = [
@@ -240,7 +241,7 @@ export function createPerspective(){
   function mount({root,station,player,expected,status,cargo,update,interact,open,feedback}){
     initialize();
     if(lab){
-      lab.carry.visible=!!cargo&&!station;
+      lab.carry.visible=typeof cargo==='string'&&!station;
       lab.showStation(station,status);
     }
     const target=stations.find(s=>s.id===expected);
@@ -248,6 +249,21 @@ export function createPerspective(){
       const current=stations.find(s=>s.id===station);
       const work=root.querySelector('.amp-work');
       const bench=work.querySelector('.amp-bench-scene');
+      if(benchVisual(bench?.dataset.benchScene)){
+        const hud=document.createElement('div');
+        hud.className='vr-photo-hud';
+        hud.innerHTML='<strong>AMPLICON</strong><span>반응액 준비</span>';
+        bench.append(hud);
+        const abbreviations={positive:'양성',negative:'음성'};
+        bench.querySelectorAll('[data-bench-target] > span').forEach(label=>{
+          const id=label.parentElement.dataset.benchTarget.split(':')[1];
+          if(!abbreviations[id])return;
+          label.dataset.shortLabel=label.parentElement.dataset.benchTarget.startsWith('sample:')
+            ?abbreviations[id]+' 원본':abbreviations[id]+' 관';
+        });
+        lastStation=station;
+        return;
+      }
       const backdrop=document.createElement('div');
       backdrop.className='vr-camera'+(bench?'':' vr-station-view');
       if(bench)bench.append(backdrop);
@@ -305,6 +321,7 @@ export function createPerspective(){
     const direct=root.querySelector('.vr-guide');
     const cargoLabel=room.querySelector('.vr-cargo');
     const nearLabel=cargo==='gel'?'전기영동 겔':cargo==='tubes'?'혼합한 반응관':'냉각 랙';
+    room.classList.toggle('vr-carrying-rack',cargo===true);
     cargoLabel.hidden=!cargo; cargoLabel.textContent='운반 중 · '+nearLabel;
     room.classList.toggle('vr-fallback',!renderer);
     if(renderer)backdrop.append(canvas);
@@ -399,5 +416,5 @@ export function createPerspective(){
     cleanup=()=>{observer.disconnect();controller.abort();release();};
   }
 
-  return {stations,explore,mount,detach:()=>cleanup()};
+  return {stations,explore,mount,benchVisual,detach:()=>cleanup()};
 }

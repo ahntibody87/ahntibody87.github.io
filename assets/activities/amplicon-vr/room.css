@@ -27,3 +27,35 @@
 .amp-vr .vr-station-view .amp-machine {position:absolute; inset:0; width:100%; max-width:none; height:100%; margin:0; background:transparent; border:0;}
 .amp-vr .vr-station-view .amp-spin-slot {min-width:1.6rem; min-height:1.6rem; padding:.13rem .2rem; white-space:nowrap;}
 .amp-vr .vr-station-view .amp-machine-label {position:absolute; left:.7rem; bottom:.7rem;}
+.amp-vr .amp-bench-scene:is([data-bench-scene="prep"],[data-bench-scene="cooler"]) {
+  height:auto;
+  aspect-ratio:16 / 9;
+  min-height:245px;
+  background:#454b4b url("./bench-daylight.webp") center / 100% 100% no-repeat;
+}
+.amp-vr .amp-bench-scene:is([data-bench-scene="prep"],[data-bench-scene="cooler"]) > canvas {
+  position:absolute;
+  inset:0;
+}
+.amp-vr .amp-bench-scene:is([data-bench-scene="prep"],[data-bench-scene="cooler"]) .amp-bench-target span {
+  background:#172629e8;
+  border:1px solid #87c4ce;
+}
+.amp-vr .vr-photo-hud {
+  position:absolute; z-index:2; inset:0 0 auto; display:flex; justify-content:space-between;
+  align-items:center; padding:.45rem .8rem; background:#151b20bd; color:white;
+  pointer-events:none; font-size:.8rem; letter-spacing:.025em;
+}
+.amp-vr .vr-photo-hud strong {font-size:1.08rem; letter-spacing:.04em;}
+.amp-vr .vr-photo-hud span {background:#ccebee; color:#102428; border-radius:20px; padding:.2rem .7rem;}
+.amp-vr .vr-carrying-rack::after {
+  position:absolute; content:""; inset:auto 15% -4% 15%; height:49%;
+  background:url("./rack-in-hand.webp") center bottom / contain no-repeat; pointer-events:none;
+}
+.amp-vr .vr-carrying-rack .vr-pad,
+.amp-vr .vr-carrying-rack .vr-cargo {z-index:1;}
+@media (max-width:650px) {
+  .amp-vr [data-bench-scene="prep"] .amp-bench-target span {font-size:.57rem; padding:.15rem .19rem;}
+  .amp-vr [data-bench-scene="prep"] .amp-bench-target span[data-short-label] {font-size:0;}
+  .amp-vr [data-bench-scene="prep"] .amp-bench-target span[data-short-label]::after {content:attr(data-short-label); font-size:.57rem;}
+}
