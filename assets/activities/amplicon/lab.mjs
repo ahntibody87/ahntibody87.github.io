@@ -18,7 +18,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
 let gelRunning=false,gelProgress=null,uvPlaced=false,autoPromptOffered=false;
 let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
-let coolerOpen=false,coolerTransfer=0,carrying=false,transit=null;
+let coolerOpen=false,coolerTransfer=0,carrying=false,transit=null,spinDelivered=false;
 const vortexHoldMs=1500;
 let vortexTube=null,mixHold=null,spinSlots=[null,null,null,null],lidClosed=false,spinning=false;
 const parkedPipette={x:5.1,y:.32,z:-1.25};
@@ -76,6 +76,7 @@ function expectedStation(){
   if(state.step===3&&Object.values(state.tubes).every(tube=>tube.mixed))return 'spin';
   return scenario.steps[state.step].station;
 }
+function needsSpinTransfer(id){return id==='spin'&&!transit&&!spinDelivered;}
 function routeInstruction(){
   const destination=stations.find(item=>item.id===expectedStation());
   return transit?.message??(carrying?'냉각 랙을 들고 작업대로 이동하세요.':destination.label+'로 이동하세요.');
@@ -277,13 +278,20 @@ function open(id){
   if(id!==expectedStation()){
     target=null;routeFeedback(id);return;
   }
+  if(needsSpinTransfer(id)){
+    prepareSpinTransfer();return;
+  }
+  const destination=stations.find(item=>item.id===id);
+  const withinReach=Math.hypot(player.x-destination.x,player.y-destination.y-.9)<=1.8;
   if(transit||carrying){
-    const destination=stations.find(item=>item.id===id);
-    if(Math.hypot(player.x-destination.x,player.y-destination.y-.9)>1.8){
+    if(!withinReach){
       routeFeedback();return;
     }
     if(carrying){carrying=false;state.step=2;}
+    if(id==='spin')spinDelivered=true;
     transit=null;
+  }else if(!withinReach){
+    player={x:destination.x,y:destination.y+1.2};
   }
   keys.clear();target=null;station=id;render();
   if(!$('#amp-auto-prompt:not([hidden])'))$('#amp-work-title')?.focus({preventScroll:true});
@@ -487,7 +495,7 @@ async function action(name,node){
   if(name==='next'){
     if(state.step===3&&station!=='spin'&&!Object.values(state.tubes).every(t=>t.spun)){
       if(issues(state,scenario,3).some(issue=>issue.rule!=='spin'))return guideNext(nextInstruction());
-      prepareTransfer('vortex','spin','tubes','혼합한 반응관을 들고 원심분리기로 이동하세요.');
+      prepareSpinTransfer();
       return;
     }
     if(nextIssues(state,scenario).length)return guideNext(nextInstruction());
@@ -500,7 +508,7 @@ async function action(name,node){
     if(state.step===1)return action('carryRack');
     if(state.step===5){
       state.step=6;
-      prepareTransfer('gel','uv','gel','전기영동 겔을 들고 UV 관찰기로 이동하세요.');
+      prepareTransfer('uv','gel','전기영동 겔을 들고 UV 관찰기로 이동하세요.');
       return;
     }
     state.step=Math.min(6,state.step+1);station=null;prepLiquid=null;gelLiquid=null;render();
@@ -510,7 +518,7 @@ async function action(name,node){
     const ice=stations.find(s=>s.id==='ice');
     player={x:ice.x,y:ice.y+1.2};station=null;carrying=true;render();$('.amp-room').focus();
   }else if(name==='previous'){
-    carrying=false;vortexTube=null;spinSlots=[null,null,null,null];lidClosed=false;
+    carrying=false;spinDelivered=false;vortexTube=null;spinSlots=[null,null,null,null];lidClosed=false;
     prepLiquid=null;gelLiquid=null;state.tip=null;state.step=Math.max(0,state.step-1);invalidateAfter(state.step);station=null;render();
   }else if(name==='close'){station=null;render();$('.amp-room')?.focus({preventScroll:true});}
   else if(name==='goto')open(expectedStation());
@@ -628,7 +636,7 @@ function bind(){
   const room=$('.amp-room');
   if(room){
     function selectEquipment(id){
-      if(id!==expectedStation()||transit){open(id);return;}
+      if(id!==expectedStation()||transit||needsSpinTransfer(id)){open(id);return;}
       const equipment=stations.find(item=>item.id===id);
       routeFeedback();
       target={x:equipment.x,y:equipment.y+1.2,station:id};
@@ -687,10 +695,13 @@ function bindSpinDrop(){
     if(state.tubes[id]&&slot)action('spinSlot',{dataset:{id,slot:slot.dataset.slot}});
   };
 }
-function prepareTransfer(from,to,cargo,message){
-  const start=stations.find(item=>item.id===from);
-  keys.clear();station=null;target=null;transit={cargo,message,destination:to};
-  player={x:start.x,y:start.y+1.2};
+function prepareSpinTransfer(){
+  prepareTransfer('spin','tubes','혼합한 반응관을 들고 원심분리기로 이동하세요.');
+}
+function prepareTransfer(destination,cargo,message){
+  cancelAnimationFrame(moveFrame);moveFrame=0;
+  keys.clear();target=null;
+  station=null;transit={cargo,message,destination};
   render();$('.amp-room')?.focus({preventScroll:true});
 }
 function updateChecks(){const list=$('.amp-checklist');if(list)list.innerHTML=checklist();}
