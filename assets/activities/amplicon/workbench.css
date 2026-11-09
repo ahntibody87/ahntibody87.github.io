@@ -96,3 +96,7 @@
   .amp-lab .amp-bench-scene .amp-bench-target {font-size: .59rem;}
   .amp-lab .amp-bench-target span {padding-inline: .15rem;}
 }
+
+.amp-lab [data-bench-scene="cooler"] [data-bench-label="rack"]{background:none;color:#17212a;font-weight:750;text-shadow:0 1px 2px #edfaff}
+.amp-gel-scene-state{position:absolute;top:.75rem;left:50%;translate:-50% 0;display:grid;gap:.15rem;width:max-content;max-width:calc(100% - 1.5rem);padding:.45rem .8rem;border:1px solid #a3cfdb;border-radius:8px;background:#133442;color:#fff;text-align:center;pointer-events:none}
+.amp-gel-scene-state span{font-size:.78rem;color:#d8f2ef}

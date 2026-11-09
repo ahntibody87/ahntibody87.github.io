@@ -96,18 +96,31 @@ function paintScene(canvas,objects,tool,tip,liquid){
       box(x,.59,z,1.25,.08,1.21,'#d7b1bd');
       box(x,.67,z,.91,.016,.8,'#4b3540');
     }else if(o.kind==='tank'){
-      box(x,0,z,8.7,.21,2.52,'#7494a2');
-      box(x,.21,z,8.38,.14,2.27,'#a1c7d3');
-      box(x,.36,z,7.95,.16,1.65,'#a5cebf');
-      box(x,.52,z,7.92,.028,1.62,'#c1e4d9');
-      box(x,.37,z-1.02,8,.15,.10,o.reverse?'#b2576d':'#3e5570');
-      box(x,.37,z+1.02,8,.15,.10,o.reverse?'#3e5570':'#b2576d');
+      const gelWidth=8,gelDepth=3.05,base=.38,rim=.57,wellHalf=.35,wellDepth=.76;
+      const gelBack=z-gelDepth/2,gelFront=z+gelDepth/2;
+      const wellBack=o.wellZ-wellDepth/2,wellFront=o.wellZ+wellDepth/2;
+      box(x,0,z,9.1,.22,3.95,'#5f7f95');
+      box(x,.22,z,8.85,.16,3.70,'#a4c7d5');
+      box(x,base,z,gelWidth,.07,gelDepth,'#92bdb3');
+      box(x,base+.07,(gelBack+wellBack)/2,gelWidth,rim-base-.07,wellBack-gelBack,'#b0d6cb');
+      box(x,base+.07,(wellFront+gelFront)/2,gelWidth,rim-base-.07,gelFront-wellFront,'#b0d6cb');
+      let left=x-gelWidth/2;
+      for(let i=0;i<=o.wellCount;i++){
+        const center=x+(i-(o.wellCount-1)/2)*o.wellSpacing;
+        const right=i===o.wellCount?x+gelWidth/2:center-wellHalf;
+        box((left+right)/2,base+.07,o.wellZ,right-left,rim-base-.07,wellDepth,'#b0d6cb');
+        left=center+wellHalf;
+      }
+      box(x,.38,z-1.69,8.7,.14,.12,o.reverse?'#b2576d':'#3e5570');
+      box(x,.38,z+1.69,8.7,.14,.12,o.reverse?'#3e5570':'#b2576d');
+      if(o.progress!==null){
+        for(let i=0;i<o.wellCount;i++){
+          const laneX=x+(i-(o.wellCount-1)/2)*o.wellSpacing;
+          box(laneX,rim,z-.38+o.progress*1.53,1.1,.008,.15,'#899ebc');
+        }
+      }
     }else if(o.kind==='well'){
-      box(x,.55,z,.75,.018,.46,o.color);
-      box(x,.55,z-.21,.75,.11,.04,'#619389');
-      box(x,.55,z+.21,.75,.11,.04,'#add3c6');
-      box(x-.35,.55,z,.05,.11,.38,'#8bb6a9');
-      box(x+.35,.55,z,.05,.11,.38,'#a2cbbd');
+      box(x,.452,z,.68,.012,.74,o.color);
     }else tube(o,o.kind==='bottle');
     if(['cooler','receivingPad','coldRack','ice','rack','tank'].includes(o.kind))supports.push(...faces.splice(0));
   }

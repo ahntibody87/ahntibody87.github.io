@@ -1,8 +1,8 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
 import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=gel12';
 
-import {mountWorkbench} from './workbench.mjs?v=bench16';
-import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=bench16';
+import {mountWorkbench} from './workbench.mjs?v=gel18';
+import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=gel18';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 
@@ -16,7 +16,7 @@ const button=(text,action,extra='')=>`<button type="button" data-action="${actio
 const tick=(done,text)=>`<li class="${done?'amp-done':''}"><span aria-hidden="true">${done?'✓':'○'}</span> ${esc(text)}</li>`;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
-let gelRunning=false,uvPlaced=false,autoPromptOffered=false;
+let gelRunning=false,gelProgress=null,uvPlaced=false,autoPromptOffered=false;
 let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
 let coolerOpen=false,coolerTransfer=0,carrying=false,transit=null;
 const vortexHoldMs=1500;
@@ -202,12 +202,16 @@ function gelView(){
   const locked=state.gelRun||gelRunning;
   return `<p>지정된 웰에 마커와 PCR 산물을 로딩하세요. 피펫으로 병을 누른 뒤 웰을 누르거나 병에서 웰로 끌어 놓으세요.</p>
     <ol class="amp-fixed-lanes" aria-label="고정 레인 배치">${state.lanePlan.map(id=>`<li>${esc(label(id))}</li>`).join('')}</ol>
-    ${sceneMarkup(electrophoresisObjects(state,scenario),'gel',esc,locked)}
-    <div class="amp-bench-readout" id="amp-scene-status" role="status">${state.gelRun?'전기영동이 끝났습니다. 다음 단계에서 겔을 UV 관찰기로 가져가세요.':gelRunning?'전기영동 중 · DNA가 + 극으로 이동합니다.':gelLiquid?esc(label(gelLiquid))+' 흡입됨':'마커 또는 PCR 산물을 고르세요.'}</div>
+    ${sceneMarkup(electrophoresisObjects(state,scenario,gelProgress),'gel',esc,locked,locked?
+      `<div class="amp-gel-scene-state" role="status">
+        <strong>${state.gelRun?'✓ 전기영동 완료':'전기영동 가동 중'}</strong>
+        <span>${state.gelRun?'겔을 UV 관찰기로 옮기세요.':'추적 색소가 + 극 쪽으로 이동합니다.'}</span>
+      </div>`:'')}
+    <div class="amp-bench-readout" id="amp-scene-status" role="status" ${locked?'hidden':''}>${gelLiquid?esc(label(gelLiquid))+' 흡입됨':'마커 또는 PCR 산물을 고르세요.'}</div>
     ${electrodeDiagram(state.polarity==='reverse',gelRunning)}
     <div class="amp-actions">
       ${button('전극 연결 바꾸기','swapElectrodes',locked?'disabled':'')}
-      ${state.gelRun?'<strong class="amp-success">✓ 전기영동 완료 · UV에서 밴드를 확인하세요.</strong>':button(gelRunning?'전기영동 중…':'전원 켜기','runGel','class="amp-primary" '+(locked?'disabled':''))}
+      ${state.gelRun?'':button(gelRunning?'전기영동 중…':'전원 켜기','runGel','class="amp-primary" '+(locked?'disabled':''))}
     </div>`;
 }
 function uvView(){
@@ -287,8 +291,8 @@ function bindBenchScene(){
     return;
   }
   benchScene=mountWorkbench(container,
-    ()=>gel?electrophoresisObjects(state,scenario):preparationObjects(state,scenario),
-    ()=>({position:state.step===1?null:(gel?gelPosition:prepPosition)??parkedPipette,tip:gel?!!gelLiquid:!!state.tip,liquid:gel?!!gelLiquid:!!prepLiquid}),
+    ()=>gel?electrophoresisObjects(state,scenario,gelProgress):preparationObjects(state,scenario),
+    ()=>({position:state.step===1||gel&&(gelRunning||state.gelRun)?null:(gel?gelPosition:prepPosition)??parkedPipette,tip:gel?!!gelLiquid:!!state.tip,liquid:gel?!!gelLiquid:!!prepLiquid}),
     (id,from)=>gel?handleGelTarget(id,from):handlePrepTarget(id,from));
 }
 async function moveTool(id,gel=false,auto=false){
@@ -417,33 +421,27 @@ async function autoPipette(){
 }
 async function handleGelTarget(id,from){
   if(busy||state.gelRun)return;
-  if(id==='bin'){
-    if(!gelLiquid)return;
-    busy=true;
-    await moveTool(id,true);
-    gelLiquid=null;busy=false;render();sceneStatus('흡입한 용액을 폐기했습니다.');
-    return;
-  }
   const well=id.startsWith('well:')?Number(id.slice(5)):null;
-  if(well!==null&&state.lanes[well])return sceneStatus('이미 채운 웰입니다. 해당 웰을 비운 뒤 다시 넣으세요.');
-  if(well!==null&&gelLiquid&&from?.startsWith('load:')&&from.slice(5)!==gelLiquid)
-    return sceneStatus('피펫에 '+label(gelLiquid)+'이 들어 있습니다. 먼저 웰에 넣거나 폐기하세요.');
-  if(well!==null&&!gelLiquid&&!from?.startsWith('load:'))return sceneStatus('먼저 마커나 PCR 산물을 골라 흡입하세요.');
-  if(id.startsWith('load:')&&gelLiquid)return sceneStatus('피펫에 든 용액을 웰에 넣거나 폐기통에서 버리세요.');
-  if(well!==null&&(gelLiquid??from.slice(5))!==state.lanePlan[well]){
-    return sceneStatus((well+1)+'번 웰에는 '+label(state.lanePlan[well])+'을 넣으세요.');
+  const source=from?.startsWith('load:')?from.slice(5):gelLiquid;
+  if(well!==null){
+    if(state.lanes[well])return sceneStatus('이미 채운 웰입니다.');
+    if(!source)return sceneStatus('먼저 마커나 PCR 산물을 골라 흡입하세요.');
+    if(source!==state.lanePlan[well])return sceneStatus((well+1)+'번 웰에는 '+label(state.lanePlan[well])+'을 넣으세요.');
   }
   busy=true;
   let message;
   try{
-    if(well!==null&&!gelLiquid){
+    if(well!==null&&gelLiquid!==source){
+      gelLiquid=null;
       await moveTool(from,true);
-      gelLiquid=from.slice(5);benchScene.draw();
+      gelLiquid=source;benchScene.draw();
     }
+    if(well===null)gelLiquid=null;
     await moveTool(id,true);
     if(well===null){
       gelLiquid=id.slice(5);
-      message=label(gelLiquid)+' 흡입 완료. 넣을 웰을 고르세요.';
+      const lane=state.lanePlan.indexOf(gelLiquid)+1;
+      message=label(gelLiquid)+' 흡입 완료. '+lane+'번 웰에 넣으세요.';
     }else{
       state.lanes[well]=gelLiquid;
       message=(well+1)+'번 웰에 '+label(gelLiquid)+' 로딩 완료.';
@@ -544,9 +542,17 @@ async function action(name,node){
     state.polarity=state.polarity==='normal'?'reverse':'normal';render();
   }else if(name==='runGel'){
     if(state.gelRun||warn(issues(state,scenario,5)))return;
-    busy=true;gelRunning=true;render();
-    await new Promise(resolve=>setTimeout(resolve,2200));
-    state.gelRun=true;gelRunning=false;busy=false;render();
+    busy=true;gelRunning=true;gelProgress=0;gelLiquid=null;render();
+    if(quality==='low'||reduced.matches)await new Promise(resolve=>setTimeout(resolve,2200));
+    else await new Promise(resolve=>{
+      const start=performance.now();
+      function advance(now){
+        gelProgress=Math.min(1,(now-start)/2200);benchScene?.draw();
+        if(gelProgress<1)requestAnimationFrame(advance);else resolve();
+      }
+      requestAnimationFrame(advance);
+    });
+    state.gelRun=true;gelRunning=false;gelProgress=null;busy=false;render();
     announce('전기영동이 끝났습니다. 다음 단계로 겔을 옮기세요.');
   }else if(name==='placeGel'){
     if(state.step!==6||station!=='uv'||!state.gelRun)return;
