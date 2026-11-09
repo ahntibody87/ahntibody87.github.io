@@ -43,14 +43,12 @@ async function init(){
   }
 }
 function showScreeningIntro(){
-  root.innerHTML=`<section class="amp-screening-intro" aria-labelledby="amp-intro-title">
-    <div class="amp-screening-head"><div><span>AMPLICON</span><h2 id="amp-intro-title">선별진료소에서 실험실로</h2></div>
-    <button type="button" id="amp-skip-intro">영상 건너뛰기 →</button></div>
-    <video width="1080" height="608" muted playsinline controls preload="metadata" aria-label="A와 B의 코로나19 검체 채취 및 신속항원검사">
-      <source src="/assets/activities/amplicon/screening-intro.webm" type="video/webm">
+  root.innerHTML=`<section class="amp-screening-intro" aria-label="도입 영상">
+    <video width="1080" height="608" muted playsinline controls preload="metadata" aria-label="선별진료소에서 A와 B의 코 검체를 채취하고 PCR 실험실로 옮기는 장면">
+      <source src="/assets/activities/amplicon/screening-intro.webm?v=pcr24" type="video/webm">
       영상 재생을 지원하지 않는 환경에서는 영상 건너뛰기를 선택하세요.
     </video>
-    <p>A와 B의 코 검체를 채취하고, 신속항원검사에서 시약 속 항체가 바이러스 항원을 포착하는 과정을 봅니다. 두 사람의 감염 여부는 이어지는 RT-PCR 실험에서 판단합니다.</p>
+    <div class="amp-screening-actions"><button type="button" id="amp-skip-intro">영상 건너뛰기 →</button></div>
     <p id="amp-intro-status" role="status" hidden></p>
   </section>`;
   const video=$('.amp-screening-intro video');
