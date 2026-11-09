@@ -1,7 +1,7 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
 import {stations as mapStations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21';
 
-import {mountWorkbench} from './workbench.mjs?v=rack22';
+import {mountWorkbench} from './workbench.mjs?v=vr1';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=rack22';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
@@ -128,7 +128,7 @@ function routeFeedback(wrong){
 }
 function explore(){
   const cargo=transit?.cargo??carrying;
-  if(perspective)return perspective.explore(esc(routeInstruction()),cargo);
+  if(perspective)return perspective.explore(esc(routeInstruction()));
   return `<section class="amp-explore">
     <div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3 id="amp-route-guide" class="amp-route-guide" role="status">${esc(routeInstruction())}</h3></div>
       ${cargo?'':button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div>

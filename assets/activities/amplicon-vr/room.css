@@ -23,3 +23,4 @@
 .amp-vr .amp-bench-scene .amp-bench-label,
 .amp-vr .amp-bench-scene .amp-gel-scene-state {z-index:2;}
 .amp-vr .amp-pcr-device:has(> .amp-pcr-device-label:only-child) {display:none;}
+.amp-vr .vr-work-hotspot {left:50%; top:69%;}

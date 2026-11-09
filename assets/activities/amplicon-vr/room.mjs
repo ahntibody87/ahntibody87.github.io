@@ -253,6 +253,18 @@ export function createPerspective(){
       if(bench)bench.append(backdrop);
       else work.querySelector('.amp-panel-head').after(backdrop);
       if(renderer)backdrop.append(canvas);
+      const operation = station==='pcr'
+        ? (status.pcrLoaded ? 'runPcr' : 'loadPcr')
+        : station==='uv' ? (status.uvPlaced ? 'view' : 'placeGel') : null;
+      const control = operation && work.querySelector('[data-action="'+operation+'"]:enabled');
+      if(control){
+        const hotspot=document.createElement('button');
+        hotspot.type='button';
+        hotspot.className='vr-marker vr-work-hotspot';
+        hotspot.textContent=control.textContent;
+        hotspot.onclick=()=>control.click();
+        backdrop.append(hotspot);
+      }
       const repaint=()=>draw(backdrop,current.x,current.y+(bench?1.4:1.55),0,bench?-.13:-.23);
       const observer=new ResizeObserver(repaint); observer.observe(backdrop); repaint();
       cleanup=()=>observer.disconnect();
