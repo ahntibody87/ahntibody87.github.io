@@ -1,17 +1,17 @@
 import * as T from '../embryo-atlas/vendor/three.module.min.js';
 
 const stations = [
-  {id:'ice', label:'아이스박스', x:2.0, y:2.2},
-  {id:'bench', label:'작업대', x:5.0, y:2.2},
-  {id:'vortex', label:'볼텍스 믹서', x:8.0, y:2.2},
-  {id:'spin', label:'미니 원심분리기', x:8.0, y:6.8},
-  {id:'pcr', label:'PCR 기기', x:6.0, y:6.8},
-  {id:'gel', label:'전기영동 장치', x:4.0, y:6.8},
-  {id:'uv', label:'UV 관찰기', x:2.0, y:6.8}
+  {id:'ice', label:'아이스박스', x:2.0, y:6.8},
+  {id:'bench', label:'작업대', x:5.0, y:6.8},
+  {id:'vortex', label:'볼텍스 믹서', x:8.0, y:6.8},
+  {id:'spin', label:'미니 원심분리기', x:8.0, y:2.2},
+  {id:'pcr', label:'PCR 기기', x:6.0, y:2.2},
+  {id:'gel', label:'전기영동 장치', x:4.0, y:2.2},
+  {id:'uv', label:'UV 관찰기', x:2.0, y:2.2}
 ];
 const counters = [
-  {x:2,z:2.2,w:1.9,d:1.1}, {x:5,z:2.2,w:2.7,d:1.1}, {x:8,z:2.2,w:1.9,d:1.1},
-  {x:5,z:6.8,w:7.8,d:1.15}, {x:.32,z:5,w:.64,d:8.5}, {x:5,z:.38,w:9,d:.76}
+  {x:2,z:6.8,w:1.9,d:1.1}, {x:5,z:6.8,w:2.7,d:1.1}, {x:8,z:6.8,w:1.9,d:1.1},
+  {x:5,z:2.2,w:7.8,d:1.15}, {x:.32,z:5,w:.64,d:8.5}, {x:5,z:.38,w:9,d:.76}
 ];
 
 function buildRoom() {
@@ -265,7 +265,7 @@ export function createPerspective(){
         hotspot.onclick=()=>control.click();
         backdrop.append(hotspot);
       }
-      const repaint=()=>draw(backdrop,current.x,current.y+(bench?1.4:1.55),0,bench?-.13:-.23);
+      const repaint=()=>draw(backdrop,current.x,current.y+(bench?1.4:1.55),0,bench?-.23:-.32);
       const observer=new ResizeObserver(repaint); observer.observe(backdrop); repaint();
       cleanup=()=>observer.disconnect();
       lastStation=station;

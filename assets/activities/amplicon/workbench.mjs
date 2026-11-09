@@ -10,6 +10,7 @@ function project([x,y,z]){
 }
 function paintScene(canvas,objects,tool,tip,liquid){
   const ctx=canvas.getContext('2d');
+  const immersive=!!canvas.closest('.amp-vr');
   const faces=[];
   function face(points,color,light=1){
     const view=points.map(project);
@@ -49,10 +50,10 @@ function paintScene(canvas,objects,tool,tip,liquid){
     box(x,y+.27,z+radius*.96,radius*1.5,.18,.025,'#f4f6f3');
   }
   const coolerScene=objects.some(object=>object.kind==='cooler');
-  if(!coolerScene){
-    box(0,-1.55,2.35,12.4,1.35,.45,'#5e7379');
-    box(0,-.21,0,13,.21,6.2,'#bdc8c6');
-    box(0,-.04,-2.88,13,.13,.14,'#d5dddd');
+  if(!coolerScene||immersive){
+    box(0,-1.55,2.35,12.4,1.35,.45,immersive?'#41464a':'#5e7379');
+    box(0,-.21,0,13,.21,6.2,immersive?'#525a5e':'#bdc8c6');
+    box(0,-.04,-2.88,13,.13,.14,immersive?'#626b71':'#d5dddd');
   }
   const furniture=faces.splice(0);
   const supports=[];
@@ -142,7 +143,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
   background.addColorStop(.60,coolerScene?'#eaf3f7':'#345363');
   background.addColorStop(1,coolerScene?'#c3d8e3':'#1b303b');
   ctx.clearRect(0,0,WIDTH,HEIGHT);
-  if(!canvas.closest('.amp-vr')){
+  if(!immersive){
     ctx.fillStyle=background;
     ctx.fillRect(0,0,WIDTH,HEIGHT);
     ctx.fillStyle='#ffffff0b';
