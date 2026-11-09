@@ -159,3 +159,22 @@
 
 .amp-lab .amp-comparison .amp-answer-correct{color:#a51d2d}
 .amp-lab .amp-comparison .amp-answer-review{color:#214eb8}
+
+.amp-lab .amp-screening-intro{
+  max-width:960px;
+  margin:0 auto;
+  padding:clamp(14px,2.4vw,24px);
+  color:#e9f3f9;
+  background:#11283a;
+  border:1px solid #263f52;
+  border-radius:16px;
+  box-shadow:0 16px 38px #12314425;
+}
+.amp-screening-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.7rem;margin-bottom:1rem}
+.amp-screening-head h2{margin:0;color:#f2f8fb;font-size:clamp(1.2rem,3vw,1.8rem)}
+.amp-screening-head span{display:block;color:#b1d0de;font-size:.72rem;font-weight:800;letter-spacing:.12em}
+.amp-lab .amp-screening-head button{background:#263f52;border-color:#658599;color:#fff}
+.amp-lab .amp-screening-head button:hover{background:#34556c;border-color:#b1d0de}
+.amp-screening-intro video{display:block;width:100%;height:auto;aspect-ratio:1080/608;border-radius:10px;background:#091926}
+.amp-screening-intro p{margin:.85rem 0 0;color:#d6e7ef;font-size:.88rem}
+.amp-screening-intro #amp-intro-status{color:#ffcbab}

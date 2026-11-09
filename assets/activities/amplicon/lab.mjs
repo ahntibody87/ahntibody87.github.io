@@ -36,15 +36,49 @@ async function init(){
     if(!response.ok)throw new Error('scenario');
     scenario=await response.json();
     if(scenario.schemaVersion!==1||scenario.samples.length!==4||!scenario.warnings)throw new Error('schema');
-    state=createState(scenario);render();
+    state=createState(scenario);showScreeningIntro();
   }catch{
     root.innerHTML='<div class="amp-panel"><h2>실험 자료를 불러오지 못했습니다</h2><p>인터넷 연결을 확인하고 새로고침해 주세요. 로컬에서는 파일을 바로 열지 말고 HTTP 서버로 실행해 주세요.</p><button type="button" id="amp-reload">다시 불러오기</button></div>';
     $('#amp-reload').onclick=init;
   }
 }
+function showScreeningIntro(){
+  root.innerHTML=`<section class="amp-screening-intro" aria-labelledby="amp-intro-title">
+    <div class="amp-screening-head"><div><span>AMPLICON</span><h2 id="amp-intro-title">선별진료소에서 실험실로</h2></div>
+    <button type="button" id="amp-skip-intro">영상 건너뛰기 →</button></div>
+    <video width="1080" height="608" muted playsinline controls preload="metadata" aria-label="A와 B의 코로나19 검체 채취 및 신속항원검사">
+      <source src="/assets/activities/amplicon/screening-intro.webm" type="video/webm">
+      영상 재생을 지원하지 않는 환경에서는 영상 건너뛰기를 선택하세요.
+    </video>
+    <p>A와 B의 코 검체를 채취하고, 신속항원검사에서 시약 속 항체가 바이러스 항원을 포착하는 과정을 봅니다. 두 사람의 감염 여부는 이어지는 RT-PCR 실험에서 판단합니다.</p>
+    <p id="amp-intro-status" role="status" hidden></p>
+  </section>`;
+  const video=$('.amp-screening-intro video');
+  const finish=()=>{
+    if(!video.isConnected)return;
+    playback?.disconnect();
+    video.pause();render();
+    $('#amp-brief-title')?.focus({preventScroll:true});
+  };
+  const playback=reduced.matches?null:new IntersectionObserver(entries=>{
+    if(!entries.some(entry=>entry.isIntersecting))return;
+    playback.disconnect();
+    video.muted=true;
+    video.play().catch(()=>{});
+  },{threshold:.25});
+  video.addEventListener('ended',finish,{once:true});
+  video.querySelector('source').addEventListener('error',()=>{
+    const status=$('#amp-intro-status');
+    if(!status)return;
+    status.hidden=false;
+    status.textContent='영상을 불러오지 못했습니다. 영상 건너뛰기를 눌러 실험으로 이동하세요.';
+  },{once:true});
+  $('#amp-skip-intro').onclick=finish;
+  playback?.observe(video);
+}
 function checklist(){
   const tubes=Object.values(state.tubes),s=state.step;
-  const flags=s===0?[true,true]:s===1?[rackReceived()]:s===2?[tubes.every(t=>t.additions.length>0&&!t.additions.some(a=>a.reused)),issues(state,scenario,2).length===0,tubes.every(t=>t.additions.length===5)]:s===3?[tubes.every(t=>t.mixed),tubes.every(t=>t.spun)]:s===4?[state.pcrLoaded.length===4,issues(state,scenario,4).length===0,state.amplified]:s===5?[state.lanes.every((x,i)=>x&&x===state.lanePlan[i]),state.polarity==='normal',state.gelRun]:[state.viewed,!!state.answer&&!!state.reason.trim(),state.submitted];
+  const flags=s===0?[]:s===1?[rackReceived()]:s===2?[tubes.every(t=>t.additions.length>0&&!t.additions.some(a=>a.reused)),issues(state,scenario,2).length===0,tubes.every(t=>t.additions.length===5)]:s===3?[tubes.every(t=>t.mixed),tubes.every(t=>t.spun)]:s===4?[state.pcrLoaded.length===4,issues(state,scenario,4).length===0,state.amplified]:s===5?[state.lanes.every((x,i)=>x&&x===state.lanePlan[i]),state.polarity==='normal',state.gelRun]:[state.viewed,!!state.answer&&!!state.reason.trim(),state.submitted];
   return scenario.steps[s].tasks.map((t,i)=>tick(flags[i],t)).join('');
 }
 function render(){
@@ -57,7 +91,7 @@ function render(){
   root.dataset.quality=quality;
   root.classList.toggle('amp-pcr-playing',!!motion);
   root.innerHTML=`<div class="amp-top"><div><span class="amp-kicker">분자 진단 탐구 · 10~20분</span><h2>AMPLICON <span>웹 구현 실험실</span></h2></div><label>애니메이션 <select id="amp-quality"><option value="normal" ${quality==='normal'?'selected':''}>표준</option><option value="low" ${quality==='low'?'selected':''}>저사양 · 움직임 줄이기</option></select></label></div>
-  <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol><ul class="amp-checklist">${checklist()}</ul><details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6&&!carrying?button('다음 단계 →','next','class="amp-primary" '+(busy||transit?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy||transit?'disabled':''):''}</div><p id="amp-next-guide" class="amp-next-guide" role="status" hidden></p><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
+  <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol>${step.tasks.length?`<ul class="amp-checklist">${checklist()}</ul>`:''}<details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6&&!carrying?button('다음 단계 →','next','class="amp-primary" '+(busy||transit?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy||transit?'disabled':''):''}</div><p id="amp-next-guide" class="amp-next-guide" role="status" hidden></p><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
   <div class="amp-main">${state.step===0?brief():station?workstation():explore()}</div></div>
   <p class="amp-status" id="amp-status" role="status" aria-live="polite"></p>
   <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>`;
@@ -68,7 +102,7 @@ function render(){
   if(!aReady())autoPromptOffered=false;
   if(station==='bench'&&!autoPromptOffered)showAutoPrompt();
 }
-function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><span class="amp-kicker">사건 01 · 분자 진단</span><h3>${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + 음성 대조군</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p>${button('실험 시작하기 →','next','class="amp-primary"')}</section>`;}
+function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><h3 id="amp-brief-title" tabindex="-1">${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + 음성 대조군</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p></section>`;}
 function movePad(){return `<div class="amp-dpad" aria-label="터치 이동"><button type="button" data-move="up" aria-label="위로 이동">↑</button><button type="button" data-move="left" aria-label="왼쪽 이동">←</button><button type="button" data-action="interact" aria-label="가까운 기기 열기">E</button><button type="button" data-move="right" aria-label="오른쪽 이동">→</button><button type="button" data-move="down" aria-label="아래로 이동">↓</button></div>`;}
 function expectedStation(){
   if(transit)return transit.destination;
