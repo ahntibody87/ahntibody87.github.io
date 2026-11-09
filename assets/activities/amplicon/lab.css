@@ -94,3 +94,16 @@
 .amp-scene-prompt section{width:min(100%,380px);padding:clamp(12px,3vw,24px);border:1px solid #b3d6e5;border-radius:12px;background:#f6fbfe;color:#173644;box-shadow:0 12px 35px #0c223766}
 .amp-scene-prompt h4,.amp-scene-prompt p{margin:0 0 .55rem}
 .amp-scene-prompt .amp-actions{margin:0}
+
+.amp-lab.amp-pcr-playing .amp-layout{grid-template-columns:minmax(0,1fr)}
+.amp-pcr-playing .amp-progress,.amp-pcr-playing .amp-work>.amp-panel-head{display:none}
+.amp-pcr-observation{scroll-margin-top:calc(var(--header-height,72px) + 12px)}
+.amp-pcr-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:12px;margin:.45rem 0}
+.amp-pcr-overview .amp-pcr-machine{width:100%;max-height:clamp(155px,32vh,245px);margin:0}
+.amp-pcr-graphs{min-width:0;background:#f2f5fa;border-radius:10px;padding:.25rem .5rem}
+.amp-lab .amp-pcr-graphs #amp-temp-graph svg,.amp-lab .amp-pcr-graphs #amp-quantity svg{width:100%;height:clamp(60px,13vh,105px);margin:0}
+.amp-lab .amp-pcr-graphs #amp-quantity{max-width:none}
+.amp-lab .amp-pcr-observation .amp-molecule-pair h4{padding:.45rem .65rem;font-size:.88rem}
+.amp-lab .amp-pcr-observation .amp-molecule-pair svg{min-height:0;height:clamp(100px,22vh,170px)}
+.amp-lab .amp-pcr-observation .amp-molecule-legend{margin:.5rem 0}
+@media(max-width:580px){.amp-pcr-overview{grid-template-columns:1fr}.amp-lab .amp-pcr-observation .amp-molecule-pair{grid-template-columns:1fr}}

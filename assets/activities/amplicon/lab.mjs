@@ -1,4 +1,4 @@
-import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=gel12';
+import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
 import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=gel12';
 
 import {mountWorkbench} from './workbench.mjs?v=bench16';
@@ -6,7 +6,7 @@ import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} fro
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 
-import {pcrEquipment} from './pcr-equipment.mjs?v=gel12';
+import {pcrEquipment} from './pcr-equipment.mjs?v=pcr17';
 
 import {electrodeDiagram,uvEquipment} from './gel-equipment.mjs';
 
@@ -55,6 +55,7 @@ function render(){
   const whyOpen=$('.amp-progress details')?.open;
   const step=scenario.steps[state.step];
   root.dataset.quality=quality;
+  root.classList.toggle('amp-pcr-playing',!!motion);
   root.innerHTML=`<div class="amp-top"><div><span class="amp-kicker">분자 진단 탐구 · 10~20분</span><h2>AMPLICON <span>웹 구현 실험실</span></h2></div><label>애니메이션 <select id="amp-quality"><option value="normal" ${quality==='normal'?'selected':''}>표준</option><option value="low" ${quality==='low'?'selected':''}>저사양 · 움직임 줄이기</option></select></label></div>
   <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol><ul class="amp-checklist">${checklist()}</ul><details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6&&!carrying?button('다음 단계 →','next','class="amp-primary" '+(busy||transit?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy||transit?'disabled':''):''}</div><p id="amp-next-guide" class="amp-next-guide" role="status" hidden></p><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
   <div class="amp-main">${state.step===0?brief():station?workstation():explore()}</div></div>
@@ -161,14 +162,26 @@ function startMix(){
 
 function pcrView(){
   const loaded=state.pcrLoaded.length===scenario.samples.length;
-  return pcrEquipment({loaded,active:!!motion,complete:state.amplified,program:state.program})+
-    (motion?molecularView():`<p>네 반응관을 한 번에 장착하고 화면에 표시된 기본 프로그램으로 실행하세요.</p>
+  const equipment=pcrEquipment({loaded,active:!!motion,complete:state.amplified,program:state.program});
+  if(motion)return molecularView(equipment);
+  return equipment+`<p>네 반응관을 한 번에 장착하고 화면에 표시된 기본 프로그램으로 실행하세요.</p>
       <div class="amp-actions">${state.amplified?
         '<strong class="amp-success">✓ RT-PCR 완료 · 전기영동으로 진행하세요.</strong>'+button('분자 뷰 다시 보기','replayPcr'):
         button('네 튜브를 한 번에 넣기','loadPcr',loaded?'disabled':'')+
-        button('기기 가동 · 분자 뷰 보기','runPcr','class="amp-primary" '+(loaded?'':'disabled'))}</div>`);
+        button('기기 가동 · 분자 뷰 보기','runPcr','class="amp-primary" '+(loaded?'':'disabled'))}</div>`;
 }
-function molecularView(){return `<div class="amp-molecular"><div class="amp-molecule-head"><strong>분자 관찰</strong><div>${button(molecularPaused?'계속 재생':'일시정지','pause')}${button('관찰 건너뛰기','skip')}</div></div><div id="amp-temp-graph"></div><div class="amp-molecule-pair"><article><h4>스파이크 유전자가 있는 튜브</h4><div id="amp-mol-a"></div></article><article><h4>스파이크 유전자가 없는 튜브</h4><div id="amp-mol-b"></div></article></div><div class="amp-molecule-legend"><span style="--amp-key:#ce8430">RNA</span><span style="--amp-key:#2885b3">주형 DNA</span><span style="--amp-key:#ce5a87">새 DNA</span><span style="--amp-key:#a17b0e">프라이머</span></div><div class="amp-molecular-bottom"><div id="amp-quantity"></div><div><strong id="amp-copy-count"></strong><p id="amp-phase-note"></p><p class="amp-small">Taq은 고온에서도 기능을 유지하는 내열성 DNA 중합효소입니다. 이론상 양은 2ⁿ이며 실제 반응은 효율·시약 고갈의 영향을 받습니다.</p></div></div></div>`;}
+function molecularView(equipment){
+  return `<section class="amp-pcr-observation" aria-label="PCR 분자 관찰">
+    <div class="amp-molecule-head"><strong>분자 관찰</strong><div>${button(molecularPaused?'계속 재생':'일시정지','pause')}${button('관찰 건너뛰기','skip')}</div></div>
+    <div class="amp-pcr-overview">${equipment}<div class="amp-pcr-graphs"><div id="amp-temp-graph"></div><div id="amp-quantity"></div></div></div>
+    <div class="amp-molecule-pair">
+      <article><h4>스파이크 유전자가 있는 튜브</h4><div id="amp-mol-a"></div></article>
+      <article><h4>스파이크 유전자가 없는 튜브</h4><div id="amp-mol-b"></div></article>
+    </div>
+    <div class="amp-molecule-legend"><span style="--amp-key:#ce8430">RNA</span><span style="--amp-key:#2885b3">주형 DNA</span><span style="--amp-key:#ce5a87">새 DNA</span><span style="--amp-key:#a17b0e">프라이머</span></div>
+    <strong id="amp-copy-count"></strong><p id="amp-phase-note"></p>
+  </section>`;
+}
 function gelSvg(){
   const y=bp=>70+230*(1-Math.log(bp/75)/Math.log(8));
   return `<svg class="amp-gel" viewBox="0 0 620 365" role="img" aria-label="UV 관찰 결과 · 다섯 레인의 DNA 밴드">
@@ -520,7 +533,10 @@ async function action(name,node){
   }
   else if(name==='runPcr'||name==='replayPcr'){
     if(warn(issues(state,scenario,4)))return;
-    motion={frames:timeline(state.program),time:0,last:0,raf:0};molecularPaused=false;busy=true;render();paintMolecules();motion.raf=requestAnimationFrame(animateMolecules);
+    motion={frames:timeline(state.program),time:0,last:0,raf:0};molecularPaused=false;busy=true;render();paintMolecules();
+    $('.amp-pcr-observation')?.scrollIntoView({block:'start',behavior:'instant'});
+    $('[data-action="pause"]')?.focus({preventScroll:true});
+    motion.raf=requestAnimationFrame(animateMolecules);
   }else if(name==='skip'){finishPcr();}
   else if(name==='pause'){molecularPaused=!molecularPaused;node.textContent=molecularPaused?'계속 재생':'일시정지';if(motion)motion.last=0;}
   else if(name==='swapElectrodes'){

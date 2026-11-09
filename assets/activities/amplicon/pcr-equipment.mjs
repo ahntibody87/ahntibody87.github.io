@@ -17,11 +17,12 @@ export function pcrEquipment({loaded,active,complete,program}){
       <path d="M-6-15H6L0-4Z" fill="${color}"/><rect x="-11" y="-38" width="22" height="8" rx="3" fill="${color}" stroke="#496779"/>
     </g>`).join('')}</g>`:''}
     ${active||complete?'<path d="M139 143l24-33h235l30 33-16 27H153Z" fill="#93c6db" fill-opacity=".45" stroke="#5d8198" stroke-width="3"/>':''}
-    <rect x="119" y="210" width="322" height="64" rx="8" fill="#18354a" stroke="#6f9eaf" stroke-width="2"/>
-    <text x="132" y="229" fill="#a0e8ef" font-size="12">기본 프로그램 · ${block}</text>
-    <text id="amp-phase" x="132" y="251" fill="#e6ffff" font-weight="700" font-size="17">${complete?'반응 완료':active?'역전사 준비':program.rt+'°C · 역전사 대기'}</text>
-    <text id="amp-cycle" x="428" y="251" text-anchor="end" fill="#e6ffff" font-size="12">${complete?program.cycles:0} / ${program.cycles} 사이클</text>
-    <text x="132" y="266" fill="#a0e8ef" font-size="11">${program.initial}°C 초기 변성 · ${program.denature} / ${program.anneal} / ${program.extend}°C 반복 · ${program.final}°C 최종 연장</text>
+    <rect x="119" y="207" width="322" height="73" rx="8" fill="#18354a" stroke="#6f9eaf" stroke-width="2"/>
+    <text x="132" y="222" fill="#a0e8ef" font-size="12">기본 프로그램 · ${block}</text>
+    <text id="amp-phase" x="132" y="243" fill="#e6ffff" font-weight="700" font-size="16">${complete?'반응 완료':active?'역전사 준비':program.rt+'°C · 역전사 대기'}</text>
+    <text id="amp-cycle" x="428" y="243" text-anchor="end" fill="#e6ffff" font-size="12">${complete?program.cycles:0} / ${program.cycles} 사이클</text>
+    <text x="132" y="258" fill="#a0e8ef" font-size="11">${program.initial}°C 초기 변성 · ${program.anneal}°C 프라이머 결합 · ${program.extend}°C DNA 신장</text>
+    <text x="132" y="273" fill="#a0e8ef" font-size="11">${program.denature} → ${program.anneal} → ${program.extend}°C × ${program.cycles}회 · ${program.final}°C 최종 신장</text>
     <circle cx="481" cy="227" r="6" fill="${active?'#60f0b4':'#547388'}"/>
   </svg>`;
 }

@@ -98,9 +98,9 @@ export function nextIssues(state,scenario) {
 export function timeline(program) {
   const frames=[{phase:'rt',label:'역전사',temp:program.rt,cycle:0,duration:4000},
     {phase:'initial',label:'초기 변성',temp:program.initial,cycle:0,duration:2500}];
-  for(let cycle=1;cycle<=program.cycles;cycle++)for(const [phase,label,key] of [['denature','변성','denature'],['anneal','결합','anneal'],['extend','연장','extend']])
+  for(let cycle=1;cycle<=program.cycles;cycle++)for(const [phase,label,key] of [['denature','변성','denature'],['anneal','프라이머 결합','anneal'],['extend','DNA 신장','extend']])
     frames.push({phase,label,temp:program[key],cycle,duration:cycle<=2?1800:cycle===3?900:100});
-  frames.push({phase:'final',label:'최종 연장',temp:program.final,cycle:program.cycles,duration:1800});
+  frames.push({phase:'final',label:'최종 신장',temp:program.final,cycle:program.cycles,duration:1800});
   let time=0;return frames.map(f=>({...f,start:time,end:time+=f.duration}));
 }
 export function frameAt(frames,time) {return frames.find(f=>time<f.end)||frames.at(-1);}
