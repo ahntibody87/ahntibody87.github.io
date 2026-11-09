@@ -1,4 +1,4 @@
-import {createState,freshTip,addReagent,resetTube,planSharedReagents,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=2';
+import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=auto6';
 import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=batch5';
 
 import {mountWorkbench} from './workbench.mjs?v=3';
@@ -86,17 +86,16 @@ function iceView(){
 function aReady(){return state.tubes.A.additions.length===scenario.reagents.length+1;}
 function benchView(){
   const t=state.tubes[selected];
-  const plan=planSharedReagents(state,scenario);
-  return '<p><strong>'+(aReady()?'남은 반응관에는 각각의 원본 시료를 넣으세요.':'A 반응관부터 공통 시약 4종과 A의 추출 RNA를 차례로 넣으세요.')+'</strong></p><p>피펫을 <strong>팁 박스 → 시약병 → 반응 튜브 → 폐기통</strong> 순으로 옮기세요. 피펫을 끌거나 기구를 차례로 누를 수 있습니다. 팁이 끼워져 있다면 병에서 반응 튜브로 바로 끌어도 됩니다.</p>'+
+  const plan=planRemainingTransfers(state,scenario);
+  return '<p><strong>'+(aReady()?(plan?.length===0?'네 반응관 준비 완료.':'남은 반응관은 자동으로 준비할 수 있습니다.'):'A 반응관부터 공통 시약 4종과 A의 추출 RNA를 차례로 넣으세요.')+'</strong></p><p>피펫을 <strong>팁 박스 → 시약병 → 반응 튜브 → 폐기통</strong> 순으로 옮기세요. 피펫을 끌거나 기구를 차례로 누를 수 있습니다. 팁이 끼워져 있다면 병에서 반응 튜브로 바로 끌어도 됩니다.</p>'+
     '<div class="amp-recipe">'+scenario.reagents.map((r,i)=>'<span>'+(i+1)+'. '+esc(r.label)+'</span>').join('<b>→</b>')+
     '<b>→</b><span>5. 해당 원본 시료</span></div>'+prepScene()+
     '<div class="amp-bench-readout" role="status" aria-live="polite" id="amp-scene-status">'+
     esc(prepLiquid?material(prepLiquid)+' 흡입됨':state.tip?(state.tip.used?'사용한 팁 · 폐기통에서 버리세요':'새 팁 장착 · 시약병에서 흡입하세요'):'팁 박스를 눌러 새 팁을 끼우세요')+'</div>'+
     '<div class="amp-actions">'+
-    (aReady()&&plan?.length&&!state.tip&&!busy?'<strong>나머지 튜브에 공통시약을 넣을까요?</strong>'+
-      button('네.','autoCommon','class="amp-primary" '+(!state.ice?'disabled':'')):'')+
+    (aReady()&&plan?.length&&!state.tip&&!busy?'<strong>나머지 반응관에 공통 시약과 원본 시료를 자동으로 넣을까요?</strong>'+
+      button('네.','autoPipette','class="amp-primary" '+(!state.ice?'disabled':'')):'')+
     '<label class="amp-inline"><input id="amp-ice" type="checkbox" '+(state.ice?'checked':'')+' '+(busy?'disabled':'')+'> 효소병을 얼음 위에 두기</label></div>'+
-    '<p class="amp-small">공통시약 자동 분주 뒤에는 각 반응관에 해당 원본 시료를 직접 넣으세요.</p>'+
     '<div class="amp-actions">'+scenario.samples.map(s=>button(esc(s.label)+' 성분 보기','tube','data-id="'+s.id+'" aria-pressed="'+(selected===s.id)+'" '+(busy?'disabled':''))).join('')+'</div>'+
     '<div class="amp-contents"><h4>'+esc(label(selected))+' 반응 튜브 · '+t.additions.length+'개 성분</h4><ol>'+
     (t.additions.length?t.additions.map(a=>'<li>'+esc(material(a.reagent))+'</li>').join(''):'<li>빈 반응 튜브</li>')+
@@ -315,8 +314,8 @@ async function liftRack(){
   $('.amp-main [data-action="carryRack"]')?.focus({preventScroll:true});
   announce('원본 시료 네 개가 들어 있는 냉각 랙을 꺼냈습니다.');
 }
-async function autoCommon(){
-  const plan=planSharedReagents(state,scenario);
+async function autoPipette(){
+  const plan=planRemainingTransfers(state,scenario);
   if(!aReady()||!plan?.length||state.tip||prepLiquid||!state.ice)return;
   busy=true;render();
   const low=quality==='low'||reduced.matches;
@@ -337,7 +336,7 @@ async function autoCommon(){
   }finally{
     busy=false;render();
   }
-  sceneStatus('공통 시약 자동 분주 완료. 원본 시료를 각각의 반응 튜브에 직접 넣으세요.');
+  sceneStatus('공통 시약과 원본 시료 분주 완료. 혼합·스핀다운으로 진행하세요.');
 }
 async function handleGelTarget(id,from){
   if(busy||state.gelRun)return;
@@ -406,7 +405,7 @@ async function action(name,node){
   }else if(name==='liftRack'){
     if(state.step===1&&station==='ice')await liftRack();
   }else if(name==='tube'){selected=id;render();announce(`${label(id)}: ${state.tubes[id].additions.map(a=>material(a.reagent)).join(', ')||'빈 튜브'}`);}
-  else if(name==='autoCommon'){await autoCommon();}
+  else if(name==='autoPipette'){await autoPipette();}
   else if(name==='samples'){$('[data-bench-target^="sample:"]')?.focus();}
   else if(name==='resetTube'){resetTube(state,selected);render();sceneStatus(label(selected)+' 반응 튜브를 새로 만들었습니다. 사용한 팁은 폐기통에 버리세요.');
   }else if(name==='placeVortex'){

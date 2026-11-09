@@ -19,25 +19,22 @@ export function addReagent(state, id, reagent, dispose=true) {
   tube.mixed=false; tube.spun=false;
   return true;
 }
-// Resume only clean, in-order preparations. The student handles every sample.
-export function planSharedReagents(state,scenario) {
-  const recipe=scenario.reagents.map(reagent=>reagent.id);
+// Resume clean preparations after the student completes the A reaction.
+export function planRemainingTransfers(state,scenario) {
+  const common=scenario.reagents.map(reagent=>reagent.id);
+  if(state.tubes.A.additions.length!==common.length+1)return null;
   const transfers=[];
-  let exampleReady=false;
   for(const {id} of scenario.samples){
     const tube=state.tubes[id];
-    if(!tube.received)return null;
-    const common=tube.additions.filter(addition=>!addition.reagent.startsWith('sample:'));
-    const hasSample=common.length!==tube.additions.length;
+    const recipe=[...common,`sample:${id}`];
+    if(!tube.received||tube.additions.length>recipe.length)return null;
     const invalid=tube.additions.some((addition,index)=>
-      addition.reagent!==(recipe[index]??`sample:${id}`) ||
-      addition.reused || (scenario.reagents.find(r=>r.id===addition.reagent)?.enzyme&&!addition.cold));
-    if(invalid||common.length>recipe.length||tube.additions.length>recipe.length+1)return null;
-    if(common.length===recipe.length)exampleReady=true;
-    if(hasSample)continue;
-    for(const reagent of recipe.slice(common.length))transfers.push({tube:id,reagent});
+      addition.reagent!==recipe[index] || addition.reused ||
+      (scenario.reagents.find(r=>r.id===addition.reagent)?.enzyme&&!addition.cold));
+    if(invalid)return null;
+    for(const reagent of recipe.slice(tube.additions.length))transfers.push({tube:id,reagent});
   }
-  return exampleReady?transfers:null;
+  return transfers;
 }
 export function resetTube(state,id) {
   state.tubes[id]={...freshTube(),received:state.tubes[id].received};

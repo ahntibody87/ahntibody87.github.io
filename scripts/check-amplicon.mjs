@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {createState,freshTip,addReagent,resetTube,planSharedReagents,issues,nextIssues,timeline,frameAt,bands} from '../assets/activities/amplicon/model.mjs';
+import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from '../assets/activities/amplicon/model.mjs';
 import {molecule,temperatureGraph} from '../assets/activities/amplicon/visuals.mjs';
 const scenario=JSON.parse(fs.readFileSync(new URL('../assets/activities/amplicon/scenarios/sars-cov-2.json',import.meta.url)));
 let checks=0;
@@ -16,24 +16,28 @@ function prepared(){
   return s;
 }
 const has=(s,rule,step=5)=>issues(s,scenario,step).some(x=>x.rule===rule);
-test('자동 분주: 시범 튜브 조제 후 나머지 공통 시약만 분주',()=>{
+test('자동 분주: A 반응관 조제 후 나머지 공통 시약과 원본 시료 분주',()=>{
   const state=createState(scenario);
   for(const tube of Object.values(state.tubes))tube.received=true;
-  assert.equal(planSharedReagents(state,scenario),null);
+  assert.equal(planRemainingTransfers(state,scenario),null);
   for(const {id} of scenario.reagents){freshTip(state);addReagent(state,'A',id);}
-  const plan=planSharedReagents(state,scenario);
-  assert.equal(plan.length,12);
-  assert.ok(plan.every(({tube,reagent})=>tube!=='A'&&!reagent.startsWith('sample:')));
+  assert.equal(planRemainingTransfers(state,scenario),null);
+  freshTip(state);addReagent(state,'A','sample:A');
+  const plan=planRemainingTransfers(state,scenario);
+  assert.equal(plan.length,15);
+  assert.deepEqual(plan.filter(({reagent})=>reagent.startsWith('sample:')),
+    ['B','positive','NTC'].map(tube=>({tube,reagent:'sample:'+tube})));
+  assert.ok(plan.every(({tube})=>tube!=='A'));
   for(const {tube,reagent} of plan){freshTip(state);addReagent(state,tube,reagent);}
-  assert.deepEqual(planSharedReagents(state,scenario),[]);
-  assert.ok(Object.values(state.tubes).every(tube=>tube.additions.length===4));
+  assert.deepEqual(planRemainingTransfers(state,scenario),[]);
+  assert.deepEqual(issues(state,scenario,2),[]);
 });
 test('자동 분주: 정상 부분 조제 이어가기와 기존 오조작 보존',()=>{
   const state=prepared();
   resetTube(state,'B');freshTip(state);addReagent(state,'B','buffer',false);
-  assert.deepEqual(planSharedReagents(state,scenario).map(item=>item.reagent),['primer','rt','taq']);
+  assert.deepEqual(planRemainingTransfers(state,scenario).map(item=>item.reagent),['primer','rt','taq','sample:B']);
   addReagent(state,'B','primer',false);
-  assert.equal(planSharedReagents(state,scenario),null);
+  assert.equal(planRemainingTransfers(state,scenario),null);
   assert.deepEqual(state.tubes.B.additions.at(-1).previousTransfer,{tube:'B',reagent:'buffer'});
   assert.ok(has(state,'tip',2));
 });
