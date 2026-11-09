@@ -14,6 +14,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
 let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
 let coolerOpen=false,coolerTransfer=0,carrying=false;
+const vortexHoldMs=1500;
 let vortexTube=null,mixHold=null,spinSlots=[null,null,null,null],lidClosed=false,spinning=false;
 const parkedPipette={x:5.1,y:.32,z:-1.25};
 let player={x:4.8,y:4.8},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
@@ -109,7 +110,7 @@ function mixView(){
   const complete=ready&&spinSlots.every(slot=>state.tubes[slot.id].spun);
   const art=mixEquipment({spin,active:spinning,closed:lidClosed,slots:spinSlots,
     sample:vortexTube,index:samples.findIndex(s=>s.id===vortexTube),button,label,escape:esc});
-  return `<p>${spin?'혼합한 반응관을 고르고 로터의 구멍을 누르거나 구멍에 끌어 놓으세요. 서로 마주 보는 1·3번과 2·4번에 같은 부피의 반응관을 배치합니다.':'반응관을 눌러 접촉판에 올리거나 접촉판으로 끌어 놓으세요. 약 2.5초 동안 접촉판에 눌러 혼합하세요.'}</p>
+  return `<p>${spin?'혼합한 반응관을 고르고 로터의 구멍을 누르거나 구멍에 끌어 놓으세요. 서로 마주 보는 1·3번과 2·4번에 같은 부피의 반응관을 배치합니다.':`반응관을 눌러 접촉판에 올리거나 접촉판으로 끌어 놓으세요. 약 ${vortexHoldMs/1000}초 동안 접촉판에 눌러 혼합하세요.`}</p>
     ${art}
     <div class="amp-tubes">${samples.map(({id})=>{
       const loaded=spinSlots.some(slot=>slot?.id===id);
@@ -120,7 +121,7 @@ function mixView(){
     <div class="amp-actions">${spin?
       button(lidClosed?'덮개 열기':'덮개 닫기','spinLid',busy?'disabled':'')+
       button(spinning?'회전 중…':complete?'✓ 스핀다운 완료':'네 반응관 스핀다운','spinAll',`class="amp-primary" ${!ready||!lidClosed||busy||complete?'disabled':''}`):
-      `<button type="button" id="amp-vortex-hold" class="amp-primary" ${vortexTube?'':'disabled'}>접촉판에 누르고 있기</button><progress id="amp-vortex-progress" max="2500" value="0" aria-label="볼텍스 혼합 시간"></progress>`}
+      `<button type="button" id="amp-vortex-hold" class="amp-primary" ${vortexTube?'':'disabled'}>접촉판에 누르고 있기</button><progress id="amp-vortex-progress" max="${vortexHoldMs}" value="0" aria-label="볼텍스 혼합 시간"></progress>`}
     ${button(spin?'볼텍스로 이동':'원심분리기로 이동','open',`data-id="${spin?'vortex':'spin'}" ${busy?'disabled':''}`)}</div>`;
 }
 
@@ -133,7 +134,7 @@ function stopMix(complete=false){
     $('.amp-vortex')?.classList.remove('amp-machine-running');
     const progress=$('#amp-vortex-progress');if(progress)progress.value=0;
   }
-  announce(complete?label(vortexTube)+' 반응관 혼합 완료.':'혼합하려면 2.5초 동안 계속 누르세요.');
+  announce(complete?label(vortexTube)+' 반응관 혼합 완료.':`혼합하려면 ${vortexHoldMs/1000}초 동안 계속 누르세요.`);
 }
 function startMix(){
   if(busy||!vortexTube||warn(issues(state,scenario,2)))return;
@@ -144,7 +145,7 @@ function startMix(){
   announce('볼텍스 믹서 작동 중.');
   function advance(now){
     progress.value=now-start;
-    if(now-start>=2500)stopMix(true);
+    if(now-start>=vortexHoldMs)stopMix(true);
     else mixHold.frame=requestAnimationFrame(advance);
   }
   mixHold.frame=requestAnimationFrame(advance);
