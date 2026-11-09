@@ -9,11 +9,11 @@ export function coolerObjects(scenario,open,transfer){
   const z=.46+transfer*.38;
   const base=.46-transfer*.26+Math.sin(transfer*Math.PI)*1.25;
   const box=target(open?'':'lid',-2.8,.42,'아이스박스 뚜껑 열기','cooler',{open,labelHeight:.94});
-  const pad=target(open&&transfer<1?'shelf':'',3.2,.84,'랙 놓는 자리','receivingPad',{labelHeight:.16});
+  const pad=target(open&&transfer<1?'shelf':'',3.2,1.28,'랙 놓는 자리','receivingPad',{labelHeight:.20,labelZ:1.91});
   if(!open)return [box,pad];
   return [box,pad,
     target('rack',x,z,transfer===1?'꺼낸 냉각 랙':'냉각 랙 꺼내기','coldRack',
-      {base,width:4.45,labelHeight:base-.46,annotation:transfer===1}),
+      {base,width:4.45,labelHeight:transfer===1?.20:base-.19,labelZ:transfer===1?1.91:z,annotation:transfer===1}),
     ...scenario.samples.map((sample,i)=>target('stock:'+sample.id,x+(i-1.5)*1.08,z,sampleName(sample,i),'tube',
       {base:base+.24,color:stockColors[i],annotation:true,labelHeight:base+.27}))
   ];

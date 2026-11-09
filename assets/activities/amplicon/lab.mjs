@@ -1,8 +1,8 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
 import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21';
 
-import {mountWorkbench} from './workbench.mjs?v=gel18';
-import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=gel18';
+import {mountWorkbench} from './workbench.mjs?v=rack22';
+import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=rack22';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 

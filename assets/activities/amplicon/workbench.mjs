@@ -75,7 +75,7 @@ function paintScene(canvas,objects,tool,tip,liquid){
         box(x,.79,z+1.97,.95,.20,.11,'#4f829f');
       }
     }else if(o.kind==='receivingPad'){
-      box(x,0,z,4.65,.20,1.52,'#97b3bf');
+      box(x,0,z,5.10,.20,2.60,'#a8c4ce');
     }else if(o.kind==='coldRack'){
       const y=o.base??.33, width=o.width??6.15;
       box(x,y,z,width,.17,.86,'#3c92a2');
@@ -122,7 +122,8 @@ function paintScene(canvas,objects,tool,tip,liquid){
     }else if(o.kind==='well'){
       box(x,.452,z,.68,.012,.74,o.color);
     }else tube(o,o.kind==='bottle');
-    if(['cooler','receivingPad','coldRack','ice','rack','tank'].includes(o.kind))supports.push(...faces.splice(0));
+    if(o.kind==='receivingPad')furniture.push(...faces.splice(0));
+    else if(['cooler','coldRack','ice','rack','tank'].includes(o.kind))supports.push(...faces.splice(0));
   }
   if(tool){
     const {x,y,z}=tool;
@@ -175,7 +176,7 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
     for(const target of anchored){
       const o=objects.find(object=>object.id===(target.dataset.benchTarget??target.dataset.benchLabel));
       if(!o)continue;
-      const p=project([o.x,o.labelHeight??.35,o.z]);
+      const p=project([o.x,o.labelHeight??.35,o.labelZ??o.z]);
       target.style.left=(100*p.x/WIDTH)+'%';
       target.style.top=(100*p.y/HEIGHT)+'%';
     }
