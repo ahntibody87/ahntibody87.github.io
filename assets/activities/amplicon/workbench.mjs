@@ -141,11 +141,14 @@ function paintScene(canvas,objects,tool,tip,liquid){
   background.addColorStop(0,coolerScene?'#d6e6ef':'#182d3b');
   background.addColorStop(.60,coolerScene?'#eaf3f7':'#345363');
   background.addColorStop(1,coolerScene?'#c3d8e3':'#1b303b');
-  ctx.fillStyle=background;
-  ctx.fillRect(0,0,WIDTH,HEIGHT);
-  ctx.fillStyle='#ffffff0b';
-  for(let i=1;i<7;i++)ctx.fillRect(i*145,0,1,214);
-  ctx.fillRect(0,145,WIDTH,1);
+  ctx.clearRect(0,0,WIDTH,HEIGHT);
+  if(!canvas.closest('.amp-vr')){
+    ctx.fillStyle=background;
+    ctx.fillRect(0,0,WIDTH,HEIGHT);
+    ctx.fillStyle='#ffffff0b';
+    for(let i=1;i<7;i++)ctx.fillRect(i*145,0,1,214);
+    ctx.fillRect(0,145,WIDTH,1);
+  }
   const ordered=group=>group.sort((a,b)=>a.depth-b.depth);
   for(const {view,color,light} of [...ordered(furniture),...ordered(supports),...ordered(faces)]){
     const channel=i=>Math.min(255,Math.round(parseInt(color.slice(i,i+2),16)*light));

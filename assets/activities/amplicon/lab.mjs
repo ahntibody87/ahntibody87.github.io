@@ -1,5 +1,5 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
-import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21';
+import {stations as mapStations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21';
 
 import {mountWorkbench} from './workbench.mjs?v=rack22';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=rack22';
@@ -11,6 +11,8 @@ import {pcrEquipment} from './pcr-equipment.mjs?v=pcr21';
 import {electrodeDiagram,uvEquipment} from './gel-equipment.mjs';
 
 const root=document.getElementById('amp-lab');
+const perspective=root.perspective;
+const stations=perspective?.stations??mapStations;
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=(text,action,extra='')=>`<button type="button" data-action="${action}" ${extra}>${text}</button>`;
 const tick=(done,text)=>`<li class="${done?'amp-done':''}"><span aria-hidden="true">${done?'✓':'○'}</span> ${esc(text)}</li>`;
@@ -81,6 +83,7 @@ function checklist(){
   return scenario.steps[s].tasks.map((t,i)=>tick(flags[i],t)).join('');
 }
 function render(){
+  perspective?.detach();
   const active=document.activeElement;
   const focusId=root.contains(active)?active.id:'';
   const focusAction=root.contains(active)?active.dataset.action:null;
@@ -89,19 +92,22 @@ function render(){
   const step=scenario.steps[state.step];
   root.dataset.quality=quality;
   root.classList.toggle('amp-pcr-playing',!!motion);
-  root.innerHTML=`<div class="amp-top"><div><span class="amp-kicker">분자 진단 탐구 · 10~20분</span><h2>AMPLICON <span>웹 구현 실험실</span></h2></div><label>애니메이션 <select id="amp-quality"><option value="normal" ${quality==='normal'?'selected':''}>표준</option><option value="low" ${quality==='low'?'selected':''}>저사양 · 움직임 줄이기</option></select></label></div>
+  root.innerHTML=`<div class="amp-top"><div><span class="amp-kicker">분자 진단 탐구 · 10~20분</span><h2>AMPLICON <span>${perspective?'1인칭 과학실':'웹 구현 실험실'}</span></h2></div><label>애니메이션 <select id="amp-quality"><option value="normal" ${quality==='normal'?'selected':''}>표준</option><option value="low" ${quality==='low'?'selected':''}>저사양 · 움직임 줄이기</option></select></label></div>
   <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol>${step.tasks.length?`<ul class="amp-checklist">${checklist()}</ul>`:''}<details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6&&!carrying?button('다음 단계 →','next','class="amp-primary" '+(busy||transit?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy||transit?'disabled':''):''}</div><p id="amp-next-guide" class="amp-next-guide" role="status" hidden></p><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
   <div class="amp-main">${state.step===0?brief():station?workstation():explore()}</div></div>
   <p class="amp-status" id="amp-status" role="status" aria-live="polite"></p>
   <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>`;
   bind();benchScene=null;bindBenchScene();if(!station&&state.step>0)updatePlayer();
+  if(perspective&&state.step>0)perspective.mount({root,station,player,expected:expectedStation(),
+    status:{pcrLoaded:state.pcrLoaded.length,pcrRunning:!!motion,uvPlaced,uvClosed:state.viewed,spinClosed:lidClosed,spinLoaded:spinSlots.filter(Boolean).length,vortexTube:!!vortexTube},cargo:transit?.cargo??carrying,
+    update:()=>{updatePlayer();return near?.id;},interact:()=>action('interact'),open,feedback:routeFeedback});
   if(whyOpen)$('.amp-progress details').open=true;
   const restored=focusId?root.querySelector(`[id="${focusId}"]`):focusAction?root.querySelector(`[data-action="${focusAction}"]${focusItem?`[data-id="${focusItem}"]`:''}`):null;
   if(restored&&!restored.disabled)restored.focus({preventScroll:true});
   if(!aReady())autoPromptOffered=false;
   if(station==='bench'&&!autoPromptOffered)showAutoPrompt();
 }
-function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><h3 id="amp-brief-title" tabindex="-1">${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + 음성 대조군</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p></section>`;}
+function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${perspective?'<img src="/assets/activities/amplicon-vr/preview.png" alt="피펫을 든 학생의 눈높이에서 바라본 과학실">':equipmentArt('pcr')}<div><h3 id="amp-brief-title" tabindex="-1">${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + 음성 대조군</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p></section>`;}
 function movePad(){return `<div class="amp-dpad" aria-label="터치 이동"><button type="button" data-move="up" aria-label="위로 이동">↑</button><button type="button" data-move="left" aria-label="왼쪽 이동">←</button><button type="button" data-action="interact" aria-label="가까운 기기 열기">E</button><button type="button" data-move="right" aria-label="오른쪽 이동">→</button><button type="button" data-move="down" aria-label="아래로 이동">↓</button></div>`;}
 function expectedStation(){
   if(transit)return transit.destination;
@@ -122,6 +128,7 @@ function routeFeedback(wrong){
 }
 function explore(){
   const cargo=transit?.cargo??carrying;
+  if(perspective)return perspective.explore(esc(routeInstruction()),cargo);
   return `<section class="amp-explore">
     <div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3 id="amp-route-guide" class="amp-route-guide" role="status">${esc(routeInstruction())}</h3></div>
       ${cargo?'':button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div>
@@ -136,7 +143,7 @@ function tubeCards(action='tube',ids=scenario.samples.map(s=>s.id)){
 function workstation(){
   const s=stations.find(s=>s.id===station),expected=scenario.steps[state.step].station;
   const relevant=station===expected||(state.step===3&&station==='spin');
-  return `<section class="amp-work"><div class="amp-panel-head"><div class="amp-work-heading">${equipmentArt(station)}<div><span class="amp-kicker">작업 모드 · ${state.step}단계</span><h3 tabindex="-1" id="amp-work-title">${s.label}</h3></div></div>${button('← 실험실로','close',busy?'disabled':'')}</div>${!relevant?`<div class="amp-empty"><p>지금은 ‘${esc(scenario.steps[state.step].title)}’ 단계입니다.</p></div>`:station==='ice'?iceView():station==='bench'?benchView():station==='vortex'||station==='spin'?mixView():station==='pcr'?pcrView():station==='gel'?gelView():uvView()}</section>`;
+  return `<section class="amp-work"><div class="amp-panel-head"><div class="amp-work-heading">${perspective?'':equipmentArt(station)}<div><span class="amp-kicker">작업 모드 · ${state.step}단계</span><h3 tabindex="-1" id="amp-work-title">${s.label}</h3></div></div>${button('← 실험실로','close',busy?'disabled':'')}</div>${!relevant?`<div class="amp-empty"><p>지금은 ‘${esc(scenario.steps[state.step].title)}’ 단계입니다.</p></div>`:station==='ice'?iceView():station==='bench'?benchView():station==='vortex'||station==='spin'?mixView():station==='pcr'?pcrView():station==='gel'?gelView():uvView()}</section>`;
 }
 
 function prepScene(){
@@ -221,9 +228,10 @@ function startMix(){
 
 function pcrView(){
   const loaded=state.pcrLoaded.length===scenario.samples.length;
-  const equipment=pcrEquipment({loaded,active:!!motion,complete:state.amplified,program:state.program});
+  const equipment=perspective?(motion?'<p id="amp-phase"></p><p id="amp-cycle"></p>':''):pcrEquipment({loaded,active:!!motion,complete:state.amplified,program:state.program});
   if(motion)return molecularView(equipment);
-  return equipment+`<p>네 반응관을 한 번에 장착하고 화면에 표시된 기본 프로그램으로 실행하세요.</p>
+  const program=perspective?`<p>기기 프로그램 · 역전사 ${state.program.rt}°C · 초기 변성 ${state.program.initial}°C · ${state.program.denature} → ${state.program.anneal} → ${state.program.extend}°C × ${state.program.cycles}회 · 최종 신장 ${state.program.final}°C</p>`:'';
+  return equipment+program+`<p>네 반응관을 한 번에 장착하고 화면에 표시된 기본 프로그램으로 실행하세요.</p>
       <div class="amp-actions">${state.amplified?
         '<strong class="amp-success">✓ RT-PCR 완료 · 전기영동으로 진행하세요.</strong>'+button('분자 뷰 다시 보기','replayPcr'):
         button('네 튜브를 한 번에 넣기','loadPcr',loaded?'disabled':'')+
@@ -280,7 +288,7 @@ function gelView(){
     </div>`;
 }
 function uvView(){
-  const equipment=uvEquipment(uvPlaced,state.viewed);
+  const equipment=perspective?'':uvEquipment(uvPlaced,state.viewed);
   if(!state.viewed)return equipment+`<p>${uvPlaced?'겔을 놓았습니다. 보호 덮개를 닫아 밴드를 관찰하세요.':'운반한 겔을 관찰기의 받침 위에 놓으세요.'}</p>
     <div class="amp-actions">${button(uvPlaced?'보호 덮개 닫기':'겔을 UV 관찰기에 놓기',uvPlaced?'view':'placeGel','class="amp-primary"')}</div>`;
   return equipment+`${gelSvg()}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 음성 대조군을 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 정답 확인</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3 class="amp-answer-${state.answer===scenario.answer?'correct':'review'}">${state.answer===scenario.answer?'정답입니다!':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘음성 대조군’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
@@ -673,7 +681,7 @@ function bind(){
     hold.onblur=()=>stopMix();
   }
   const room=$('.amp-room');
-  if(room){
+  if(room&&!perspective){
     function selectEquipment(id){
       if(id!==expectedStation()||transit||needsSpinTransfer(id)){open(id);return;}
       const equipment=stations.find(item=>item.id===id);

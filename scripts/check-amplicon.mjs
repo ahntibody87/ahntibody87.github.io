@@ -87,5 +87,5 @@ test('활동의 저장·외부 전송·글로벌 CSS 없음',()=>{
   for(const f of ['model.mjs','lab.mjs']){const code=fs.readFileSync(new URL(`../assets/activities/amplicon/${f}`,import.meta.url),'utf8');assert.doesNotMatch(code,/localStorage|sessionStorage|indexedDB|sendBeacon|XMLHttpRequest/);}
   const css=fs.readFileSync(new URL('../assets/activities/amplicon/lab.css',import.meta.url),'utf8');assert.doesNotMatch(css,/(^|\n)(?:body|html|:root|\.site-header|\.workspace)/);
 });
-test('등록된 단원·활동 경로',()=>{const site=JSON.parse(fs.readFileSync(new URL('../data/site.json',import.meta.url)));const unit=site.courses.find(c=>c.id==='advanced-life-science').units.find(u=>u.id==='biotechnology');assert.equal(unit.activities.length,1);assert.equal(unit.activities[0].id,'amplicon');assert.equal(unit.activities[0].type,'inquiry');});
+test('등록된 단원·활동 경로',()=>{const site=JSON.parse(fs.readFileSync(new URL('../data/site.json',import.meta.url)));const unit=site.courses.find(c=>c.id==='advanced-life-science').units.find(u=>u.id==='biotechnology');assert.deepEqual(unit.activities.map(({id,type})=>[id,type]),[['amplicon','inquiry'],['amplicon-vr','inquiry']]);assert.equal(unit.activities[1].title,unit.activities[0].title+' (VR)');});
 console.log(`AMPLICON: ${checks}개 검사 통과`);
