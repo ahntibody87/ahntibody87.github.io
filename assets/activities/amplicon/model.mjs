@@ -3,7 +3,7 @@ export const freshTube = () => ({received:false, additions:[], mixed:false, spun
 export function createState(scenario) {
   return {step:0, tubes:Object.fromEntries(scenario.samples.map(s=>[s.id,freshTube()])),
     tip:null, ice:true, program:{...scenario.program.defaults}, pcrLoaded:[], amplified:false,
-    lanePlan:['marker',...scenario.samples.map(s=>s.id)], lanes:[null,null,null,null,null],
+    recorded:false, lanePlan:['marker',...scenario.samples.map(s=>s.id)], lanes:[null,null,null,null,null],
     polarity:'normal', gelRun:false, viewed:false, answer:'', reason:'', submitted:false};
 }
 export function freshTip(state) { state.tip={used:false,contacts:[]}; }
@@ -83,6 +83,7 @@ export function issues(state,scenario,step=state.step) {
   }
   if(step>=5) {
     if(!state.amplified)add('pcrRun');
+    if(!state.recorded||state.lanePlan[0]!=='marker'||new Set(state.lanePlan).size!==ids.length+1)add('laneRecord');
     if(!state.lanes.includes('marker'))add('marker');
     if(state.lanes.some((id,i)=>id!==state.lanePlan[i])||state.lanes.some(id=>id===null))add('laneMismatch');
     if(state.polarity!=='normal')add('polarity');
@@ -96,11 +97,11 @@ export function nextIssues(state,scenario) {
   return out;
 }
 export function timeline(program) {
-  const frames=[{phase:'rt',label:'역전사',temp:program.rt,cycle:0,duration:4000},
-    {phase:'initial',label:'초기 변성',temp:program.initial,cycle:0,duration:2500}];
+  const frames=[{phase:'rt',label:'역전사',temp:program.rt,cycle:0,duration:7000},
+    {phase:'initial',label:'초기 변성',temp:program.initial,cycle:0,duration:4000}];
   for(let cycle=1;cycle<=program.cycles;cycle++)for(const [phase,label,key] of [['denature','변성','denature'],['anneal','결합','anneal'],['extend','연장','extend']])
-    frames.push({phase,label,temp:program[key],cycle,duration:cycle<=2?1800:cycle===3?900:100});
-  frames.push({phase:'final',label:'최종 연장',temp:program.final,cycle:program.cycles,duration:1800});
+    frames.push({phase,label,temp:program[key],cycle,duration:cycle<=2?3500:cycle===3?1600:220});
+  frames.push({phase:'final',label:'최종 연장',temp:program.final,cycle:program.cycles,duration:2500});
   let time=0;return frames.map(f=>({...f,start:time,end:time+=f.duration}));
 }
 export function frameAt(frames,time) {return frames.find(f=>time<f.end)||frames.at(-1);}
