@@ -1,5 +1,5 @@
 import {createState,freshTip,addReagent,resetTube,planSharedReagents,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=2';
-import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=terms1';
+import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=batch2';
 
 import {mountWorkbench} from './workbench.mjs?v=3';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=3';
@@ -11,7 +11,7 @@ const tick=(done,text)=>`<li class="${done?'amp-done':''}"><span aria-hidden="tr
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let scenario,state,station=null,busy=false,quality=reduced.matches?'low':'normal',selected='A';
 let benchScene=null,prepPosition=null,gelPosition=null,prepLiquid=null,gelLiquid=null;
-let coolerOpen=false,coolerTransfer=0;
+let coolerOpen=false,coolerTransfer=0,carrying=false;
 const parkedPipette={x:5.1,y:.32,z:-1.25};
 let player={x:4.8,y:4.8},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
 const $=selector=>root.querySelector(selector);
@@ -47,7 +47,7 @@ function render(){
   const step=scenario.steps[state.step];
   root.dataset.quality=quality;
   root.innerHTML=`<div class="amp-top"><div><span class="amp-kicker">분자 진단 탐구 · 10~20분</span><h2>AMPLICON <span>웹 구현 실험실</span></h2></div><label>애니메이션 <select id="amp-quality"><option value="normal" ${quality==='normal'?'selected':''}>표준</option><option value="low" ${quality==='low'?'selected':''}>저사양 · 움직임 줄이기</option></select></label></div>
-  <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol><ul class="amp-checklist">${checklist()}</ul><details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6?button('다음 단계 →','next','class="amp-primary" '+(busy?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy?'disabled':''):''}</div><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
+  <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol><ul class="amp-checklist">${checklist()}</ul><details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6&&!carrying?button('다음 단계 →','next','class="amp-primary" '+(busy?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy?'disabled':''):''}</div><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
   <div class="amp-main">${state.step===0?brief():station?workstation():explore()}</div></div>
   <p class="amp-status" id="amp-status" role="status" aria-live="polite"></p>
   <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>`;
@@ -57,7 +57,8 @@ function render(){
   if(restored&&!restored.disabled)restored.focus({preventScroll:true});
 }
 function brief(){return `<section class="amp-brief"><div class="amp-brief-visual">${equipmentArt('pcr')}<div><span class="amp-kicker">사건 01 · 분자 진단</span><h3>${esc(scenario.title)}</h3><p>${esc(scenario.brief)}</p></div></div><div class="amp-facts"><article><span>01 / 시료</span><h4>의심자 A와 B</h4><p>핵산 추출 완료<br>감염 여부는 아직 모릅니다.</p></article><article><span>02 / 표적</span><h4>${esc(scenario.target)} · 약 ${scenario.productBp}bp</h4><p>${esc(scenario.virus)}는 RNA 바이러스.<br>RNA → cDNA → DNA 증폭</p></article><article><span>03 / 대조군</span><h4>양성 대조군 + NTC</h4><p>바이러스 RNA: 증폭 확인<br>증류수: 오염 확인</p></article></div><div class="amp-route">시약 조제 <b>→</b> 역전사·PCR <b>→</b> 전기영동 <b>→</b> 근거로 판정</div><p>한 튜브에서 역전사와 PCR을 이어서 하는 <strong>RT-PCR</strong>을 사용합니다. 완성된 겔과 추출 RNA가 준비되어 있습니다.</p>${button('실험 시작하기 →','next','class="amp-primary"')}</section>`;}
-function explore(){return `<section class="amp-explore"><div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3>기기로 이동해 실험하세요</h3></div>${button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div><div class="amp-room-wrap">${labMap()}<div class="amp-dpad" aria-label="터치 이동"><button type="button" data-move="up" aria-label="위로 이동">↑</button><button type="button" data-move="left" aria-label="왼쪽 이동">←</button><button type="button" data-action="interact" aria-label="가까운 기기 열기">E</button><button type="button" data-move="right" aria-label="오른쪽 이동">→</button><button type="button" data-move="down" aria-label="아래로 이동">↓</button></div></div><p class="amp-controls-note">WASD / 방향키 이동 · E로 조작 · 바닥을 클릭하거나 탭해 이동 · 기기를 누르면 가까이 이동해 열기</p><div class="amp-station-links" aria-label="기기 바로 이동">${stations.map(s=>button(s.label,'open',`data-id="${s.id}"`)).join('')}</div></section>`;}
+function movePad(){return `<div class="amp-dpad" aria-label="터치 이동"><button type="button" data-move="up" aria-label="위로 이동">↑</button><button type="button" data-move="left" aria-label="왼쪽 이동">←</button><button type="button" data-action="interact" aria-label="가까운 기기 열기">E</button><button type="button" data-move="right" aria-label="오른쪽 이동">→</button><button type="button" data-move="down" aria-label="아래로 이동">↓</button></div>`;}
+function explore(){if(carrying)return `<section class="amp-explore"><div class="amp-panel-head"><h3>냉각 랙을 들고 작업대로 이동하세요</h3></div><div class="amp-room-wrap">${labMap(true)}${movePad()}</div><p class="amp-controls-note">방향키 / WASD 또는 바닥을 눌러 이동하세요. 작업대 가까이에서 E를 누르거나 지도에서 작업대를 누르세요.</p></section>`;return `<section class="amp-explore"><div class="amp-panel-head"><div><span class="amp-kicker">탐색 모드</span><h3>기기로 이동해 실험하세요</h3></div>${button('현재 단계 기기로 이동','goto','class="amp-soft"')}</div><div class="amp-room-wrap">${labMap(carrying)}${movePad()}</div><p class="amp-controls-note">WASD / 방향키 이동 · E로 조작 · 바닥을 클릭하거나 탭해 이동 · 기기를 누르면 가까이 이동해 열기</p><div class="amp-station-links" aria-label="기기 바로 이동">${stations.map(s=>button(s.label,'open',`data-id="${s.id}"`)).join('')}</div></section>`;}
 function tubeCards(action='tube',ids=scenario.samples.map(s=>s.id)){
   return `<div class="amp-tubes">${ids.map(id=>{const t=state.tubes[id];return button(`<span class="amp-tube-drawing ${t.additions.length?'amp-filled':''}" aria-hidden="true"><i></i></span><strong>${esc(label(id))}</strong><small>${!t.received?'수령 전':`${t.additions.length}/5 성분`}${t.spun?' · 스핀 완료':t.mixed?' · 혼합 완료':''}</small>`,action,`data-id="${id}" class="amp-tube ${id===selected?'amp-selected':''}" aria-pressed="${id===selected}"`);}).join('')}</div>`;
 }
@@ -76,7 +77,7 @@ function iceView(){
     coolerOpen?'냉각 랙을 눌러 꺼내세요. 오른쪽 받침으로 끌어 놓아도 됩니다.':'아이스박스 뚜껑을 열어 준비된 냉각 랙을 꺼내세요.';
   return '<p>'+instructions+'</p>'+
     sceneMarkup(coolerObjects(scenario,coolerOpen,coolerTransfer),'cooler',esc,busy)+
-    '<div class="amp-actions">'+(received?button('랙을 들고 작업대로 →','next','class="amp-primary"'):
+    '<div class="amp-actions">'+(received?button('랙을 들고 작업대로 →','carryRack','class="amp-primary"'):
       button(coolerOpen?'냉각 랙 꺼내기':'아이스박스 뚜껑 열기',coolerOpen?'liftRack':'openCooler','class="amp-primary" '+(busy?'disabled':'')))+'</div>';
 }
 function benchView(){
@@ -138,6 +139,13 @@ function warn(found){
 }
 function open(id){
   if(busy)return;
+  if(carrying){
+    const bench=stations.find(s=>s.id==='bench');
+    if(id!==bench.id||Math.hypot(player.x-bench.x,player.y-bench.y-.9)>1.8){
+      announce('랙을 들고 작업대 가까이로 이동하세요.');return;
+    }
+    carrying=false;state.step=2;
+  }
   keys.clear();target=null;station=id;render();$('#amp-work-title')?.focus({preventScroll:true});
   if(quality!=='low'&&!reduced.matches){
     $('[data-bench-scene] canvas')?.animate(
@@ -242,7 +250,7 @@ async function liftRack(){
   }finally{
     busy=false;render();
   }
-  $('.amp-main [data-action="next"]')?.focus({preventScroll:true});
+  $('.amp-main [data-action="carryRack"]')?.focus({preventScroll:true});
   announce('원본 시료 네 개가 들어 있는 냉각 랙을 꺼냈습니다.');
 }
 async function autoCommon(){
@@ -316,10 +324,15 @@ async function action(name,node){
       $('#amp-target-bin')?.focus();
       return;
     }
-    const fromIce=state.step===1;
-    state.step=Math.min(6,state.step+1);station=fromIce?'bench':null;prepLiquid=null;gelLiquid=null;render();
-    if(fromIce)$('#amp-work-title')?.focus({preventScroll:true});$('.amp-room')?.focus({preventScroll:true});
+    if(state.step===1)return action('carryRack');
+    state.step=Math.min(6,state.step+1);station=null;prepLiquid=null;gelLiquid=null;render();
+    $('.amp-room')?.focus({preventScroll:true});
+  }else if(name==='carryRack'){
+    if(carrying||state.step!==1||!rackReceived())return;
+    const ice=stations.find(s=>s.id==='ice');
+    player={x:ice.x,y:ice.y+1.2};station=null;carrying=true;render();$('.amp-room').focus();
   }else if(name==='previous'){
+    carrying=false;
     prepLiquid=null;gelLiquid=null;state.tip=null;state.step=Math.max(0,state.step-1);invalidateAfter(state.step);station=null;render();
   }else if(name==='close'){station=null;render();$('.amp-room')?.focus({preventScroll:true});}
   else if(name==='goto')open(scenario.steps[state.step].station);
@@ -380,7 +393,7 @@ function bind(){
       else{const point=new DOMPoint(e.clientX,e.clientY).matrixTransform(room.getScreenCTM().inverse());const pos=unproject(point.x,point.y);target={x:Math.max(.4,Math.min(9.6,pos.x)),y:Math.max(.4,Math.min(9.6,pos.y))};}
       room.focus({preventScroll:true});startMovement();
     };
-    all('[data-station]').forEach(n=>n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open(n.dataset.station);}});
+    all('[data-station]').forEach(n=>n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(carrying){const s=stations.find(s=>s.id===n.dataset.station);target={x:s.x,y:s.y+1.2,station:s.id};startMovement();}else open(n.dataset.station);}});
     room.onkeydown=e=>{const key=e.key.toLowerCase();if(key==='e'){e.preventDefault();if(near)open(near.id);}else if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(key)){e.preventDefault();keys.add(key);target=null;startMovement();}};
     room.onkeyup=e=>keys.delete(e.key.toLowerCase());
     room.onblur=()=>keys.clear();
