@@ -79,3 +79,5 @@
 @keyframes amp-track-dye{to{transform:translateY(30px)}}
 .amp-lab[data-quality="low"] .amp-dye-front{animation:none}
 @media(prefers-reduced-motion:reduce){.amp-dye-front{animation:none}}
+
+.amp-lab .amp-next-guide{margin:.6rem 0 0;color:#254962;font-size:.85rem;font-weight:700}

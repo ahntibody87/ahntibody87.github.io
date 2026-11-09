@@ -1,7 +1,7 @@
 const stockColors=['#6ca7c6','#9c98cb','#4eae94','#829aa9'];
 const reagentColors=['#649daf','#ac83bc','#4389bb','#d9975b'];
 const columns=[-3.05,-1.02,1.02,3.05];
-const sampleName=(sample,index)=>['A','B','양성','NTC'][index]??sample.label;
+const sampleName=(sample,index)=>['A','B','양성','음성 대조군'][index]??sample.label;
 const target=(id,x,z,text,kind,options={})=>({id,x,z,text,kind,...options});
 
 export function coolerObjects(scenario,open,transfer){

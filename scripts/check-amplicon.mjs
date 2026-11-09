@@ -26,7 +26,7 @@ test('자동 분주: A 반응관 조제 후 나머지 공통 시약과 원본 �
   const plan=planRemainingTransfers(state,scenario);
   assert.equal(plan.length,15);
   assert.deepEqual(plan.filter(({reagent})=>reagent.startsWith('sample:')),
-    ['B','positive','NTC'].map(tube=>({tube,reagent:'sample:'+tube})));
+    ['B','positive','negative'].map(tube=>({tube,reagent:'sample:'+tube})));
   assert.ok(plan.every(({tube})=>tube!=='A'));
   for(const {tube,reagent} of plan){freshTip(state);addReagent(state,tube,reagent);}
   assert.deepEqual(planRemainingTransfers(state,scenario),[]);
@@ -65,7 +65,7 @@ test('시료 먼저 투입·시약 중복 차단',()=>{
   s.tubes.A.additions.push(s.tubes.A.additions[0]);assert.ok(has(s,'duplicate',2));
 });
 test('효소 상온 취급 차단',()=>{const s=prepared();s.tubes.A.additions[2].cold=false;assert.ok(has(s,'ice',2));s.tubes.A=prepared().tubes.A;assert.deepEqual(issues(s,scenario,2),[]);});
-for(const control of ['positive','NTC'])test(`${control} 누락 차단`,()=>{const s=prepared();s.tubes[control].received=false;assert.ok(has(s,'controls',1));s.tubes[control].received=true;assert.deepEqual(issues(s,scenario,1),[]);});
+for(const control of ['positive','negative'])test(`${control} 누락 차단`,()=>{const s=prepared();s.tubes[control].received=false;assert.ok(has(s,'controls',1));s.tubes[control].received=true;assert.deepEqual(issues(s,scenario,1),[]);});
 for(const [field,rule] of [['mixed','mix'],['spun','spin']])test(`${rule} 생략 차단`,()=>{const s=prepared();s.tubes.A[field]=false;assert.ok(has(s,rule,3));s.tubes.A[field]=true;assert.deepEqual(issues(s,scenario,3),[]);});
 for(const [key,value,rule] of [['rtEnabled',false,'rtDeleted'],['rt',20,'rtTemp'],['initial',72,'denature'],['denature',72,'denature'],['anneal',80,'annealHigh'],['anneal',25,'annealLow'],['extend',45,'extend'],['final',30,'extend'],['cycles',2,'cycles'],['cycles',NaN,'cycles'],['cycles',30.5,'cycles']])test(`${key}=${value} 차단과 기본값 복구`,()=>{
   const s=prepared();s.program[key]=value;assert.ok(has(s,rule,4));s.program[key]=scenario.program.defaults[key];assert.deepEqual(issues(s,scenario,4),[]);
@@ -75,7 +75,7 @@ test('마커 누락·잘못된 순서·전극 반대 차단과 복구',()=>{
   const s=prepared();s.lanes[0]=null;assert.ok(has(s,'marker'));s.lanes[0]='marker';
   [s.lanes[1],s.lanes[2]]=[s.lanes[2],s.lanes[1]];assert.ok(has(s,'laneMismatch'));s.lanes=[...s.lanePlan];s.polarity='reverse';assert.ok(has(s,'polarity'));s.polarity='normal';assert.deepEqual(issues(s,scenario),[]);
 });
-test('고정된 레인 순서와 밴드가 일치',()=>{const s=prepared();assert.deepEqual(s.lanePlan,['marker','A','B','positive','NTC']);assert.deepEqual(issues(s,scenario,5),[]);assert.deepEqual(s.lanes.map(id=>bands(scenario,id)),[scenario.markerBp,[300],[],[300],[]]);});
+test('고정된 레인 순서와 밴드가 일치',()=>{const s=prepared();assert.deepEqual(s.lanePlan,['marker','A','B','positive','negative']);assert.deepEqual(issues(s,scenario,5),[]);assert.deepEqual(s.lanes.map(id=>bands(scenario,id)),[scenario.markerBp,[300],[],[300],[]]);});
 test('전기영동 완료 전 다음 단계 차단',()=>{const s=prepared();s.step=5;s.gelRun=false;assert.ok(nextIssues(s,scenario).some(x=>x.rule==='gelRun'));});
 test('경고는 원인→분자 수준→판정 영향으로 완비',()=>{for(const w of Object.values(scenario.warnings))for(const key of ['cause','molecule','consequence'])assert.ok(w[key]?.length>5);});
 test('온도·분자 뷰 공통 시간축과 약 30초 재생',()=>{
