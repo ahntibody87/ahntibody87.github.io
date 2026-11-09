@@ -1,12 +1,12 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17';
-import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=walk19';
+import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21';
 
 import {mountWorkbench} from './workbench.mjs?v=gel18';
 import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=gel18';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 
-import {pcrEquipment} from './pcr-equipment.mjs?v=walk19';
+import {pcrEquipment} from './pcr-equipment.mjs?v=pcr21';
 
 import {electrodeDiagram,uvEquipment} from './gel-equipment.mjs';
 
@@ -198,14 +198,20 @@ function pcrView(){
 }
 function molecularView(equipment){
   return `<section class="amp-pcr-observation" aria-label="PCR 분자 관찰">
-    <div class="amp-molecule-head"><strong>분자 관찰</strong><div>${button(molecularPaused?'계속 재생':'일시정지','pause')}${button('관찰 건너뛰기','skip')}</div></div>
-    <div class="amp-pcr-overview">${equipment}<div class="amp-pcr-graphs"><div id="amp-temp-graph"></div><div id="amp-quantity"></div></div></div>
+    <div class="amp-molecule-head"><h3>분자 관찰</h3><div>${button(molecularPaused?'계속 재생':'일시정지','pause')}${button('관찰 건너뛰기','skip')}</div></div>
+    <div class="amp-pcr-overview">
+      <div class="amp-pcr-device"><span class="amp-pcr-device-label">RT-PCR 기기</span>${equipment}</div>
+      <div class="amp-pcr-graphs">
+        <section><h4>반응 온도</h4><div id="amp-temp-graph"></div></section>
+        <section><h4>DNA 증폭량 <span id="amp-copy-count"></span></h4><div id="amp-quantity"></div></section>
+      </div>
+    </div>
     <div class="amp-molecule-pair">
-      <article><h4>스파이크 유전자가 있는 튜브</h4><div id="amp-mol-a"></div></article>
-      <article><h4>스파이크 유전자가 없는 튜브</h4><div id="amp-mol-b"></div></article>
+      <article class="amp-sample-present"><header><h4>스파이크 유전자가 있는 튜브</h4><span>표적 있음</span></header><div id="amp-mol-a"></div></article>
+      <article class="amp-sample-absent"><header><h4>스파이크 유전자가 없는 튜브</h4><span>표적 없음</span></header><div id="amp-mol-b"></div></article>
     </div>
     <div class="amp-molecule-legend"><span style="--amp-key:#ce8430">RNA</span><span style="--amp-key:#2885b3">주형 DNA</span><span style="--amp-key:#ce5a87">새 DNA</span><span style="--amp-key:#a17b0e">프라이머</span></div>
-    <strong id="amp-copy-count"></strong><p id="amp-phase-note"></p>
+    <p id="amp-phase-note"></p>
   </section>`;
 }
 function gelSvg(){
@@ -244,7 +250,7 @@ function uvView(){
   const equipment=uvEquipment(uvPlaced,state.viewed);
   if(!state.viewed)return equipment+`<p>${uvPlaced?'겔을 놓았습니다. 보호 덮개를 닫아 밴드를 관찰하세요.':'운반한 겔을 관찰기의 받침 위에 놓으세요.'}</p>
     <div class="amp-actions">${button(uvPlaced?'보호 덮개 닫기':'겔을 UV 관찰기에 놓기',uvPlaced?'view':'placeGel','class="amp-primary"')}</div>`;
-  return equipment+`${gelSvg()}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 음성 대조군을 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 정답 확인</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3>${state.answer===scenario.answer?'정답!':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘음성 대조군’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
+  return equipment+`${gelSvg()}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 음성 대조군을 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 정답 확인</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3 class="amp-answer-${state.answer===scenario.answer?'correct':'review'}">${state.answer===scenario.answer?'정답입니다!':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘음성 대조군’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
 }
 
 function guideNext(message){

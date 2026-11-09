@@ -79,11 +79,19 @@ export function molecule(frame,progress,positive){
   return `<svg viewBox="0 0 400 175" role="img" aria-label="${esc(note)}"><g font-size="12" fill="#34465e">${art}<text x="200" y="166" text-anchor="middle" font-size="11">${esc(note)}</text></g></svg>`;
 }
 export function temperatureGraph(frames,time){
-  const total=frames.at(-1).end,x=t=>42+t/total*600,y=t=>117-(t-40)*1.5;
+  const total=frames.at(-1).end,x=t=>39+t/total*302,y=t=>83-(t-47)*1.36;
   const points=frames.flatMap(f=>[`${x(f.start)},${y(f.temp)}`,`${x(f.end)},${y(f.temp)}`]).join(' ');
-  return `<svg viewBox="0 0 670 150" role="img" aria-label="온도 그래프와 현재 재생 위치"><path d="M42 15V122H650" fill="none" stroke="#9eacc1"/>${[50,72,95].map(t=>`<text x="35" y="${y(t)+4}" text-anchor="end" font-size="11">${t}°</text>`).join('')}<polyline points="${points}" fill="none" stroke="#93a9e6" stroke-width="2"/><path d="M${x(time)} 15V122" stroke="#315efb" stroke-width="3"/><circle cx="${x(time)}" cy="${y(frames.find(f=>time<f.end)?.temp||frames.at(-1).temp)}" r="5" fill="#315efb"/><text x="42" y="143" font-size="11">0초</text><text x="640" y="143" text-anchor="end" font-size="11">${Math.round(total/1000)}초 · 학습용 재생 시간</text></svg>`;
+  const temp=frames.find(frame=>time<frame.end)?.temp??frames.at(-1).temp;
+  return `<svg viewBox="0 0 350 112" role="img" aria-label="온도 그래프와 현재 재생 위치">
+    ${[50,72,95].map(t=>`<path d="M39 ${y(t)}H341" stroke="#e5eaf0"/><text x="34" y="${y(t)+3}" text-anchor="end" font-size="11" fill="#40556a">${t}°</text>`).join('')}
+    <path d="M39 12V91H341" fill="none" stroke="#9eacc1"/>
+    <polyline points="${points}" fill="none" stroke="#5984a9" stroke-width="1.65"/>
+    <path d="M${x(time)} 12V91" stroke="#276c86" stroke-width="2"/>
+    <circle cx="${x(time)}" cy="${y(temp)}" r="4" fill="#276c86"/>
+    <text x="39" y="106" font-size="10" fill="#40556a">0초</text><text x="341" y="106" text-anchor="end" font-size="10" fill="#40556a">${Math.round(total/1000)}초 · 학습용</text>
+  </svg>`;
 }
 export function quantityGraph(cycle,max){
   const points=Array.from({length:cycle+1},(_,i)=>`${40+i/max*300},${95-i/max*75}`).join(' ');
-  return `<svg viewBox="0 0 365 125" role="img" aria-label="이론상 DNA 양 2의 n승, 현재 ${cycle}사이클"><path d="M40 10V95H345" stroke="#9eacc1" fill="none"/><polyline points="${points}" stroke="#ce5a87" stroke-width="3" fill="none"/><text x="35" y="98" text-anchor="end" font-size="11">2⁰</text><text x="35" y="23" text-anchor="end" font-size="11">2<tspan baseline-shift="super">${max}</tspan></text><text x="40" y="113" font-size="11">0</text><text x="325" y="113" font-size="11">${max}회</text><text x="65" y="20" font-size="11">DNA 양 · 로그 눈금</text></svg>`;
+  return `<svg viewBox="0 0 365 125" role="img" aria-label="이론상 DNA 양 2의 n승, 현재 ${cycle}사이클"><path d="M40 10V95H345" stroke="#9eacc1" fill="none"/><polyline points="${points}" stroke="#ce5a87" stroke-width="3" fill="none"/><text x="35" y="98" text-anchor="end" font-size="11">2⁰</text><text x="35" y="23" text-anchor="end" font-size="11">2<tspan baseline-shift="super">${max}</tspan></text><text x="40" y="113" font-size="11">0</text><text x="325" y="113" font-size="11">${max}회</text><text x="52" y="21" font-size="11" fill="#40556a">로그 눈금</text></svg>`;
 }

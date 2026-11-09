@@ -1,7 +1,7 @@
 const tubeColors=['#68b1d5','#a996cb','#58b398','#bcaa75'];
 export function pcrEquipment({loaded,active,complete,program}){
   const block=loaded?'네 반응관 장착':'반응관 블록 비어 있음';
-  return `<svg class="amp-pcr-machine" viewBox="0 0 560 325" role="group" aria-label="RT-PCR 기기와 기본 프로그램">
+  return `<svg class="amp-pcr-machine" viewBox="32 24 500 291" role="group" aria-label="RT-PCR 기기와 기본 프로그램">
     <ellipse cx="286" cy="298" rx="232" ry="17" fill="#cedbe4"/>
     <path d="M45 176L121 103H450L517 175V251L465 289H95L45 246Z" fill="#7190a6" stroke="#486477" stroke-width="3"/>
     <path d="M45 176L121 103H450L517 175L465 199H95Z" fill="#dae6ee" stroke="#486477" stroke-width="3"/>
@@ -21,8 +21,8 @@ export function pcrEquipment({loaded,active,complete,program}){
     <text x="132" y="222" fill="#a0e8ef" font-size="12">기본 프로그램 · ${block}</text>
     <text id="amp-phase" x="132" y="243" fill="#e6ffff" font-weight="700" font-size="16">${complete?'반응 완료':active?'역전사 준비':program.rt+'°C · 역전사 대기'}</text>
     <text id="amp-cycle" x="428" y="243" text-anchor="end" fill="#e6ffff" font-size="12">${complete?program.cycles:0} / ${program.cycles} 사이클</text>
-    <text x="132" y="258" fill="#a0e8ef" font-size="11">${program.initial}°C 초기 변성 · ${program.anneal}°C 프라이머 결합 · ${program.extend}°C DNA 신장</text>
-    <text x="132" y="273" fill="#a0e8ef" font-size="11">${program.denature} → ${program.anneal} → ${program.extend}°C · ${program.cycles}회 반복 · ${program.final}°C 최종 신장</text>
+    <text x="132" y="258" fill="#a0e8ef" font-size="12">${program.initial}°C 초기 변성 · ${program.anneal}°C 프라이머 결합 · ${program.extend}°C DNA 신장</text>
+    <text x="132" y="273" fill="#a0e8ef" font-size="12">(${program.denature} → ${program.anneal} → ${program.extend}°C) × ${program.cycles}회 · ${program.final}°C 최종 신장</text>
     <circle cx="481" cy="227" r="6" fill="${active?'#60f0b4':'#547388'}"/>
   </svg>`;
 }
