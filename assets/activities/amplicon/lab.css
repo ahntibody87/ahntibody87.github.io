@@ -48,3 +48,27 @@
 @media(max-width:800px) and (min-height:700px){.amp-lab .amp-progress{position:sticky;top:var(--header-height,88px);z-index:5;box-shadow:0 4px 15px #24375212}.amp-lab .amp-step-list,.amp-lab .amp-progress>.amp-small{display:none}.amp-lab .amp-checklist{margin-top:8px;margin-bottom:8px}.amp-lab .amp-progress details{padding-top:6px}.amp-lab .amp-side-actions{margin-top:8px}}
 
 .amp-bench-readout.amp-error{color:#9f1b26;background:#fff0f0;border-color:#e4a4a9}
+.amp-machine{position:relative;width:min(100%,440px);margin:0 auto 1rem;border-radius:14px;background:linear-gradient(#e7f0f4,#f5f8fb)}
+.amp-machine svg{display:block;width:100%;height:auto}
+.amp-machine-label{position:absolute;top:5%;left:0;right:0;text-align:center;font-size:.85rem;font-weight:700}
+.amp-machine .amp-machine-light{fill:#74818a}
+.amp-machine-running .amp-machine-light{fill:#45d69e}
+.amp-machine-running .amp-vibration{animation:amp-vortex-orbit .13s linear infinite}
+.amp-machine-running .amp-rotor{transform-origin:210px 156px;animation:amp-rotor-turn .48s linear infinite}
+.amp-lab .amp-spin-slot{position:absolute;transform:translate(-50%,-50%);width:12%;min-width:0;aspect-ratio:1;padding:0;border:1px dashed #c0d9ec;border-radius:50%;background:#1b3447a0;color:#fff;font-size:clamp(.6rem,2vw,.84rem);line-height:1}
+.amp-lab .amp-slot-filled{transform:translate(-50%,12%);width:auto;min-width:11%;aspect-ratio:auto;border:0;border-radius:4px;padding:2px 4px}
+.amp-lab #amp-vortex-hold{touch-action:none;user-select:none}
+.amp-lab #amp-vortex-progress{width:8rem}
+@keyframes amp-vortex-orbit{0%,100%{transform:translate(0,0)}25%{transform:translate(3px,-2px)}50%{transform:translate(0,2px)}75%{transform:translate(-3px,-2px)}}
+@keyframes amp-rotor-turn{to{transform:rotate(360deg)}}
+.amp-lab[data-quality="low"] .amp-machine-running .amp-vibration,
+.amp-lab[data-quality="low"] .amp-machine-running .amp-rotor{animation:none}
+@media(prefers-reduced-motion:reduce){
+  .amp-machine-running .amp-vibration,.amp-machine-running .amp-rotor{animation:none}
+}
+
+.amp-vortex [data-vortex-contact]{cursor:pointer;touch-action:none}
+.amp-inserting{animation:amp-insert-tube .28s ease-out both}
+@keyframes amp-insert-tube{from{transform:translateY(-24px);opacity:.55}to{transform:translateY(0);opacity:1}}
+.amp-lab[data-quality="low"] .amp-inserting{animation:none}
+@media(prefers-reduced-motion:reduce){.amp-inserting{animation:none}}
