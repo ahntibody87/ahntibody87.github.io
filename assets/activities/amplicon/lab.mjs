@@ -46,7 +46,7 @@ function showScreeningIntro(){
   root.innerHTML=`<section class="amp-screening-intro" aria-label="도입 영상">
     <p class="amp-screening-caption">바이러스 감염 의심 환자의 검체를 채취하였습니다. 감염 여부를 직접 실험을 통해 확인하세요.</p>
     <video width="1080" height="608" muted playsinline controls preload="metadata" aria-label="선별진료소에서 A와 B의 코 검체를 채취하고 PCR 실험실로 옮기는 장면">
-      <source src="/assets/activities/amplicon/screening-intro.webm?v=swab25" type="video/webm">
+      <source src="/assets/activities/amplicon/screening-intro.webm?v=swab26" type="video/webm">
       영상 재생을 지원하지 않는 환경에서는 영상 건너뛰기를 선택하세요.
     </video>
     <div class="amp-screening-actions"><button type="button" id="amp-skip-intro">영상 건너뛰기 →</button></div>
