@@ -1,8 +1,8 @@
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=gel12';
 import {stations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=gel12';
 
-import {mountWorkbench} from './workbench.mjs?v=gel12';
-import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=guide13';
+import {mountWorkbench} from './workbench.mjs?v=bench16';
+import {coolerObjects,preparationObjects,electrophoresisObjects,sceneMarkup} from './workbench-ui.mjs?v=bench16';
 
 import {mixEquipment} from './mix-equipment.mjs?v=batch5';
 
@@ -59,8 +59,7 @@ function render(){
   <div class="amp-layout"><aside class="amp-progress"><span class="amp-kicker">현재 단계 ${state.step} / 6</span><h3>${esc(step.title)}</h3><ol class="amp-step-list">${scenario.steps.map((s,i)=>`<li ${i===state.step?'aria-current="step"':''} class="${i<state.step?'amp-past':''}"><span>${i<state.step?'✓':i}</span>${esc(s.title)}</li>`).join('')}</ol><ul class="amp-checklist">${checklist()}</ul><details><summary>왜 이 과정을 할까요?</summary><p>${esc(step.why)}</p></details><div class="amp-side-actions">${state.step===0?button('실험 시작하기 →','next','class="amp-primary"'):state.step<6&&!carrying?button('다음 단계 →','next','class="amp-primary" '+(busy||transit?'disabled':'')):''}${state.step>0&&state.step<6?button('이전 단계','previous',busy||transit?'disabled':''):''}</div><p id="amp-next-guide" class="amp-next-guide" role="status" hidden></p><p class="amp-small">실제 반응 시간은 단축했습니다.<br>답안은 저장되지 않으며 새로고침하면 처음부터 시작합니다.</p></aside>
   <div class="amp-main">${state.step===0?brief():station?workstation():explore()}</div></div>
   <p class="amp-status" id="amp-status" role="status" aria-live="polite"></p>
-  <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>
-  <dialog class="amp-warning" id="amp-auto-prompt" aria-labelledby="amp-auto-title"></dialog>`;
+  <dialog class="amp-warning" id="amp-warning" aria-labelledby="amp-warning-title"></dialog>`;
   bind();benchScene=null;bindBenchScene();if(!station&&state.step>0)updatePlayer();
   if(whyOpen)$('.amp-progress details').open=true;
   const restored=focusId?root.querySelector(`[id="${focusId}"]`):focusAction?root.querySelector(`[data-action="${focusAction}"]${focusItem?`[data-id="${focusItem}"]`:''}`):null;
@@ -81,7 +80,13 @@ function workstation(){
 }
 
 function prepScene(){
-  return sceneMarkup(preparationObjects(state,scenario),'prep',esc,busy);
+  return sceneMarkup(preparationObjects(state,scenario),'prep',esc,busy,`<div id="amp-auto-prompt" class="amp-scene-prompt" hidden>
+    <section aria-labelledby="amp-auto-title">
+      <h4 id="amp-auto-title">나머지 반응관에 자동으로 넣을까요?</h4>
+      <p>공통 시약과 각 반응관에 맞는 원본 시료가 모두 들어갑니다.</p>
+      <div class="amp-actions">${button('네.','autoPipette','class="amp-primary"')}${button('나중에','dismissAuto')}</div>
+    </section>
+  </div>`);
 }
 function iceView(){
   const received=rackReceived();
@@ -196,7 +201,7 @@ function uvView(){
   const equipment=uvEquipment(uvPlaced,state.viewed);
   if(!state.viewed)return equipment+`<p>${uvPlaced?'겔을 놓았습니다. 보호 덮개를 닫아 밴드를 관찰하세요.':'운반한 겔을 관찰기의 받침 위에 놓으세요.'}</p>
     <div class="amp-actions">${button(uvPlaced?'보호 덮개 닫기':'겔을 UV 관찰기에 놓기',uvPlaced?'view':'placeGel','class="amp-primary"')}</div>`;
-  return equipment+`${gelSvg()}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 음성 대조군를 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 모범 해석과 비교</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3>${state.answer===scenario.answer?'판정이 일치합니다':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘음성 대조군’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
+  return equipment+`${gelSvg()}<p class="amp-small">마커 눈금 단위: bp · 작은 DNA가 더 멀리 이동합니다. 표적 산물: 약 ${scenario.productBp}bp</p><form id="amp-conclusion"><fieldset><legend>누가 감염자라고 판단하나요?</legend>${[['A','A만'],['B','B만'],['both','A와 B 모두'],['neither','둘 다 아님']].map(([id,name])=>`<label><input type="radio" name="amp-answer" value="${id}" ${state.answer===id?'checked':''} required> ${name}</label>`).join('')}</fieldset><label for="amp-reason">밴드의 크기와 두 대조군을 근거로 설명하세요.</label><textarea id="amp-reason" rows="4" maxlength="3000" required placeholder="A와 B의 결과는… 양성 대조군과 음성 대조군을 보면…">${esc(state.reason)}</textarea><p class="amp-small">답과 근거는 이 화면에서만 사용하며 저장·전송하지 않습니다.</p><button type="submit" class="amp-primary">제출하고 정답 확인</button></form>${state.submitted?`<section class="amp-comparison" tabindex="-1"><h3>${state.answer===scenario.answer?'정답!':'판정을 다시 비교해 보세요'}</h3><div class="amp-comparison-grid"><article><h4>내 해석</h4><p>${esc({A:'A만',B:'B만',both:'A와 B 모두',neither:'둘 다 아님'}[state.answer])}</p><p class="amp-student-reason">${esc(state.reason)}</p></article><article><h4>모범 해석</h4>${scenario.modelInterpretation.map(t=>`<p>${esc(t)}</p>`).join('')}</article></div><p>내 글에 ‘약 ${scenario.productBp}bp’, ‘양성 대조군’, ‘음성 대조군’의 근거가 모두 있는지 스스로 확인하세요. 서술형 답안은 자동 채점하지 않습니다.</p><details><summary>과학적 근거</summary>${scenario.sources.map(s=>`<p><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></p>`).join('')}</details><strong class="amp-success">✓ 탐구 완료</strong></section>`:''}`;
 }
 
 function guideNext(message){
@@ -235,7 +240,7 @@ function open(id){
     carrying=false;state.step=2;
   }
   keys.clear();target=null;station=id;render();
-  if(!$('#amp-auto-prompt').open)$('#amp-work-title')?.focus({preventScroll:true});
+  if(!$('#amp-auto-prompt:not([hidden])'))$('#amp-work-title')?.focus({preventScroll:true});
   if(id==='bench'&&state.step===2&&!aReady())$('#amp-target-tube-A')?.classList.add('amp-aim-at-a');
   if(quality!=='low'&&!reduced.matches){
     $('[data-bench-scene] canvas')?.animate(
@@ -361,15 +366,17 @@ function canAutoPipette(){
   return state.step===2&&!busy&&!state.tip&&!prepLiquid&&!!planRemainingTransfers(state,scenario)?.length;
 }
 function showAutoPrompt(){
-  if(!canAutoPipette())return;
+  const prompt=$('#amp-auto-prompt');
+  if(!prompt||!canAutoPipette())return;
   autoPromptOffered=true;
-  const dialog=$('#amp-auto-prompt');
-  dialog.innerHTML='<h3 id="amp-auto-title">나머지 반응관에 자동으로 넣을까요?</h3>'+
-    '<p>공통 시약과 각 반응관에 맞는 원본 시료가 모두 들어갑니다.</p>'+
-    '<div class="amp-actions">'+button('네.','autoPipette','class="amp-primary"')+button('나중에','dismissAuto')+'</div>';
-  dialog.querySelector('[data-action="autoPipette"]').onclick=()=>{dialog.close();void autoPipette();};
-  dialog.querySelector('[data-action="dismissAuto"]').onclick=()=>dialog.close();
-  dialog.showModal();
+  prompt.hidden=false;
+  all('[data-bench-scene="prep"] [data-bench-target]').forEach(target=>target.inert=true);
+  prompt.querySelector('[data-action="autoPipette"]').focus({preventScroll:true});
+}
+function dismissAutoPrompt(){
+  $('#amp-auto-prompt').hidden=true;
+  all('[data-bench-scene="prep"] [data-bench-target]').forEach(target=>target.inert=false);
+  $('[data-action="askAuto"]')?.focus({preventScroll:true});
 }
 async function autoPipette(){
   const plan=planRemainingTransfers(state,scenario);
@@ -476,6 +483,8 @@ async function action(name,node){
     if(state.step===1&&station==='ice')await liftRack();
   }else if(name==='tube'){selected=id;render();announce(`${label(id)}: ${state.tubes[id].additions.map(a=>material(a.reagent)).join(', ')||'빈 튜브'}`);}
   else if(name==='askAuto'){showAutoPrompt();}
+  else if(name==='dismissAuto'){dismissAutoPrompt();}
+  else if(name==='autoPipette'){await autoPipette();}
   else if(name==='samples'){$('[data-bench-target^="sample:"]')?.focus();}
   else if(name==='resetTube'){resetTube(state,selected);render();sceneStatus(label(selected)+' 반응 튜브를 새로 만들었습니다. 사용한 팁은 폐기통에 버리세요.');
   }else if(name==='placeVortex'){

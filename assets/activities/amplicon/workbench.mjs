@@ -171,6 +171,7 @@ export function mountWorkbench(scene,getObjects,getToolState,onTarget){
     if(performance.now()>suppressClickUntil)onTarget(target.dataset.benchTarget);
   });
   scene.addEventListener('pointerdown',event=>{
+    if(event.target.closest('.amp-scene-prompt'))return;
     const target=event.target.closest('[data-bench-target]');
     if(target?.disabled||!event.isPrimary||event.button!==0)return;
     const bounds=canvas.getBoundingClientRect();

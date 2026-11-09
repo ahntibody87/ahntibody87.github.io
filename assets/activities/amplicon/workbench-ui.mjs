@@ -52,7 +52,7 @@ export function electrophoresisObjects(state,scenario){
   ];
 }
 
-export function sceneMarkup(objects,kind,escape,busy){
+export function sceneMarkup(objects,kind,escape,busy,overlay=''){
   return '<div class="amp-bench-scene" data-bench-scene="'+kind+'">'+
     '<canvas width="1000" height="440" aria-hidden="true"></canvas>'+
     objects.filter(o=>o.id).map(o=>o.annotation?
@@ -60,5 +60,5 @@ export function sceneMarkup(objects,kind,escape,busy){
       '<button type="button" class="amp-bench-target amp-target-'+o.kind+'" id="amp-target-'+o.id.replace(':','-')+
       '" data-bench-target="'+o.id+'" aria-label="'+escape(o.title??o.text)+'"'+(busy||o.disabled?' disabled':'')+
       '><span>'+escape(o.text)+'</span></button>'
-    ).join('')+'</div>';
+    ).join('')+overlay+'</div>';
 }
