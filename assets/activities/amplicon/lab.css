@@ -87,3 +87,5 @@
 .amp-lab[data-quality="low"] .amp-aim-at-a::after{animation:amp-point-to-a-static 2s linear both}
 @keyframes amp-point-to-a-static{0%,90%{opacity:1}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.amp-aim-at-a::after{animation:amp-point-to-a-static 2s linear both}}
+
+.amp-lab .amp-spin-slot.amp-spin-drop{border-color:#ffe08c;box-shadow:0 0 0 4px #ffe08c9c;background:#365d73}
