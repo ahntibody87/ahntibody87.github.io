@@ -524,8 +524,12 @@ export function createLab(experiment){
   label('VORTEX',-.050,.070,.147,.136,.028,vortex);
 
   const centrifuge=device('spin');
-  rounded(0,.105,0,.445,.206,.405,'plastic',centrifuge,.033);
-  const spinRim=add(new T.RingGeometry(.153,.186,40),'dark',0,.214,-.035,centrifuge);
+  rounded(0,.073,0,.445,.143,.405,'plastic',centrifuge,.028);
+  for(const side of [-1,1]){
+    rounded(side*.195,.175,0,.054,.068,.397,'plastic',centrifuge,.013);
+    rounded(0,.175,side*.169,.367,.068,.064,'plastic',centrifuge,.014);
+  }
+  const spinRim=add(new T.RingGeometry(.153,.186,40),'dark',0,.190,-.035,centrifuge);
   spinRim.rotation.x=-Math.PI/2;
   const spinLid=new T.Group();spinLid.position.set(0,.222,-.190);centrifuge.add(spinLid);
   for(const side of [-1,1]){
@@ -534,13 +538,13 @@ export function createLab(experiment){
   }
   rounded(0,.061,.159,.274,.018,.218,'cabinetGlass',spinLid,.007);
   rounded(0,-.011,.34,.105,.032,.031,'dark',spinLid,.008);
-  const rotor=new T.Group();rotor.position.set(0,.213,-.035);centrifuge.add(rotor);
+  const rotor=new T.Group();rotor.position.set(0,.171,-.035);centrifuge.add(rotor);
   cyl(0,.006,0,.15,.022,'steel',rotor);
   const rotorPositions=[];
   for(let i=0;i<4;i++){
     const angle=Math.PI/4+i*Math.PI/2;
     const x=Math.cos(angle)*.093,z=Math.sin(angle)*.093;
-    rotorPositions.push(new T.Vector3(x,.039,z));
+    rotorPositions.push(new T.Vector3(x,.013,z));
     cyl(x,.018,z,.023,.008,'dark',rotor);
     target('slot:'+i,rotor,x,.03,z,.069,.081,.065);
   }

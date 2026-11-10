@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
-import {createLab} from './lab-scene.mjs?v=6';
+import {createLab} from './lab-scene.mjs?v=7';
 
 const standing=1.62;
 const movement={
