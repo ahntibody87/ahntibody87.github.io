@@ -696,7 +696,8 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
       const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
       if(skipClick||Math.hypot(dx,dy)>5){
         skipClick=true;
-        look(dx*2,dy*2);
+        const horizontal=event.pointerType==='touch'?-dx:dx;
+        look(horizontal*2,dy*2);
         drag={x:event.clientX,y:event.clientY};
       }
     }
