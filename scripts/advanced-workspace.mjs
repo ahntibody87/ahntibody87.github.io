@@ -8,8 +8,8 @@ const previews = {
   'rna-lab':['RNA STRUCTURE','RNA 접힘 개념도'],
   'x-inactivation':['XIST & CHROMATIN','X 불활성화 개념도'],
   'embryo-atlas':['HUMAN DEVELOPMENT','상실배와 포배낭의 구조','/assets/activities/embryo-atlas/preview.webp'],
-  amplicon:['RT-PCR & GEL ELECTROPHORESIS','써멀 사이클러와 전기영동 겔 밴드 개념도','/assets/biology-art-v1/tool-amplicon-2d.webp','피펫과 써멀 사이클러, 전기영동 겔을 그린 수채화'],
-  'amplicon-vr':['RT-PCR & GEL ELECTROPHORESIS','써멀 사이클러와 전기영동 겔 밴드 개념도',null,'피펫을 든 손 너머로 실험대와 장비가 보이는 1인칭 3D 과학실']
+  amplicon:['RT-PCR & GEL ELECTROPHORESIS','RT-PCR과 젤 전기영동 프로토콜 실습','/assets/biology-art-v1/tool-amplicon-2d.webp','피펫과 써멀 사이클러, 전기영동 겔을 그린 수채화'],
+  'amplicon-vr':['RT-PCR & GEL ELECTROPHORESIS','RT-PCR과 젤 전기영동 프로토콜 실습',null,'피펫을 든 손 너머로 실험대와 장비가 보이는 1인칭 3D 과학실']
 };
 export function unitNavigation(course, unit) {
   return `<nav class="workspace-units" aria-label="고급 생명과학 단원">${course.units.map((u,i)=>`<a href="/${course.id}/${u.id}/"${u.id===unit.id?' aria-current="page"':''}><span>${String(i+1).padStart(2,'0')}</span>${esc(u.title)}</a>`).join('')}</nav>`;

@@ -14,8 +14,8 @@ const movement={
 };
 
 export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]}={}){
-  root.innerHTML=`<section class="lab-walk" aria-label="1인칭 과학실">
-    <header class="lab-walk-title"><div><p>AMPLICON / 반응액 준비</p><h2>1인칭 과학실</h2></div></header>
+  root.innerHTML=`<section class="lab-walk" aria-labelledby="lab-walk-title">
+    <header class="lab-walk-title"><h2 id="lab-walk-title">AMPLICON / 웹 구현 과학실</h2></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
       <canvas aria-hidden="true"></canvas>
       <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-note" role="status">${experiment?experiment.message:'왼쪽 앞의 아이스박스부터 살펴보세요.'}</span><span class="lab-zone">입구 / 자유 탐색</span></div>
