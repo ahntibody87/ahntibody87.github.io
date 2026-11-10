@@ -39,7 +39,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
         <button type="button" data-dir="right" aria-label="오른쪽 이동">→</button>
       </div>
     </div>
-    <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 / 마우스 시점 / <kbd>E</kbd> 작업 위치 보기 또는 일어나기 / 작업 중에는 빈 곳을 드래그해 시점 조정</p>
+    <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 / 마우스로 시점 회전 / <kbd>Esc</kbd> 마우스 잠금 해제 / <kbd>E</kbd> 작업 위치 보기 또는 일어나기. 작업 중이거나 마우스 잠금이 안 되면 빈 곳을 드래그해 시점을 조정하세요.</p>
   </section>`;
   const find=selector=>root.querySelector(selector);
   const viewport=find('.lab-viewport');
@@ -88,7 +88,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
   const keys=new Map();
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
-  let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
+  let lockPending=false,wasLocked=false,drag=null,carrying=false,animating=false,skipClick=false;
   let autoQueue=null,autoAt=0,holdStarted=null,spinEnds=0,handlingUntil=0;
   let pcrRun=false,gelRun=null;
   const lesson=createPcrLesson(find('.lab-pcr-panel'),schedule);
@@ -104,13 +104,29 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     keys.clear();
     drag=null;
   }
-  function setMouse(active){
-    mouseMode=active;
-    entry.hidden=active||!!working;
+  function mouseLocked(){
+    return document.pointerLockElement===canvas;
+  }
+  function lockFailed(){
+    if(!lockPending)return;
+    lockPending=false;
+    entry.hidden=!!working;
+    entry.textContent='마우스 잠금 다시 시도';
+  }
+  function releaseMouse(){
+    stop();
+    if(mouseLocked())document.exitPointerLock();
   }
   function capture(){
+    if(working||transition||mouseLocked()||lockPending)return;
     viewport.focus({preventScroll:true});
-    setMouse(true);
+    lockPending=true;
+    try{
+      if(!canvas.requestPointerLock){lockFailed();return;}
+      canvas.requestPointerLock()?.catch(lockFailed);
+    }catch{
+      lockFailed();
+    }
   }
   function look(dx,dy){
     const target=working?pose:player;
@@ -277,7 +293,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
         pose=null;
         zone.textContent=experiment?.carrying?(experiment.phase==='carry'?'냉각 랙 운반 중':'반응관 랙 운반 중'):carrying?'냉각 랙 운반 중':'자유 탐색';
         note.textContent=experiment?experiment.message:old.id==='ice'?'랙을 들고 통로로 물러난 뒤, 옆 피펫 작업대까지 걸어가세요.':'통로를 따라 다른 장비에도 접근해 보세요.';
-        entry.hidden=true;
+        entry.hidden=false;
       }};
       schedule();
       return;
@@ -293,7 +309,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     }
     working=near;
     const target=working;
-    keys.clear();
+    releaseMouse();
     entry.hidden=true;
     pose={x:target.x,y:target.eye,z:target.viewZ,yaw:0,pitch:target.tilt};
     transition={from:{...player,y:standing},to:pose,start:performance.now(),done(){
@@ -568,7 +584,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     pointAt(event);
     const hit=pickTarget();
     if(hit){perform(hit);return;}
-    if(event.pointerType!=='touch')capture();
+    if(!working&&event.pointerType!=='touch')capture();
   });
   promptButton.addEventListener('click',()=>{
     viewport.focus({preventScroll:true});
@@ -586,19 +602,33 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     }
   });
   window.addEventListener('keyup',event=>keys.delete(event.code));
-  window.addEventListener('blur',()=>{setMouse(false);stop();});
+  document.addEventListener('pointerlockchange',()=>{
+    const locked=mouseLocked();
+    if(!locked&&!wasLocked)return;
+    wasLocked=locked;
+    lockPending=false;
+    if(locked&&(working||!document.hasFocus()))releaseMouse();
+    if(!locked)stop();
+    entry.hidden=locked||!!working;
+    entry.textContent='클릭해서 이동 조작하기';
+  });
+  document.addEventListener('pointerlockerror',lockFailed);
+  document.addEventListener('mousemove',event=>{
+    if(mouseLocked()&&!working)look(event.movementX,event.movementY);
+  });
+  window.addEventListener('blur',releaseMouse);
   viewport.addEventListener('focusout',event=>{
     if(!viewport.contains(event.relatedTarget))stop();
   });
   canvas.addEventListener('pointerdown',event=>{
     skipClick=false;
-    if(event.button!==0||event.pointerType==='mouse'&&!working)return;
+    if(event.button!==0||mouseLocked())return;
     pointAt(event);
     const hit=pickTarget();
     if(hit==='holdMix'){beginMix(event);return;}
     if(startTubeDrag(event,hit))return;
     viewport.focus({preventScroll:true});
-    entry.hidden=true;
+    if(event.pointerType==='touch')entry.hidden=true;
     canvas.setPointerCapture(event.pointerId);
     drag={x:event.clientX,y:event.clientY};
   });
@@ -611,8 +641,6 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
         look(dx*2,dy*2);
         drag={x:event.clientX,y:event.clientY};
       }
-    }else if(!working&&mouseMode&&event.pointerType==='mouse'){
-      look(event.movementX,event.movementY);
     }
   });
   canvas.addEventListener('lostpointercapture',()=>{drag=null;});
