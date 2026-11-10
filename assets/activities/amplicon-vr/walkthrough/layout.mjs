@@ -35,3 +35,14 @@ export function canStand(x,z,radius=.19){
     return Math.hypot(dx,dz)<radius;
   });
 }
+
+export function canReachStationByTouch(player,station){
+  const dx=station.x-player.x,dz=station.standZ-player.z;
+  const distance=Math.hypot(dx,dz);
+  if(distance>2)return false;
+  const steps=Math.ceil(distance/.15);
+  for(let step=1;step<=steps;step++){
+    if(!canStand(player.x+dx*step/steps,player.z+dz*step/steps))return false;
+  }
+  return true;
+}

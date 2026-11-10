@@ -16,9 +16,28 @@ html:has(.lab-expanded) {overflow:hidden;}
 .lab-spot span {display:block;font-size:.82rem;font-weight:750;margin-bottom:.25rem;}
 .lab-spot-working {left:50%;top:auto;bottom:.7rem;transform:translateX(-50%);}
 .lab-pad {position:absolute;bottom:.65rem;right:.65rem;display:grid;grid-template-columns:repeat(3,2.4rem);gap:.22rem;}
-.lab-pad button {padding:0;height:2.4rem;touch-action:none;}
+.lab-pad,.lab-pad button {-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+.lab-pad button {display:grid;place-items:center;padding:0;height:2.4rem;touch-action:none;}
+.lab-pad svg {
+  width:1.2rem;height:1.2rem;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
+}
+.lab-pad [data-dir=left] svg {transform:rotate(-90deg);}
+.lab-pad [data-dir=right] svg {transform:rotate(90deg);}
+.lab-pad [data-dir=back] svg {transform:rotate(180deg);}
+.lab-pad [data-dir=turnRight] svg {transform:scaleX(-1);}
 .lab-keys,.lab-note {margin:.6rem 0;font-size:.87rem;}
 .lab-keys kbd {padding:.07rem .23rem;border:1px solid #b9c9ca;border-radius:3px;font-family:inherit;}
+.lab-touch-keys,.lab-touch .lab-enter,.lab-touch + .lab-keys .lab-keyboard-keys {display:none;}
+.lab-touch + .lab-keys .lab-touch-keys {display:inline;}
+.lab-viewport.lab-touch .lab-pad {grid-template-columns:repeat(3,44px);}
+.lab-viewport.lab-touch .lab-pad button {height:44px;}
+.lab-touch .lab-spot:not(.lab-spot-working) {
+  left:.65rem;top:auto;bottom:.65rem;transform:none;max-width:calc(100% - 162px);
+  text-align:left;white-space:normal;z-index:1;
+}
+.lab-touch .lab-spot span:empty {display:none;}
+.lab-touch .lab-spot button {min-height:44px;white-space:normal;}
 @media(max-width:580px) {
   .lab-walk-title {align-items:start;flex-direction:column;gap:.2rem;}
   .lab-viewport {height:clamp(330px,72svh,620px);}

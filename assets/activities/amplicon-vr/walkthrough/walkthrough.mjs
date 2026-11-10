@@ -1,5 +1,5 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {canStand,spawn,stations} from './layout.mjs?v=4-nodot1';
+import {canStand,canReachStationByTouch,spawn,stations} from './layout.mjs?v=5-nodot1';
 import {createLab} from './lab-scene.mjs?v=10-nodot1';
 import {createPcrLesson} from './pcr-lesson.mjs?v=6-nodot1';
 import {createGelObservation} from './gel-observation.mjs?v=2-nodot1';
@@ -12,11 +12,14 @@ const movement={
   KeyW:'forward',KeyS:'back',KeyA:'left',KeyD:'right',
   ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'turnLeft',ArrowRight:'turnRight'
 };
+const directionIcon=path=>`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${path}"/></svg>`;
+const straightArrow=directionIcon('M12 20V4m-6 6 6-6 6 6');
+const turnArrow=directionIcon('M9 4 4 9l5 5M4 9h10a5 5 0 0 1 0 10h-2');
 
 export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]}={}){
   root.innerHTML=`<section class="lab-walk" aria-labelledby="lab-walk-title">
     <header class="lab-walk-title"><h2 id="lab-walk-title">AMPLICON / 웹 구현 과학실</h2></header>
-    <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
+    <div class="lab-viewport" tabindex="0" aria-label="3D 과학실" aria-describedby="lab-keys">
       <canvas aria-hidden="true"></canvas>
       <div class="lab-viewbar">
         <strong>AMPLICON</strong>
@@ -36,15 +39,15 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
         <h3 id="lab-review-title" tabindex="-1"></h3><p></p><ul></ul>
       </section>
       <div class="lab-pad" aria-label="터치 이동">
-        <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
-        <button type="button" data-dir="forward" aria-label="앞으로 이동">↑</button>
-        <button type="button" data-dir="turnRight" aria-label="오른쪽 보기">↷</button>
-        <button type="button" data-dir="left" aria-label="왼쪽 이동">←</button>
-        <button type="button" data-dir="back" aria-label="뒤로 이동">↓</button>
-        <button type="button" data-dir="right" aria-label="오른쪽 이동">→</button>
+        <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">${turnArrow}</button>
+        <button type="button" data-dir="forward" aria-label="앞으로 이동">${straightArrow}</button>
+        <button type="button" data-dir="turnRight" aria-label="오른쪽 보기">${turnArrow}</button>
+        <button type="button" data-dir="left" aria-label="왼쪽 이동">${straightArrow}</button>
+        <button type="button" data-dir="back" aria-label="뒤로 이동">${straightArrow}</button>
+        <button type="button" data-dir="right" aria-label="오른쪽 이동">${straightArrow}</button>
       </div>
     </div>
-    <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 / 마우스로 시점 회전 / <kbd>Esc</kbd> 마우스 잠금 해제 / <kbd>E</kbd> 작업 위치 보기 또는 일어나기. 작업 중이거나 마우스 잠금이 안 되면 빈 곳을 드래그해 시점을 조정하세요.</p>
+    <p class="lab-keys" id="lab-keys"><span class="lab-keyboard-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 / 마우스로 시점 회전 / <kbd>Esc</kbd> 마우스 잠금 해제 / <kbd>E</kbd> 작업 위치 보기 또는 일어나기. 작업 중이거나 마우스 잠금이 안 되면 빈 곳을 드래그해 시점을 조정하세요.</span><span class="lab-touch-keys">화살표를 눌러 이동하고, 화면을 밀어 둘러보세요. 장비 근처에서는 왼쪽 아래의 작업 버튼을 누르세요.</span></p>
   </section>`;
   const find=selector=>root.querySelector(selector);
   const viewport=find('.lab-viewport');
@@ -91,6 +94,8 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
   camera.add(lab.carried);
   lab.scene.add(camera);
   const player={...spawn,pitch:-.055};
+  let touchMode=matchMedia('(pointer: coarse)').matches;
+  viewport.classList.toggle('lab-touch',touchMode);
   const keys=new Map();
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
@@ -177,34 +182,42 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
       promptButton.toggleAttribute('data-lab-next',!waiting&&!experiment.finished&&working.id!==experiment.destination);
       prompt.hidden=false;
       promptLabel.textContent=experiment?'':working.action;
-      promptButton.textContent=experiment?'E / 작업 위치에서 나오기':working.id==='ice'?'랙 들고 물러나기':working.id==='prep'&&carrying?'랙 내려놓고 일어나기':'작업 위치에서 나오기';
+      const exitLabel='작업 위치에서 나오기';
+      promptButton.textContent=experiment
+        ?touchMode?exitLabel:'E / '+exitLabel
+        :working.id==='ice'?'랙 들고 물러나기':working.id==='prep'&&carrying?'랙 내려놓고 일어나기':exitLabel;
       return;
     }
     prompt.classList.remove('lab-spot-working');
-    let reach=stationReach;
-    for(const station of stations){
+    const destination=experiment&&!experiment.finished?stations.find(station=>station.id===experiment.destination):null;
+    const candidates=touchMode&&destination?[destination]:stations;
+    let reach=touchMode?Infinity:stationReach;
+    for(const station of candidates){
       const distance=Math.hypot(player.x-station.x,player.z-station.standZ);
-      if(distance<reach){near=station;reach=distance;}
+      if(distance<reach&&(!touchMode||canReachStationByTouch(player,station))){near=station;reach=distance;}
     }
     prompt.hidden=true;
     if(experiment?.finished){
       const instruction='탐구 완료 / 원하는 장비를 다시 살펴보세요.';
       if(note.textContent!==instruction)note.textContent=instruction;
-    }else if(experiment){
-      const destination=stations.find(station=>station.id===experiment.destination);
-      const instruction=near?.id===destination.id?'E를 눌러 작업 위치에 들어가세요.':destination.name+'로 이동하세요.';
+    }else if(destination){
+      const instruction=near?.id===destination.id
+        ?touchMode?'아래 작업 버튼을 눌러 시작하세요.':'E를 눌러 작업 위치에 들어가세요.'
+        :destination.name+'로 이동하세요.';
       if(note.textContent!==instruction)note.textContent=instruction;
     }
     if(!near)return;
-    labelPoint.set(near.x,near.id==='ice'?1.27:1.16,near.z);
-    labelPoint.project(camera);
-    if(labelPoint.z>1||Math.abs(labelPoint.x)>.98)return;
+    if(!touchMode){
+      labelPoint.set(near.x,near.id==='ice'?1.27:1.16,near.z);
+      labelPoint.project(camera);
+      if(labelPoint.z>1||Math.abs(labelPoint.x)>.98)return;
+      prompt.style.setProperty('--lab-x',T.MathUtils.clamp(50+50*labelPoint.x,15,85)+'%');
+      prompt.style.setProperty('--lab-y',T.MathUtils.clamp(50-50*labelPoint.y,18,77)+'%');
+    }
     prompt.hidden=false;
-    prompt.style.setProperty('--lab-x',T.MathUtils.clamp(50+50*labelPoint.x,15,85)+'%');
-    prompt.style.setProperty('--lab-y',T.MathUtils.clamp(50-50*labelPoint.y,18,77)+'%');
-    promptLabel.textContent=near.name;
-    promptButton.toggleAttribute('data-lab-next',!experiment.finished&&near.id===experiment.destination);
-    promptButton.textContent='E / 작업 위치 보기';
+    promptLabel.textContent=touchMode?'':near.name;
+    promptButton.toggleAttribute('data-lab-next',near===destination);
+    promptButton.textContent=touchMode?near.name+' 열기':'E / 작업 위치 보기';
   }
   function render(now){
     frame=0;
@@ -299,7 +312,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
         pose=null;
         zone.textContent=experiment?.carrying?(experiment.phase==='carry'?'냉각 랙 운반 중':'반응관 랙 운반 중'):carrying?'냉각 랙 운반 중':'자유 탐색';
         note.textContent=experiment?experiment.message:old.id==='ice'?'랙을 들고 통로로 물러난 뒤, 옆 피펫 작업대까지 걸어가세요.':'통로를 따라 다른 장비에도 접근해 보세요.';
-        entry.hidden=false;
+        entry.hidden=touchMode;
       }};
       schedule();
       return;
@@ -531,6 +544,15 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     if(event.pointerType==='touch'){viewport.focus({preventScroll:true});entry.hidden=true;return;}
     capture();
   });
+  viewport.addEventListener('pointerdown',event=>{
+    if(event.pointerType!=='touch'&&event.pointerType!=='mouse')return;
+    const next=event.pointerType==='touch';
+    if(next===touchMode)return;
+    touchMode=next;
+    viewport.classList.toggle('lab-touch',touchMode);
+    entry.hidden=touchMode||!!working||mouseLocked();
+    schedule();
+  },true);
   const expanded=()=>viewport.classList.contains('lab-expanded');
   function updateFullscreenButton(){
     fullscreenButton.textContent=document.fullscreenElement===viewport||expanded()?'전체화면 종료':'전체화면';
@@ -645,7 +667,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     lockPending=false;
     if(locked&&(working||!document.hasFocus()))releaseMouse();
     if(!locked)stop();
-    entry.hidden=locked||!!working;
+    entry.hidden=locked||!!working||touchMode;
     entry.textContent='클릭해서 이동 조작하기';
   });
   document.addEventListener('pointerlockerror',lockFailed);
@@ -680,7 +702,9 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     }
   });
   canvas.addEventListener('lostpointercapture',()=>{drag=null;});
-  root.querySelectorAll('[data-dir]').forEach(button=>{
+  const pad=find('.lab-pad');
+  pad.addEventListener('contextmenu',event=>event.preventDefault());
+  pad.querySelectorAll('[data-dir]').forEach(button=>{
     button.addEventListener('pointerdown',event=>{
       event.preventDefault();
       viewport.focus({preventScroll:true});
