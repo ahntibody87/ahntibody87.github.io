@@ -7,9 +7,18 @@ const stages=[
   ['72°C · DNA 합성','중합효소는 프라이머의 3′ 끝에서 출발해 새 가닥을 5′ → 3′로 늘립니다. 각 이중가닥에는 기존 가닥 하나와 새 가닥 하나가 들어 있습니다.']
 ];
 const initial=[[{start:18,end:222,forward:true},{start:18,end:222,forward:false}]];
-const copyOf=strand=>strand.forward?{start:strand.start,end:targetEnd,forward:false}:{start:targetStart,end:strand.end,forward:true};
+function copyOf(strand,synthesizedIn){
+  return strand.forward
+    ?{start:strand.start,end:targetEnd,forward:false,synthesizedIn}
+    :{start:targetStart,end:strand.end,forward:true,synthesizedIn};
+}
 const generations=[initial];
-for(let i=0;i<3;i++)generations.push(generations[i].flatMap(pair=>pair.map(strand=>[strand,copyOf(strand)])));
+for(let cycle=1;cycle<=3;cycle++){
+  generations.push(generations[cycle-1].flatMap(pair=>pair.map(strand=>{
+    const copy=copyOf(strand,cycle);
+    return strand.forward?[strand,copy]:[copy,strand];
+  })));
+}
 const exact=strand=>strand.start===targetStart&&strand.end===targetEnd;
 const clamp=value=>Math.max(0,Math.min(1,value));
 const line=(x1,x2,y,stroke,width=5)=>'<path d="M'+x1+' '+y+'H'+x2+'" stroke="'+stroke+'" stroke-width="'+width+'" stroke-linecap="round"/>';
@@ -19,32 +28,43 @@ function ends(left,right,y,forward){
 }
 const strandLine=(strand,y,stroke)=>line(strand.start,strand.end,y,stroke)+ends(strand.start,strand.end,y,strand.forward);
 
+function bonds(from,to,templateY,copyY,opacity=1){
+  let path='';
+  for(let x=Math.min(from,to)+4;x<Math.max(from,to);x+=7)path+='M'+x+' '+templateY+'V'+copyY;
+  return '<path d="'+path+'" stroke="#a8cfde" opacity="'+opacity+'" stroke-width="1"/>';
+}
+
 function molecules(cycle,stage,progress){
   return generations[cycle-1].map((pair,index)=>{
     const x=12+index%2*258,y=10+Math.floor(index/2)*82;
+    const axes=[17,59].map((separated,row)=>{
+      const together=30+row*12;
+      return stage===0?together+(separated-together)*progress:separated;
+    });
+    const joined=stage===0?bonds(Math.max(pair[0].start,pair[1].start),Math.min(pair[0].end,pair[1].end),...axes,1-progress):'';
     const strands=pair.map((strand,row)=>{
-      const together=30+row*12,separated=17+row*42;
-      const axis=stage===0?together+(separated-together)*progress:separated;
-      const product=copyOf(strand);
-      let markup=strandLine(strand,axis,stage===0&&cycle>1&&row===1?color.copy:color.dna);
+      const axis=axes[row];
+      const product=copyOf(strand,cycle);
+      let markup=strandLine(strand,axis,stage===0&&strand.synthesizedIn===cycle-1?color.copy:color.dna);
       if(stage===0)return markup;
-      const childY=axis+10;
+      const inward=row===0?1:-1;
+      const childY=axis+11*inward;
       const from=product.forward?product.start:product.end;
       const primerEnd=from+(product.forward?primerLength:-primerLength);
       const end=product.forward?product.end:product.start;
       if(stage===1){
-        const primerY=childY+(1-progress)*9;
-        return markup+'<g opacity="'+progress+'">'+line(from,primerEnd,primerY,color.primer)+
+        const primerY=childY+6*inward*(1-progress);
+        return bonds(from,primerEnd,axis,primerY,progress)+markup+'<g opacity="'+progress+'">'+line(from,primerEnd,primerY,color.primer)+
           ends(Math.min(from,primerEnd),Math.max(from,primerEnd),primerY,product.forward)+'</g>';
       }
       if(cycle===3&&exact(strand)&&exact(product)&&progress>.9){
-        markup='<rect x="74" y="'+(axis-6)+'" width="92" height="23" rx="5" fill="#255451" stroke="#8df5d7"/>'+markup;
+        markup='<rect x="74" y="'+(Math.min(axis,childY)-6)+'" width="92" height="23" rx="5" fill="#255451" stroke="#8df5d7"/>'+markup;
       }
       const tip=primerEnd+(end-primerEnd)*progress;
-      return markup+line(from,primerEnd,childY,color.primer)+line(primerEnd,tip,childY,color.copy)+
+      return markup+bonds(from,tip,axis,childY)+line(from,primerEnd,childY,color.primer)+line(primerEnd,tip,childY,color.copy)+
         ends(Math.min(from,tip),Math.max(from,tip),childY,product.forward);
     }).join('');
-    return '<g transform="translate('+x+' '+y+')">'+strands+'</g>';
+    return '<g transform="translate('+x+' '+y+')">'+joined+strands+'</g>';
   }).join('');
 }
 

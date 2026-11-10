@@ -1,7 +1,7 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
 import {createLab} from './lab-scene.mjs?v=10';
-import {createPcrLesson} from './pcr-lesson.mjs?v=3';
+import {createPcrLesson} from './pcr-lesson.mjs?v=4';
 import {createGelObservation} from './gel-observation.mjs?v=2';
 
 const standing=1.62;
