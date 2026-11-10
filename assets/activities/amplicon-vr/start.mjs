@@ -1,4 +1,4 @@
-import {createPerspective} from './room.mjs?v=4';
+import {createPerspective} from './room.mjs?v=5';
 
 document.getElementById('amp-lab').perspective = createPerspective();
-await import('../amplicon/lab.mjs?v=vr4');
+await import('../amplicon/lab.mjs?v=vr5');

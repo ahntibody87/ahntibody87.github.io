@@ -25,7 +25,7 @@ const vortexHoldMs=1500;
 let vortexTube=null,mixHold=null,spinSlots=[null,null,null,null],lidClosed=false,spinning=false;
 const parkedPipette={x:5.1,y:.32,z:-1.25};
 const vrParkedPipette={x:.9,y:1.16,z:1.4};
-let player={x:4.8,y:4.8},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
+let player={...(perspective?.spawn??{x:4.8,y:4.8})},target=null,keys=new Set(),previous=0,near=null,moveFrame=0,motion=null,molecularPaused=false;
 const $=selector=>root.querySelector(selector);
 const all=selector=>[...root.querySelectorAll(selector)];
 const label=id=>id==='marker'?'DNA 크기 마커':scenario.samples.find(s=>s.id===id)?.label||id;

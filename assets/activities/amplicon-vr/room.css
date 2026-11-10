@@ -59,3 +59,16 @@
   .amp-vr [data-bench-scene="prep"] .amp-bench-target span[data-short-label] {font-size:0;}
   .amp-vr [data-bench-scene="prep"] .amp-bench-target span[data-short-label]::after {content:attr(data-short-label); font-size:.57rem;}
 }
+.amp-vr .vr-room {height:auto; aspect-ratio:16 / 9; min-height:245px;}
+.amp-vr .vr-camera.vr-reference-camera {background:transparent;}
+.amp-vr .vr-daylight-loading .vr-canvas {visibility:hidden;}
+.amp-vr .vr-room .vr-daylight-loading {background:url("./bench-daylight.webp") center / 100% 100%;}
+.amp-vr .vr-crosshair {
+  display:none; position:absolute; left:50%; top:50%; z-index:2;
+  width:6px; height:6px; border:1px solid #152a34; background:#fff;
+  border-radius:50%; transform:translate(-50%,-50%); pointer-events:none;
+}
+.amp-vr .vr-locked .vr-crosshair {display:block;}
+.amp-vr .vr-locked .vr-pad {visibility:hidden;}
+.amp-vr .vr-room .vr-marker {z-index:1;}
+.amp-vr .vr-locked .vr-camera {cursor:none;}

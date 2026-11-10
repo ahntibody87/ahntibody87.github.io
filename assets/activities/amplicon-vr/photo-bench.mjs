@@ -1,3 +1,6 @@
+import {CanvasTexture,SRGBColorSpace} from '../embryo-atlas/vendor/three.module.min.js';
+
+const closedCoolerMask=new Path2D('M.251 .466 Q.267 .394 .312 .382 L.345 .382 L.35 .37 L.39 .37 L.395 .382 L.606 .382 L.61 .369 L.65 .369 L.655 .382 L.682 .382 Q.727 .387 .739 .452 L.772 .577 Q.78 .623 .774 .677 L.746 .888 Q.74 .963 .71 .982 L.297 .982 Q.264 .981 .249 .941 L.226 .728 Q.213 .664 .219 .599 Z');
 const art = {
   pipette: 'pipette-hand.webp',
   tips: 'tip-box.webp',
@@ -65,7 +68,7 @@ function drawCooler(ctx,objects,project){
   }else{
     ctx.translate(left,top);
     ctx.scale(width,height);
-    const shape=new Path2D('M.251 .466 Q.267 .394 .312 .382 L.345 .382 L.35 .37 L.39 .37 L.395 .382 L.606 .382 L.61 .369 L.65 .369 L.655 .382 L.682 .382 Q.727 .387 .739 .452 L.772 .577 Q.78 .623 .774 .677 L.746 .888 Q.74 .963 .71 .982 L.297 .982 Q.264 .981 .249 .941 L.226 .728 Q.213 .664 .219 .599 Z');
+    const shape=closedCoolerMask;
     ctx.clip(shape);
     ctx.drawImage(images[key],0,0,1,1);
   }
@@ -170,4 +173,21 @@ export function benchVisual(kind){
       drawPipette(ctx,tool,tip,liquid,project);
     }
   };
+}
+
+export async function closedCoolerTexture(){
+  loadProps();
+  await images.closed.decode().catch(()=>{});
+  if(!available('closed'))return null;
+  const canvas=document.createElement('canvas');
+  canvas.width=480;
+  canvas.height=240;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(480/.57,240/.64);
+  ctx.translate(-.21,-.357);
+  ctx.clip(closedCoolerMask);
+  ctx.drawImage(images.closed,0,0,1,1);
+  const texture=new CanvasTexture(canvas);
+  texture.colorSpace=SRGBColorSpace;
+  return texture;
 }
