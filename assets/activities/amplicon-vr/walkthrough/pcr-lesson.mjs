@@ -2,9 +2,9 @@ const color={rna:'#ffa24d',dna:'#80b6ff',primer:'#ffdc70',copy:'#57e6c5'};
 const targetStart=82,targetEnd=158,primerLength=17;
 const detailedTime=2500,fastTime=5000,totalCycles=30;
 const stages=[
-  ['95°C / DNA 가닥 분리','이중가닥 DNA가 갈라지면 기존 가닥과 직전 사이클에서 합성된 가닥이 각각 주형이 됩니다.'],
-  ['55°C / 프라이머 결합','프라이머는 서로 반대쪽 주형의 상보적 위치에 붙습니다. 두 프라이머의 3′ 끝은 표적 구간 안쪽을 향합니다.'],
-  ['72°C / DNA 합성','중합효소는 프라이머의 3′ 끝에서 출발해 새 가닥을 5′ → 3′로 늘립니다. 각 이중가닥에는 기존 가닥 하나와 새 가닥 하나가 들어 있습니다.']
+  [95,'DNA 가닥 분리','이중가닥 DNA가 갈라지면 기존 가닥과 직전 사이클에서 합성된 가닥이 각각 주형이 됩니다.'],
+  [55,'프라이머 결합','프라이머는 서로 반대쪽 주형의 상보적 위치에 붙습니다. 두 프라이머의 3′ 끝은 표적 구간 안쪽을 향합니다.'],
+  [72,'DNA 합성','중합효소는 프라이머의 3′ 끝에서 출발해 새 가닥을 5′ → 3′로 늘립니다. 각 이중가닥에는 기존 가닥 하나와 새 가닥 하나가 들어 있습니다.']
 ];
 const initial=[[{start:18,end:222,forward:true},{start:18,end:222,forward:false}]];
 function copyOf(strand,synthesizedIn){
@@ -68,10 +68,21 @@ function molecules(cycle,stage,progress){
   }).join('');
 }
 
-export function createPcrLesson(root,wake){
+export function createPcrLesson(root,wake,reduceMotion=false){
   root.innerHTML=`<section class="lab-observation lab-pcr-lesson" hidden aria-labelledby="lab-pcr-title">
     <header><span class="lab-observation-kicker">반응관 안에서 일어나는 일 / 모식도</span><strong class="lab-cycle"></strong></header>
-    <h3 id="lab-pcr-title" tabindex="-1"></h3><p class="lab-molecule-note"></p>
+    <div class="lab-pcr-stage">
+      <div class="lab-temperature" hidden>
+        <svg viewBox="0 0 38 64" aria-hidden="true">
+          <path d="M12 8a5 5 0 0 1 10 0v40a8 8 0 1 1-10 0Z" fill="#132c3c" stroke="#c0deec" stroke-width="1.5"/>
+          <path d="M27 8h6m-6 10h4m-4 10h6m-6 10h4m-4 10h6" stroke="#c0deec" stroke-width="1.5"/>
+          <rect class="lab-temperature-fill" x="14" width="6" rx="3" fill="#ffad70"/>
+          <circle cx="17" cy="54" r="4.5" fill="#ffad70"/>
+        </svg>
+        <strong class="lab-temperature-value"></strong>
+      </div>
+      <div><h3 id="lab-pcr-title" tabindex="-1"></h3><p class="lab-molecule-note"></p></div>
+    </div>
     <svg viewBox="0 0 530 180" class="lab-molecule-graphic" role="img" aria-label="PCR 단계별 분자 모식도"></svg>
     <ul class="lab-molecule-legend"><li style="--ink:${color.rna}">RNA</li><li style="--ink:${color.dna}">DNA 주형</li><li style="--ink:${color.primer}">프라이머</li><li style="--ink:${color.copy}">새 DNA</li></ul>
     <div class="lab-observation-controls">
@@ -82,7 +93,9 @@ export function createPcrLesson(root,wake){
     </div>
   </section>`;
   const panel=root.firstElementChild,title=panel.querySelector('h3'),description=panel.querySelector('.lab-molecule-note');
-  const cycleLabel=panel.querySelector('.lab-cycle'),graphic=panel.querySelector('svg');
+  const cycleLabel=panel.querySelector('.lab-cycle'),graphic=panel.querySelector('.lab-molecule-graphic');
+  const thermometer=panel.querySelector('.lab-temperature'),fill=panel.querySelector('.lab-temperature-fill');
+  const temperatureLabel=panel.querySelector('.lab-temperature-value');
   const back=panel.querySelector('[data-pcr=back]'),pause=panel.querySelector('[data-pcr=pause]'),skip=panel.querySelector('[data-pcr=fast]');
   const summaryIndex=10,fastIndex=11;
   let active=false,playing=false,index=0,elapsed=0,last=0,skipped=false,shown=-1;
@@ -90,14 +103,29 @@ export function createPcrLesson(root,wake){
   function render(){
     const cycle=Math.ceil(index/3),stage=(index-1)%3;
     const progress=clamp(elapsed/(index===fastIndex?fastTime:detailedTime));
+    const pcrStage=index>0&&index<summaryIndex;
     if(shown!==index){
       shown=index;
+      thermometer.hidden=!pcrStage;
       const [heading,note]=index===0?['역전사 / cDNA 만들기','RNA를 주형으로 cDNA가 만들어집니다.']
         :index===summaryIndex?['표적 이중가닥 DNA가 처음 완성되었습니다','2번째 사이클에서는 표적 길이의 단일가닥이 생깁니다. 3번째 사이클에서 양쪽 가닥의 길이가 모두 맞는 표적 DNA 두 개가 처음 생깁니다.']
         :index===fastIndex?['PCR 반복 / 증폭','3번째 사이클에 생긴 표적 이중가닥 두 개의 후손을 따라가면, 이상적으로 매 사이클마다 2 → 4 → 8 → 16개로 늘어납니다.']
-        :stages[stage];
+        :stages[stage].slice(1);
       title.textContent=heading;description.textContent=note;
       cycleLabel.textContent=index===0?'사이클 전 / 역전사':index===summaryIndex?'3번째 사이클 완료':cycle+'번째 사이클';
+    }
+    if(pcrStage){
+      const target=stages[stage][0];
+      const previous=index===1?target:stages[(stage+2)%3][0];
+      const ramp=reduceMotion?1:clamp(elapsed/600);
+      const temperature=Math.round(previous+(target-previous)*ramp);
+      const label=temperature+'°C';
+      if(temperatureLabel.textContent!==label){
+        temperatureLabel.textContent=label;
+        const height=40*clamp((temperature-40)/60);
+        fill.setAttribute('y',48-height);
+        fill.setAttribute('height',height+6);
+      }
     }
     if(index===0){
       graphic.setAttribute('viewBox','0 0 530 132');

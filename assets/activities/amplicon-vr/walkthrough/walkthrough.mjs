@@ -1,7 +1,7 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4-nodot1';
 import {createLab} from './lab-scene.mjs?v=10-nodot1';
-import {createPcrLesson} from './pcr-lesson.mjs?v=4-nodot1';
+import {createPcrLesson} from './pcr-lesson.mjs?v=5-nodot1';
 import {createGelObservation} from './gel-observation.mjs?v=2-nodot1';
 
 const standing=1.62;
@@ -97,11 +97,11 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
   let lockPending=false,wasLocked=false,drag=null,carrying=false,animating=false,skipClick=false;
   let autoQueue=null,autoAt=0,holdStarted=null,spinEnds=0,handlingUntil=0;
   let pcrRun=false,gelRun=null;
-  const lesson=createPcrLesson(find('.lab-pcr-panel'),schedule);
+  const reduceMotion=lowMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lesson=createPcrLesson(find('.lab-pcr-panel'),schedule,reduceMotion);
   const observation=experiment&&createGelObservation(find('.lab-gel-panel'),experiment,()=>{
     note.textContent=experiment.message;refreshActions();schedule();
   },()=>viewport.focus({preventScroll:true}));
-  const reduceMotion=lowMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function schedule(){
     if(!frame){last=performance.now();frame=requestAnimationFrame(render);}
