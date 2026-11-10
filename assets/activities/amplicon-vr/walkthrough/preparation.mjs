@@ -296,8 +296,27 @@ export function createPreparation(scenario){
     return liquid?[...samples.map(item=>'tube:'+item.id),'discard']:[...sources.map(item=>item.id),'discard'];
   }
 
+  function nextAction(station,ids=controls(station)){
+    if(ids.length<=1)return ids[0];
+    if(station==='prep'){
+      if(ids.includes('auto'))return 'auto';
+      if(!state.tip||state.tip.used)return ids[0];
+      if(!liquid)return expected(nextTube().id);
+      const destination=samples.find(({id})=>!completed(id)&&expected(id)===liquid);
+      return 'tube:'+destination.id;
+    }
+    if(station==='gel'){
+      if(gelSource)return 'well:'+state.lanePlan.indexOf(gelSource);
+      const empty=state.lanes.indexOf(null);
+      if(empty!==-1)return 'gelSource:'+state.lanePlan[empty];
+      return state.polarity==='normal'?'runGel':'swapGel';
+    }
+    if(station==='spin'&&selected)return 'slot:'+slots.indexOf(null);
+    return ids[0];
+  }
+
   return {
-    state,samples,reagents,actions,perform,controls,autoActions,completeSpin,completePcr,completeGel,result,
+    state,samples,reagents,actions,perform,controls,nextAction,autoActions,completeSpin,completePcr,completeGel,result,
     laneNames,markerBp:scenario.markerBp,productBp:scenario.productBp,
     bandRows:()=>state.lanes.map(id=>bands(scenario,id)),
     get gelSource(){return gelSource;},

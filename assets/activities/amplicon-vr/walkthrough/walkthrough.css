@@ -30,7 +30,7 @@
 .lab-preparation div {display:flex;flex-wrap:wrap;gap:.28rem;}
 .amp-lab .lab-preparation button {
   min-height:56px;max-width:100%;padding:.7rem 1.1rem;
-  color:#102c35;background:#c8edf2;border:1px solid #e4fbff;
+  color:#fff;background:#19343d;border:1px solid #91b4be;
   font-size:clamp(1rem,1.45vw,1.2rem);font-weight:750;line-height:1.25;white-space:normal;
 }
 .lab-viewport:has(.lab-preparation:not([hidden])) .lab-spot-working {left:auto;right:.7rem;transform:none;}
@@ -89,7 +89,6 @@
 .lab-molecule-legend li::before {content:"";display:inline-block;width:.58rem;height:.58rem;border-radius:50%;background:var(--ink);margin-right:.28rem;}
 .lab-observation-controls {display:flex;flex-wrap:wrap;gap:.4rem;}
 .amp-lab .lab-observation button {min-height:34px;padding:.32rem .65rem;color:#fff;background:#28536a;border:1px solid #9acbda;border-radius:5px;}
-.amp-lab .lab-observation button[data-pcr=fast] {color:#102c35;background:#caf1f1;font-weight:750;}
 .amp-lab .lab-observation button:disabled {opacity:.45;}
 .lab-gel-result {display:grid;gap:.4rem;}
 .lab-gel-result label {display:grid;gap:.15rem;font-size:.81rem;}
@@ -104,4 +103,15 @@
 }
 .amp-lab .lab-observation button[data-pcr=fast]:is(:hover,:focus-visible,:active) {
   color:#102c35;background:#e3fbfb;
+}
+
+/* Use the same accent for the next interaction wherever its button appears. */
+.amp-lab .lab-viewport:not(:has(.lab-spot:not([hidden]) button[data-lab-next])) .lab-enter,
+.amp-lab .lab-viewport:not([data-lab-waiting],:has(.lab-gel-observation:not([hidden]))) button[data-lab-next]:not(:disabled),
+.amp-lab .lab-observation button[data-pcr=fast]:not(:disabled),
+.amp-lab .lab-gel-observation:not(:has(.lab-gel-feedback:not([hidden]))) form:valid button[type=submit],
+.amp-lab .lab-gel-observation:has(.lab-gel-feedback:not([hidden])) button[data-gel-close] {
+  color:#102c35;background:#c8edf2;border-color:#efffff;
+  box-shadow:0 0 0 2px #102c35,0 0 0 3px #92d4dc;
+  font-weight:750;
 }

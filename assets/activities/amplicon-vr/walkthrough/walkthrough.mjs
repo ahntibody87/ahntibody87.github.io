@@ -129,10 +129,13 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   }
   function updateHint(){
     near=null;
+    const waiting=animating||holdStarted!==null||transition||autoQueue||pcrRun||gelRun||spinEnds;
+    viewport.toggleAttribute('data-lab-waiting',!!waiting);
     viewport.classList.toggle('lab-working',!!working);
     if(transition||autoQueue||pcrRun||gelRun||spinEnds){prompt.hidden=true;return;}
     if(working){
       prompt.classList.add('lab-spot-working');
+      promptButton.toggleAttribute('data-lab-next',!waiting&&!experiment.finished&&working.id!==experiment.destination);
       prompt.hidden=false;
       promptLabel.textContent=experiment?'':working.action;
       promptButton.textContent=experiment?'E · 작업 위치에서 나오기':working.id==='ice'?'랙 들고 물러나기':working.id==='prep'&&carrying?'랙 내려놓고 일어나기':'작업 위치에서 나오기';
@@ -158,6 +161,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     prompt.style.setProperty('--lab-x',(50+50*labelPoint.x)+'%');
     prompt.style.setProperty('--lab-y',T.MathUtils.clamp(50-50*labelPoint.y,18,77)+'%');
     promptLabel.textContent=near.name;
+    promptButton.toggleAttribute('data-lab-next',!experiment.finished&&near.id===experiment.destination);
     promptButton.textContent='E · 작업 위치 보기';
   }
   function render(now){
@@ -285,11 +289,13 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   function refreshActions(){
     if(!experiment||!working){actions.hidden=true;objectButtons.replaceChildren();return;}
     const ids=autoQueue?[]:experiment.controls(working.id);
+    const next=experiment.nextAction(working.id,ids);
     const fixed=[],tagged=[];
     for(const id of ids){
       const button=document.createElement('button');
       button.type='button';
       button.dataset.labAction=id;
+      button.toggleAttribute('data-lab-next',id===next);
       const fullName=experiment.actions.get(id);
       button.textContent=shortNames[id]??fullName;
       button.title=fullName;
