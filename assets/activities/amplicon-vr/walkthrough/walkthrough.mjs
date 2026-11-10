@@ -18,7 +18,12 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     <header class="lab-walk-title"><h2 id="lab-walk-title">AMPLICON / 웹 구현 과학실</h2></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
       <canvas aria-hidden="true"></canvas>
-      <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-note" role="status">${experiment?experiment.message:'왼쪽 앞의 아이스박스부터 살펴보세요.'}</span><span class="lab-zone">입구 / 자유 탐색</span></div>
+      <div class="lab-viewbar">
+        <strong>AMPLICON</strong>
+        <span class="lab-note" role="status">${experiment?experiment.message:'왼쪽 앞의 아이스박스부터 살펴보세요.'}</span>
+        <span class="lab-zone">입구 / 자유 탐색</span>
+        <button class="lab-fullscreen" type="button" hidden>전체화면</button>
+      </div>
       <button class="lab-enter" type="button">클릭해서 이동 조작하기</button>
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
       <div class="lab-object-buttons" aria-label="기구 옆 조작 버튼"></div>
@@ -50,6 +55,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
   const promptButton=prompt.querySelector('button');
   const zone=find('.lab-zone');
   const note=find('.lab-note');
+  const fullscreenButton=find('.lab-fullscreen');
   const actions=find('.lab-preparation');
   const objectButtons=find('.lab-object-buttons');
   const mixMeter=find('.lab-mix-meter'),mixProgress=mixMeter.querySelector('progress');
@@ -525,6 +531,25 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     if(event.pointerType==='touch'){viewport.focus({preventScroll:true});entry.hidden=true;return;}
     capture();
   });
+  if(document.fullscreenEnabled&&viewport.requestFullscreen){
+    fullscreenButton.hidden=false;
+    viewport.addEventListener('fullscreenchange',()=>{
+      fullscreenButton.textContent=document.fullscreenElement===viewport?'전체화면 종료':'전체화면';
+    });
+    fullscreenButton.addEventListener('click',async()=>{
+      fullscreenButton.disabled=true;
+      releaseMouse();
+      try{
+        if(document.fullscreenElement===viewport)await document.exitFullscreen();
+        else await viewport.requestFullscreen();
+        viewport.focus({preventScroll:true});
+      }catch{
+        if(document.fullscreenElement!==viewport)fullscreenButton.textContent='전체화면 다시 시도';
+      }finally{
+        fullscreenButton.disabled=false;
+      }
+    });
+  }
   function pointAt(event){
     const rect=canvas.getBoundingClientRect();
     pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
