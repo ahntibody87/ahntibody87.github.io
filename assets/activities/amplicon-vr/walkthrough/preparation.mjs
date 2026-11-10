@@ -1,10 +1,11 @@
-import {createState,freshTip,addReagent,planRemainingTransfers,issues} from '../../amplicon/model.mjs?v=pcr17';
+import {createState,freshTip,addReagent,planRemainingTransfers,issues,bands} from '../../amplicon/model.mjs?v=pcr17';
 
 export function createPreparation(scenario){
   const state=createState(scenario);
   const names=['A','B','양성 대조군','음성 대조군'];
   const samples=scenario.samples.map((sample,i)=>({...sample,name:names[i]}));
   const reagents=scenario.reagents;
+  const laneNames=['DNA 마커',...samples.map(sample=>sample.name)];
   const sources=[
     ...reagents.map(item=>({id:item.id,label:item.label})),
     ...samples.map(item=>({id:'sample:'+item.id,label:item.name+' 원본'}))
@@ -16,10 +17,20 @@ export function createPreparation(scenario){
     tips:'새 팁 끼우기',discard:'사용한 팁 버리기',auto:'나머지 반응관에 자동으로 주입할까요?'
   }))actions.set(id,label);
 
+  for(const [id,label] of Object.entries({
+    dockGel:'랙 내려놓기',swapGel:'전극 연결 바꾸기',runGel:'전기영동 시작',
+    collectGel:'겔 들어 옮기기',dockLed:'관찰판에 겔 놓기',viewLed:'덮개 닫고 LED 켜기',
+    inspectLed:'밴드 확대해서 보기'
+  }))actions.set(id,label);
+  state.lanePlan.forEach((id,index)=>{
+    actions.set('gelSource:'+id,laneNames[index]+(id==='marker'?'':' PCR 산물'));
+    actions.set('well:'+index,(index+1)+'번 웰 · '+laneNames[index]);
+  });
+
   let phase='ice',lid=false,liquid=null,prepared=false;
   let vortexTube=null,selected=null,spinOpen=false;
   const slots=Array(samples.length).fill(null);
-  let pcrOpen=false;
+  let pcrOpen=false,gelSource=null;
   for(const sample of samples)actions.set('handle:'+sample.id,sample.name+' 반응관');
   for(let i=0;i<slots.length;i++)actions.set('slot:'+i,(i+1)+'번 로터 자리');
   for(const [id,label] of Object.entries({collect:'반응관 랙 들기',dockMix:'랙 내려놓기',holdMix:'접촉판에 누르고 있기',removeMix:'반응관을 랙에 되돌리기',carrySpin:'혼합한 랙 들기',dockSpin:'랙 내려놓기',openSpin:'원심분리기 뚜껑 열기',closeSpin:'뚜껑 닫기',runSpin:'원심분리 시작',collectSpin:'반응관을 랙에 회수하기',dockPcr:'랙 내려놓기',openPcr:'PCR 기기 뚜껑 열기',loadPcr:'네 반응관 장착하기',closePcr:'PCR 뚜껑 닫기',runPcr:'PCR 시작',recoverPcr:'PCR 뚜껑 열기',collectPcr:'반응관을 랙에 회수하기'}))actions.set(id,label);
@@ -124,8 +135,49 @@ export function createPreparation(scenario){
       pcrOpen=true;phase='collectPcr';message='반응관을 랙에 회수하세요.';return id;
     }
     if(id==='collectPcr'&&phase==='collectPcr'){
-      state.pcrLoaded=[];phase='done';message='PCR 완료 · 다음 작업 위치는 전기영동 장치입니다.';return id;
+      state.pcrLoaded=[];phase='toGel';message='E를 누르고 물러나 전기영동 장치로 가세요.';return id;
     }
+
+    if(id==='dockGel'&&phase==='toGel'){
+      phase='gel';message='DNA 마커를 선택하세요.';return id;
+    }
+    if(phase==='gel'){
+      if(id.startsWith('gelSource:')){
+        const source=id.slice(10);
+        if(!state.lanePlan.includes(source)||state.lanes.includes(source))return null;
+        gelSource=source;
+        message=(state.lanePlan.indexOf(source)+1)+'번 웰에 넣으세요.';
+        return 'selectGel';
+      }
+      if(id.startsWith('well:')&&gelSource){
+        const index=Number(id.slice(5));
+        if(state.lanePlan[index]!==gelSource)return blocked('표시된 레인 이름과 일치하는 웰을 고르세요.');
+        if(state.lanes[index])return blocked('이미 채운 웰입니다.');
+        state.lanes[index]=gelSource;gelSource=null;
+        const next=state.lanes.indexOf(null);
+        message=next===-1?'전극 연결을 확인하고 전기영동을 시작하세요.':actions.get('gelSource:'+state.lanePlan[next])+'을 선택하세요.';
+        return 'loadGel';
+      }
+      if(id==='swapGel'){
+        state.polarity=state.polarity==='normal'?'reverse':'normal';
+        message=state.polarity==='normal'?'웰이 −극 쪽입니다.':'웰이 +극 쪽입니다. 연결을 다시 확인하세요.';
+        return id;
+      }
+      if(id==='runGel'&&state.lanes.every(Boolean)){
+        if(state.polarity!=='normal')return blocked('웰이 −극 쪽에 오도록 전극을 바꾸세요.');
+        phase='runningGel';message='전기영동 중 · 추적 색소가 +극 쪽으로 이동합니다.';return id;
+      }
+    }
+    if(id==='collectGel'&&phase==='recoverGel'){
+      phase='toLed';message='E를 누르고 물러나 LED 관찰기로 가세요.';return id;
+    }
+    if(id==='dockLed'&&phase==='toLed'){
+      phase='led';message='보호 덮개를 닫고 LED를 켜세요.';return id;
+    }
+    if(id==='viewLed'&&phase==='led'){
+      phase='observe';state.viewed=true;message='마커와 대조군을 비교해 밴드를 판독하세요.';return id;
+    }
+    if(id==='inspectLed'&&state.viewed)return id;
 
     if(id==='lid'&&phase==='ice'&&!lid){
       lid=true;
@@ -188,7 +240,32 @@ export function createPreparation(scenario){
     if(phase!=='runningPcr')return;
     state.amplified=true;phase='recoverPcr';message='PCR이 끝났습니다. 뚜껑을 열어 반응관을 꺼내세요.';
   }
+  function completeGel(){
+    if(phase!=='runningGel')return;
+    state.gelRun=true;phase='recoverGel';message='전기영동이 끝났습니다. 겔을 들어 옮기세요.';
+  }
+  function result(answer,reason){
+    if(!state.viewed||!['A','B','both','neither'].includes(answer)||!reason.trim())return null;
+    state.answer=answer;state.reason=reason.trim();state.submitted=true;
+    phase='done';message='탐구 완료 · 판정과 근거를 모범 해석과 비교하세요.';
+    return {correct:answer===scenario.answer,model:scenario.modelInterpretation};
+  }
   function controls(station){
+    if(station==='gel'){
+      if(phase==='toGel')return ['dockGel'];
+      if(phase==='recoverGel')return ['collectGel'];
+      if(phase==='gel'){
+        if(state.lanes.every(Boolean))return ['swapGel','runGel'];
+        if(gelSource)return [...state.lanes.flatMap((id,i)=>id?[]:['well:'+i]),
+          ...state.lanePlan.filter(id=>!state.lanes.includes(id)).map(id=>'gelSource:'+id)];
+        return state.lanePlan.filter(id=>!state.lanes.includes(id)).map(id=>'gelSource:'+id);
+      }
+    }
+    if(station==='led'){
+      if(phase==='toLed')return ['dockLed'];
+      if(phase==='led')return ['viewLed'];
+      if(state.viewed)return ['inspectLed'];
+    }
     if(station==='pcr'){
       const action={toPcr:'dockPcr',pcr:'openPcr',loadPcr:'loadPcr',closePcr:'closePcr',
         readyPcr:'runPcr',recoverPcr:'recoverPcr',collectPcr:'collectPcr'}[phase];
@@ -220,13 +297,17 @@ export function createPreparation(scenario){
   }
 
   return {
-    state,samples,reagents,actions,perform,controls,autoActions,completeSpin,completePcr,
+    state,samples,reagents,actions,perform,controls,autoActions,completeSpin,completePcr,completeGel,result,
+    laneNames,markerBp:scenario.markerBp,productBp:scenario.productBp,
+    bandRows:()=>state.lanes.map(id=>bands(scenario,id)),
+    get gelSource(){return gelSource;},
     get phase(){return phase;},get lid(){return lid;},get liquid(){return liquid;},
     get finished(){return phase==='done';},get vortexTube(){return vortexTube;},get slots(){return slots;},
     get spinOpen(){return spinOpen;},get pcrOpen(){return pcrOpen;},get selected(){return selected;},
-    get carrying(){return ['carry','toMix','toSpin','toPcr','done'].includes(phase);},get message(){return message;},
+    get carrying(){return ['carry','toMix','toSpin','toPcr','toGel','toLed'].includes(phase);},get message(){return message;},
     get destination(){
-      if(phase==='done')return 'gel';
+      if(['toGel','gel','runningGel','recoverGel'].includes(phase))return 'gel';
+      if(['toLed','led','observe','done'].includes(phase))return 'led';
       if(['toPcr','pcr','loadPcr','closePcr','readyPcr','runningPcr','recoverPcr','collectPcr'].includes(phase))return 'pcr';
       return phase==='ice'?'ice':['carry','prep'].includes(phase)?'prep':['toMix','mix'].includes(phase)?'vortex':'spin';
     }

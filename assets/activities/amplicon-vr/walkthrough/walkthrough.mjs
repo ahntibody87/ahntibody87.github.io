@@ -1,6 +1,8 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
-import {createLab} from './lab-scene.mjs?v=8';
+import {createLab} from './lab-scene.mjs?v=9';
+import {createPcrLesson} from './pcr-lesson.mjs';
+import {createGelObservation} from './gel-observation.mjs';
 
 const standing=1.62;
 const movement={
@@ -19,6 +21,7 @@ export function mountWalkthrough(root,experiment=null){
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
       <div class="lab-object-buttons" aria-label="기구 옆 조작 버튼"></div>
       <section class="lab-preparation" hidden aria-label="자동 준비"><div></div></section>
+      <div class="lab-pcr-panel"></div><div class="lab-gel-panel"></div>
       <div class="lab-pad" aria-label="터치 이동">
         <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
         <button type="button" data-dir="forward" aria-label="앞으로 이동">↑</button>
@@ -73,7 +76,11 @@ export function mountWalkthrough(root,experiment=null){
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
   let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
   let autoQueue=null,autoAt=0,holdStarted=null,spinEnds=0,handlingUntil=0;
-  let pcrRun=null;
+  let pcrRun=false,gelRun=null;
+  const lesson=createPcrLesson(find('.lab-pcr-panel'),schedule);
+  const observation=experiment&&createGelObservation(find('.lab-gel-panel'),experiment,()=>{
+    note.textContent=experiment.message;refreshActions();schedule();
+  },()=>viewport.focus({preventScroll:true}));
   const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 
   function schedule(){
@@ -126,7 +133,7 @@ export function mountWalkthrough(root,experiment=null){
   function updateHint(){
     near=null;
     viewport.classList.toggle('lab-working',!!working);
-    if(transition||autoQueue||pcrRun||spinEnds){prompt.hidden=true;return;}
+    if(transition||autoQueue||pcrRun||gelRun||spinEnds){prompt.hidden=true;return;}
     if(working){
       prompt.classList.add('lab-spot-working');
       prompt.hidden=false;
@@ -178,7 +185,7 @@ export function mountWalkthrough(root,experiment=null){
       view=Object.fromEntries(['x','y','z','yaw','pitch'].map(key=>[key,T.MathUtils.lerp(from[key],to[key],eased)]));
       if(t===1){transition=null;done();}
     }
-    const halfView=working?.id==='prep'?28:['vortex','spin','pcr'].includes(working?.id)?32:0;
+    const halfView=working?.id==='prep'?28:['vortex','spin','pcr','gel','led'].includes(working?.id)?32:0;
     const fov=Math.max(51,T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(halfView))/camera.aspect)));
     if(fov!==camera.fov){camera.fov=fov;camera.updateProjectionMatrix();}
     camera.position.set(view.x,view.y,view.z);
@@ -193,22 +200,31 @@ export function mountWalkthrough(root,experiment=null){
       spinEnds=0;experiment.completeSpin();handlingUntil=now+360;
       note.textContent=experiment.message;refreshActions();
     }
-    let pcrProgress=0;
+    let pcrProgress=0,gelProgress=0;
     if(pcrRun){
-      pcrProgress=Math.min(1,(now-pcrRun.start)/pcrRun.duration);
-      if(pcrProgress===1){
-        pcrRun=null;experiment.completePcr();
+      const observation=lesson.update(now);
+      pcrProgress=observation.progress;
+      if(observation.done){
+        pcrRun=false;lesson.close();experiment.completePcr();
+        note.textContent=experiment.message;refreshActions();viewport.focus({preventScroll:true});
+      }
+    }
+    if(gelRun){
+      gelProgress=Math.min(1,(now-gelRun.start)/gelRun.duration);
+      if(gelProgress===1){
+        gelRun=null;experiment.completeGel();
         note.textContent=experiment.message;refreshActions();
       }
     }
-    lab.updateHandling(now,experiment,holdStarted!==null,pcrProgress);
+    lab.updateHandling(now,experiment,holdStarted!==null,pcrProgress,gelProgress);
+    lab.showCarriedGel(experiment?.phase==='toLed');
     lab.carried.visible=experiment?experiment.carrying&&!animating:carrying&&!working;
     if(wasAnimating&&!animating&&!autoQueue)renderer.shadowMap.needsUpdate=true;
     renderer.render(lab.scene,camera);
     updateHint();
     positionObjectButtons();
     if(autoQueue&&!animating&&now>=autoAt)advanceAuto(now);
-    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
+    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun&&lesson.playing||gelRun||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
     const {width,height}=viewport.getBoundingClientRect();
@@ -221,7 +237,7 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
   function enter(){
-    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun)return;
+    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||gelRun||observationIsOpen())return;
     if(working){
       const old=working;
       if(!experiment){
@@ -249,10 +265,6 @@ export function mountWalkthrough(root,experiment=null){
       note.textContent='지금은 '+next.name+'에서 작업할 차례입니다.';
       return;
     }
-    if(experiment?.finished){
-      note.textContent='PCR을 완료했습니다. 전기영동은 다음 구간입니다.';
-      return;
-    }
     working=near;
     const target=working;
     keys.clear();
@@ -274,7 +286,7 @@ export function mountWalkthrough(root,experiment=null){
   const shortNames={buffer:'버퍼·dNTP',primer:'프라이머',rt:'역전사 효소',taq:'Taq',
     'sample:A':'A 원본','sample:B':'B 원본','sample:positive':'+ 원본','sample:negative':'− 원본',
     'tube:A':'A 반응관','tube:B':'B 반응관','tube:positive':'+ 반응관','tube:negative':'− 반응관',
-    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기',holdMix:'눌러서 혼합',removeMix:'반응관 되돌리기',collectSpin:'반응관 회수'};
+    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기',holdMix:'눌러서 혼합',removeMix:'반응관 되돌리기',collectSpin:'반응관 회수','gelSource:marker':'마커','gelSource:A':'A 산물','gelSource:B':'B 산물','gelSource:positive':'+ 대조군','gelSource:negative':'− 대조군'};
 
   function refreshActions(){
     if(!experiment||!working){actions.hidden=true;objectButtons.replaceChildren();return;}
@@ -289,6 +301,7 @@ export function mountWalkthrough(root,experiment=null){
       button.title=fullName;
       button.setAttribute('aria-label',fullName);
       if(lab.targets.has(id)){
+        if(id.startsWith('well:'))button.textContent=['1 · 마커','2 · A','3 · B','4 · 양성','5 · 음성'][Number(id.slice(5))];
         button.dataset.kind=experiment.reagents.some(item=>item.id===id)?'reagent':id.split(':')[0];
         button.className='lab-object-button';
         tagged.push(button);
@@ -325,7 +338,7 @@ export function mountWalkthrough(root,experiment=null){
       const center=T.MathUtils.clamp(middle,span,width-span);
       items.forEach(({button,x,y},i)=>{
         const left=center+(i-(count-1)/2)*spacing;
-        const gap=['sample','lid','rack'].includes(kind)?-32:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
+        const gap=['sample','lid','rack','well'].includes(kind)?-32:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
         const top=T.MathUtils.clamp(y+gap,62,height*.74);
         button.style.left=left+'px';
         button.style.top=top+'px';
@@ -339,10 +352,12 @@ export function mountWalkthrough(root,experiment=null){
     const effect=experiment.perform(id);
     if(!effect)return false;
     lab.prepareAction(effect,id,now,duration);
-    animating=duration>0&&['lid','rack','place','tips','discard','aspirate','dispense'].includes(effect);
+    animating=duration>0&&['lid','rack','place','tips','discard','aspirate','dispense','selectGel','loadGel'].includes(effect);
     if(!animating)handlingUntil=now+420;
     if(effect==='runSpin')spinEnds=now+(motionPreference.matches?800:2400);
-    if(effect==='runPcr')pcrRun={start:now,duration:motionPreference.matches?1400:6400};
+    if(effect==='runPcr'){pcrRun=true;lesson.open();}
+    if(effect==='runGel')gelRun={start:now,duration:motionPreference.matches?1200:3900};
+    if(effect==='inspectLed')observation.open();
     if(effect==='lid'){
       pose.pitch=-.55;
       renderer.shadowMap.needsUpdate=true;
@@ -368,8 +383,9 @@ export function mountWalkthrough(root,experiment=null){
     refreshActions();
     schedule();
   }
+  const observationIsOpen=()=>!!find('.lab-gel-observation:not([hidden])');
   function perform(id){
-    if(id==='holdMix'||!experiment||transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||!experiment.controls(working?.id).includes(id))return;
+    if(id==='holdMix'||!experiment||transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||gelRun||observationIsOpen()||!experiment.controls(working?.id).includes(id))return;
     if(['runSpin','runPcr'].includes(id)&&performance.now()<handlingUntil)return;
     if(id==='auto'){
       const sequence=experiment.autoActions();
@@ -383,7 +399,7 @@ export function mountWalkthrough(root,experiment=null){
       note.textContent=experiment.message;
     }
     refreshActions();
-    viewport.focus({preventScroll:true});
+    if(!pcrRun&&!observationIsOpen())viewport.focus({preventScroll:true});
     schedule();
   }
 

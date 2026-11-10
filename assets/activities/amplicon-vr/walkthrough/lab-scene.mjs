@@ -432,6 +432,16 @@ export function createLab(experiment){
       }};
       return;
     }
+    if(effect==='selectGel'||effect==='loadGel'){
+      const point=targets.get(id);
+      const position=gel.worldToLocal(point.getWorldPosition(new T.Vector3()));
+      const initial=gelTool.position.clone();
+      motion={start:now,duration,apply:t=>{
+        gelTool.position.lerpVectors(initial,new T.Vector3(position.x,position.y+.145,position.z),t);
+        gelTool.position.y+=Math.sin(Math.PI*t)*.065;
+      }};
+      return;
+    }
     if(!['tips','discard','aspirate','dispense'].includes(effect))return;
     const point=targets.get(id);
     if(!point)return;
@@ -544,24 +554,48 @@ export function createLab(experiment){
     box(sign*.228,.095,0,.012,.128,.267,'glass',gel);
     box(0,.095,sign*.134,.463,.128,.011,'glass',gel);
   }
-  box(0,.072,0,.31,.026,.194,'glass',gel);
-  for(let i=0;i<6;i++)box(-.12+i*.048,.086,-.053,.021,.004,.036,'dark',gel);
+  const gelInsert=new T.Group();gel.add(gelInsert);
+  box(0,.072,0,.31,.026,.194,'glass',gelInsert);
+  const dye=[];
+  for(let i=0;i<5;i++){
+    const x=-.108+i*.054;
+    box(x,.086,-.056,.022,.004,.032,'dark',gelInsert);
+    const mark=box(x,.089,-.052,.020,.005,.018,'blue',gelInsert);mark.visible=false;dye.push(mark);
+    target('well:'+i,gel,x,.096,-.056,.045,.072,.064);
+  }
+  target('dockGel',gel,0,.077,.287,.33,.13,.12);
+  target('collectGel',gel,0,.13,0,.32,.13,.22);
+  target('swapGel',gel,.01,.19,-.116,.36,.07,.12);
+  target('runGel',gel,.405,.10,.10,.17,.11,.12);
+  const gelTool=pipette.clone();gel.add(gelTool);gelTool.position.set(-.30,.16,.08);gelTool.rotation.set(0,0,0);
+  add(new T.CylinderGeometry(.008,.002,.055,18),'glass',0,-.082,0,gelTool);
+  gelTool.visible=false;
+  const leadColors=[];
   rounded(.395,.071,-.01,.219,.138,.215,'dark',gel,.012);
   label('POWER',.395,.084,.099,.145,.044,gel);
   for(const [index,key] of ['red','dark'].entries()){
     const x=.16-index*.32;
-    cyl(x,.17,-.10,.021,.05,key,gel);
+    const plug=cyl(x,.17,-.10,.021,.05,key,gel);
     const curve=new T.CatmullRomCurve3([[x,.19,-.10],[x+.02,.27,-.22],[.31,.16,-.25],[.38+index*.05,.10,-.115]].map(p=>new T.Vector3(...p)));
-    add(new T.TubeGeometry(curve,20,.008,7,false),key,0,0,0,gel);
+    const cable=add(new T.TubeGeometry(curve,20,.008,7,false),key,0,0,0,gel);
+    leadColors.push([plug,cable]);
   }
 
   const viewer=device('led');
   rounded(0,.065,0,.50,.128,.39,'dark',viewer,.019);
-  rounded(0,.135,-.015,.452,.023,.327,'screen',viewer,.008);
+  const ledPlate=rounded(0,.135,-.015,.452,.023,.327,'dark',viewer,.008);
   for(const x of [-.206,.206])box(x,.148,-.01,.023,.013,.31,'trim',viewer);
-  rounded(0,.162,-.045,.454,.016,.29,'filter',viewer,.007);
+  const amberLid=new T.Group();amberLid.position.set(0,.160,-.180);viewer.add(amberLid);
+  rounded(0,.016,.145,.454,.016,.29,'filter',amberLid,.007);
+  const ledGel=box(0,.151,-.025,.32,.015,.216,'glass',viewer);ledGel.visible=false;
+  const ledBands=new T.Group();ledBands.position.set(0,.162,-.025);viewer.add(ledBands);
+  const bandMaterial=new T.MeshBasicMaterial({color:'#a1ffc0',toneMapped:false});
+  let populated=false;
+  target('dockLed',viewer,0,.16,-.015,.39,.10,.29);
+  target('viewLed',viewer,0,.20,-.08,.43,.14,.30);
+  target('inspectLed',viewer,0,.17,-.025,.40,.10,.26);
   label('BLUE LED',-.094,.068,.197,.179,.032,viewer);
-  rounded(.16,.066,.199,.044,.032,.013,'screen',viewer,.005);
+  const ledPower=rounded(.16,.066,.199,.044,.032,.013,'dark',viewer,.005);
   rod([-.21,.151,-.177],[.21,.151,-.177],.008,'steel',viewer);
 
   const vortex=device('vortex');
@@ -606,12 +640,12 @@ export function createLab(experiment){
   rounded(.104,.002,.012,.038,.028,.012,'screen',spinPanel,.005);
   for(let i=0;i<7;i++)box(-.168+i*.023,.045,.204,.011,.020,.005,'trim',centrifuge);
 
-  function handlingTube(id,parent){
+  function handlingTube(id,parent,mark=sampleLabels[sampleIds.indexOf(id)]){
     const tube=new T.Group();parent.add(tube);
     add(new T.CylinderGeometry(.016,.010,.082,20),'tubeGlass',0,.041,0,tube);
     cyl(0,.084,0,.019,.015,'plastic',tube);
     cyl(0,.027,0,.011,.024,'screen',tube);
-    label(sampleLabels[sampleIds.indexOf(id)],0,.046,.017,.028,.021,tube);
+    label(mark,0,.046,.017,.028,.021,tube);
     return tube;
   }
   const workRack=new T.Group();workRack.visible=false;scene.add(workRack);
@@ -630,11 +664,15 @@ export function createLab(experiment){
   target('closeSpin',spinLid,0,.034,.22,.25,.11,.18);
   target('collectSpin',centrifuge,0,.27,-.025,.31,.13,.28);
   target('runSpin',spinPanel,.10,0,.03,.09,.075,.055);
-  [pcrLid,spinLid,rotor,workRack,...workTubes].forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
+  const markerTube=handlingTube('marker',gel,'M');
+  markerTube.position.set(-.205,.023,.284);markerTube.visible=false;
+  target('gelSource:marker',markerTube,0,.065,0,.062,.13,.078);
+  sampleIds.forEach((id,i)=>target('gelSource:'+id,workTubes[i],0,.061,0,.064,.13,.082));
+  [pcrLid,spinLid,rotor,workRack,...workTubes,gelInsert,gelTool,markerTube,amberLid,ledGel].forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
 
   const tubePoint=new T.Vector3();
   let lastHandling=0;
-  function updateHandling(now,experiment,holding,pcrProgress=0){
+  function updateHandling(now,experiment,holding,pcrProgress=0,gelProgress=0){
     const dt=Math.min(.05,(now-lastHandling)/1000);
     lastHandling=now;
     if(!experiment)return;
@@ -642,13 +680,39 @@ export function createLab(experiment){
     const atSpin=['spin','readySpin','spinning','recoverSpin'].includes(phase);
     const atMix=phase==='mix';
     const atPcr=experiment.destination==='pcr'&&phase!=='toPcr';
-    const station=atPcr?pcr:atSpin?centrifuge:vortex;
-    workRack.visible=atSpin||atMix||atPcr;
+    const atGel=['gel','runningGel','recoverGel'].includes(phase);
+    const atLed=['led','observe','done'].includes(phase);
+    const station=atGel?gel:atPcr?pcr:atSpin?centrifuge:vortex;
+    workRack.visible=atSpin||atMix||atPcr||atGel;
+    markerTube.visible=atGel;
+    gelTool.visible=phase==='gel';
+    gelInsert.visible=!['toLed','led','observe','done'].includes(phase);
+    dye.forEach((mark,i)=>{
+      mark.visible=!!experiment.state.lanes[i]&&gelInsert.visible;
+      mark.position.z=-.052+(experiment.state.gelRun?1:gelProgress)*.12;
+    });
+    leadColors.forEach((pair,i)=>pair.forEach(part=>{
+      part.material=m[(i===0)===(experiment.state.polarity==='normal')?'red':'dark'];
+    }));
+    const filterGoal=phase==='toLed'||phase==='led'?-1.54:0;
+    amberLid.rotation.x=T.MathUtils.lerp(amberLid.rotation.x,filterGoal,Math.min(1,dt*14));
+    ledGel.visible=atLed;
+    ledBands.visible=experiment.state.viewed;
+    ledPlate.material=ledPower.material=experiment.state.viewed?m.screen:m.dark;
+    if(experiment.state.viewed&&!populated){
+      populated=true;
+      experiment.bandRows().forEach((bands,i)=>bands.forEach(bp=>{
+        const distance=1-Math.log(bp/75)/Math.log(8);
+        const band=new T.Mesh(cube,bandMaterial);
+        band.position.set(-.116+i*.057,0,-.082+distance*.156);band.scale.set(.040,.003,.006);
+        ledBands.add(band);
+      }));
+    }
     const pcrGoal=experiment.pcrOpen?-1.62:0;
     pcrLid.rotation.x=T.MathUtils.lerp(pcrLid.rotation.x,pcrGoal,Math.min(1,dt*14));
     if(Math.abs(pcrLid.rotation.x-pcrGoal)<.008)pcrLid.rotation.x=pcrGoal;
     paintPcr(phase==='runningPcr'?'run':experiment.state.amplified?'done':phase==='readyPcr'?'ready':experiment.pcrOpen?'open':'idle',pcrProgress);
-    workRack.position.copy(station.position).add(new T.Vector3(-.43,0,.12));
+    workRack.position.copy(station.position).add(new T.Vector3(atGel?-.01:-.43,0,atGel?.285:.12));
     const lidGoal=experiment.spinOpen?-1.78:0;
     spinLid.rotation.x=T.MathUtils.lerp(spinLid.rotation.x,lidGoal,Math.min(1,dt*14));
     if(Math.abs(spinLid.rotation.x-lidGoal)<.008)spinLid.rotation.x=lidGoal;
@@ -695,7 +759,8 @@ export function createLab(experiment){
   batchStaticGeometry(scene,[cube,round]);
 
   const carried=new T.Group();
-  rack(carried).position.set(0,-.22,-.46);
+  const carriedRack=rack(carried);carriedRack.position.set(0,-.22,-.46);
+  const carriedGel=box(0,-.189,-.46,.30,.023,.145,'glass',carried);carriedGel.visible=false;
   const joint=new T.SphereGeometry(1,18,12);
   function softPart(x,y,z,sx,sy,sz,key,parent=carried){
     const mesh=add(joint,key,x,y,z,parent);
@@ -727,7 +792,8 @@ export function createLab(experiment){
   carried.scale.setScalar(.90);
   carried.position.y=-.012;
   carried.visible=false;
-  return {scene,carried,targets,prepareAction,updatePreparation,updateHandling,ready:Promise.all([exterior.ready,reflectionReady])};
+  return {scene,carried,targets,prepareAction,updatePreparation,updateHandling,
+    showCarriedGel(active){carriedGel.visible=active;carriedRack.visible=!active;},ready:Promise.all([exterior.ready,reflectionReady])};
 }
 
 function batchStaticGeometry(scene,geometries){

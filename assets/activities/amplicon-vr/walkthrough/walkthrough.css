@@ -79,3 +79,28 @@
 .lab-preparation {width:auto;max-width:calc(100% - 1.3rem);}
 @media(max-width:650px){.lab-viewbar .lab-zone {display:none;}}
 .lab-working .lab-pad {display:none;}
+.lab-observation {
+  position:absolute;z-index:5;inset:3.35rem auto auto 50%;transform:translateX(-50%);
+  width:min(650px,calc(100% - 1rem));max-height:calc(100% - 4rem);overflow:auto;
+  padding:.8rem 1rem;background:#0b2332f5;color:#f1f8fb;
+  border:1px solid #92c5d3;border-radius:10px;box-shadow:0 12px 35px #07151a80;
+}
+.lab-observation header {display:flex;align-items:center;justify-content:space-between;gap:.6rem;}
+.lab-observation-kicker,.lab-cycle {color:#9cdbed;font-size:.79rem;}
+.lab-observation h3 {margin:.25rem 0;color:#fff;font-size:clamp(1rem,2.3vw,1.43rem);}
+.lab-observation p {margin:.2rem 0 .5rem;color:#d1e9ef;font-size:.84rem;}
+.lab-molecule-graphic,.lab-gel-diagram svg {display:block;width:100%;background:#102c3c;border-radius:6px;}
+.lab-molecule-legend {display:flex;flex-wrap:wrap;gap:.65rem;padding:0;list-style:none;margin:.45rem 0;font-size:.76rem;}
+.lab-molecule-legend li::before {content:"";display:inline-block;width:.58rem;height:.58rem;border-radius:50%;background:var(--ink);margin-right:.28rem;}
+.lab-observation-controls {display:flex;flex-wrap:wrap;gap:.4rem;}
+.amp-lab .lab-observation button {min-height:34px;padding:.32rem .65rem;color:#fff;background:#28536a;border:1px solid #9acbda;border-radius:5px;}
+.amp-lab .lab-observation button[data-pcr=fast] {color:#102c35;background:#caf1f1;font-weight:750;}
+.amp-lab .lab-observation button:disabled {opacity:.45;}
+.lab-gel-result {display:grid;gap:.4rem;}
+.lab-gel-result label {display:grid;gap:.15rem;font-size:.81rem;}
+.lab-gel-result select,.lab-gel-result textarea {max-width:100%;padding:.25rem;color:#172a30;background:#f8fcfc;}
+.lab-gel-feedback {margin-top:.6rem;border-top:1px solid #8ab6c4;padding-top:.5rem;}
+@media(max-width:650px){
+  .lab-observation {padding:.6rem;}
+  .lab-observation header {align-items:flex-start;}
+}
