@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {canStand,spawn,stations} from './layout.mjs';
-import {createLab} from './lab-scene.mjs';
+import {canStand,spawn,stations} from './layout.mjs?v=2';
+import {createLab} from './lab-scene.mjs?v=2';
 
 const standing=1.62;
 const movement={
@@ -48,7 +48,8 @@ export function mountWalkthrough(root){
     note.textContent='이 브라우저에서 3D 화면을 열 수 없습니다.';
     return;
   }
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  const maxPixelRatio=Math.min(devicePixelRatio,1.5);
+  let renderRatio=maxPixelRatio,slowFrames=0;
   renderer.toneMapping=T.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.10;
   renderer.shadowMap.enabled=true;
@@ -134,7 +135,11 @@ export function mountWalkthrough(root){
       return;
     }
     prompt.classList.remove('lab-spot-working');
-    near=stations.find(s=>Math.hypot(player.x-s.x,player.z-s.standZ)<.67);
+    let reach=.67;
+    for(const station of stations){
+      const distance=Math.hypot(player.x-station.x,player.z-station.standZ);
+      if(distance<reach){near=station;reach=distance;}
+    }
     prompt.hidden=true;
     if(!near)return;
     labelPoint.set(near.x,near.id==='ice'?1.27:1.16,near.z);
@@ -148,8 +153,17 @@ export function mountWalkthrough(root){
   }
   function render(now){
     frame=0;
-    const dt=Math.min(.24,(now-last)/1000);
+    const elapsed=(now-last)/1000;
+    const dt=Math.min(.24,elapsed);
     last=now;
+    if(keys.size&&!working){
+      slowFrames=elapsed>.075?slowFrames+1:0;
+      if(slowFrames>=4&&renderRatio>.62){
+        renderRatio=Math.max(.62,renderRatio*.82);
+        renderer.setPixelRatio(renderRatio);
+        slowFrames=0;
+      }
+    }
     if(!working&&!transition)advance(dt);
     let view=pose??{...player,y:standing};
     if(transition){
@@ -171,6 +185,8 @@ export function mountWalkthrough(root){
     if(width<=0||height<=0)return;
     camera.aspect=width/height;
     camera.updateProjectionMatrix();
+    renderRatio=Math.min(renderRatio,maxPixelRatio,Math.sqrt(1250000/(width*height)));
+    renderer.setPixelRatio(renderRatio);
     renderer.setSize(width,height,false);
     schedule();
   }
@@ -204,7 +220,7 @@ export function mountWalkthrough(root){
       note.textContent=target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
       visits.add(target.id);
       find('[data-visit="'+target.id+'"]').dataset.visited='true';
-      if(visits.size===stations.length)note.textContent+=' 네 장비의 작업 위치를 모두 확인했습니다.';
+      if(visits.size===stations.length)note.textContent+=' 모든 장비의 작업 위치를 모두 확인했습니다.';
     }};
     schedule();
   }

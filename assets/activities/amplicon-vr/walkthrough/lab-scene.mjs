@@ -1,5 +1,5 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {roomSize,benches,stools,stations} from './layout.mjs';
+import {roomSize,benches,stools,stations} from './layout.mjs?v=2';
 
 function surface(kind){
   const canvas=document.createElement('canvas');
@@ -72,6 +72,20 @@ export function createLab(){
   const ceiling=surface('ceiling');ceiling.repeat.set(w/.64,d/.64);
   const material=(color,props={})=>new T.MeshStandardMaterial({color,roughness:.56,...props});
   const exterior=photographMaterials(stone);
+  let finishReflection;
+  const reflectionReady=new Promise(resolve=>{finishReflection=resolve;});
+  const reflected=new T.TextureLoader().load(new URL('../room-surround.webp',import.meta.url).href,finishReflection,undefined,finishReflection);
+  reflected.mapping=T.EquirectangularReflectionMapping;
+  reflected.colorSpace=T.SRGBColorSpace;
+  scene.environment=reflected;
+  scene.environmentIntensity=.42;
+  const woodDoors=Array.from({length:5},(_,index)=>{
+    const grain=oak.clone();
+    grain.offset.x=index*.183;
+    grain.repeat.set(.82,1);
+    grain.needsUpdate=true;
+    return material('#fff',{map:grain,roughness:.43});
+  });
   const m={
     stone:material('#fff',{map:stone,roughness:.25}),
     floor:material('#fff',{map:tile,roughness:.42}),
@@ -81,6 +95,10 @@ export function createLab(){
     steel:material('#b8c5c8',{metalness:.54,roughness:.28}),
     trim:material('#555b5d',{metalness:.25}), dark:material('#22292b'),
     blue:material('#234d80'), plastic:material('#eeefea',{roughness:.34}),
+    cabinetGlass:new T.MeshPhysicalMaterial({color:'#d5e4e7',metalness:.12,roughness:.13,transparent:true,opacity:.19,depthWrite:false}),
+    chrome:material('#f3f7fa',{metalness:.9,roughness:.18}),
+    rubber:material('#242529',{roughness:.94}),
+    filter:material('#cf9342',{roughness:.24,transparent:true,opacity:.53,depthWrite:false}),
     glass:new T.MeshPhysicalMaterial({color:'#b7d2d9',roughness:.13,transparent:true,opacity:.28,depthWrite:false,side:T.DoubleSide}),
     daylight:new T.MeshBasicMaterial({map:exterior.texture,color:'#e8f4ff',toneMapped:false}),
     light:new T.MeshBasicMaterial({color:'#fff9ed',toneMapped:false}),
@@ -91,7 +109,7 @@ export function createLab(){
   function add(geometry,key,x,y,z,parent=scene){
     const mesh=new T.Mesh(geometry,m[key]);
     mesh.position.set(x,y,z);
-    mesh.castShadow=!['glass','daylight','light'].includes(key);
+    mesh.castShadow=!m[key].transparent&&!['daylight','light'].includes(key);
     mesh.receiveShadow=!['glass','daylight','light'].includes(key);
     parent.add(mesh);
     return mesh;
@@ -159,15 +177,21 @@ export function createLab(){
   box(5.42,h-.074,4.48,.74,.083,.74,'ivory');
   for(let i=0;i<8;i++)box(5.42,h-.121,4.21+i*.076,.53,.015,.017,'trim');
 
-  function cupboards(start,end,z,glass){
+  function handle(x,y,z,length){
+    const front=z+.026;
+    for(const offset of [-length/2,length/2]){
+      rod([x,y+offset,z],[x,y+offset,front],.008,'chrome');
+    }
+    rod([x,y-length/2,front],[x,y+length/2,front],.009,'chrome');
+  }
+  function cupboards(start,end,z){
     const count=Math.round((end-start)/.65);
     const step=(end-start)/count;
     for(let i=0;i<count;i++){
       const x=start+(i+.5)*step;
-      box(x,.46,z,step-.012,.86,.61,'wood');
-      box(x,.53,z+.318,step-.028,.72,.036,'wood');
-      rod([x+step*.31,.68,z+.352],[x+step*.31,.82,z+.352],.011,'steel');
-      if(!glass)continue;
+      box(x,.51,z,step-.009,.79,.61,'wood');
+      box(x,.49,z+.323,step-.040,.72,.039,'wood').material=woodDoors[i%5];
+      handle(x+step*.30,.73,z+.344,.128);
       const glazed=i<4||i>7;
       if(glazed){
         box(x,1.68,z-.245,step-.012,1.35,.085,'wood');
@@ -175,36 +199,88 @@ export function createLab(){
           box(x+sign*(step/2-.016),1.68,z-.04,.032,1.35,.43,'wood');
           box(x,1.68+sign*.642,z-.04,step-.01,.05,.43,'wood');
         }
-        box(x,1.68,z+.17,step-.062,1.18,.04,'glass');
+        const pane=z+.201;
+        box(x,1.68,pane,step-.088,1.218,.012,'cabinetGlass');
+        for(const sign of [-1,1]){
+          box(x+sign*(step/2-.025),1.68,pane,.032,1.28,.028,'steel');
+          box(x,1.68+sign*.626,pane,step-.044,.028,.028,'steel');
+        }
         for(const y of [1.27,1.65,2.02]){
           box(x,y,z+.063,step-.074,.023,.29,'wood');
           for(let j=0;j<3;j++){
             const px=x-step*.28+j*step*.24;
-            const height=.11+((i+j)%3)*.032;
-            cyl(px,y+height*.5,z+.12,.036,height,j%2?'plastic':'amber');
-            cyl(px,y+height,z+.12,.025,.027,'dark');
+            const height=.092+((i+j*3+Math.round(y*10))%5)*.024;
+            const radius=.026+((i+j)%3)*.007;
+            const depth=z+.057+((i+j)%3)*.022;
+            cyl(px,y+.012+height*.5,depth,radius,height,j%3===0?'glass':j%2?'plastic':'amber');
+            cyl(px,y+.012+height,depth,radius*.76,.024,j%2?'blue':'dark');
+            box(px,y+.042+height*.29,depth+radius*.94,radius*1.36,.031,.005,'plastic');
           }
         }
       }else{
         box(x,1.68,z-.08,step-.008,1.35,.44,'wood');
-        box(x,1.68,z+.175,step-.03,1.28,.04,'wood');
+        box(x,1.68,z+.175,step-.038,1.28,.04,'wood').material=woodDoors[(i+2)%5];
       }
-      rod([x+step*.31,1.35,z+.21],[x+step*.31,1.54,z+.21],.011,'steel');
+      handle(x+step*.31,1.45,z+.219,.142);
     }
   }
-  cupboards(.68,10.03,.34,true);
+  cupboards(.68,10.03,.34);
+  box(5.35,.064,.34,9.37,.12,.54,'trim');
   box(5.35,.94,.36,9.42,.055,.68,'stone');
-  box(.35,.93,4.17,.70,.063,7.48,'stone');
-  for(let z=.72;z<7.85;z+=.56){
-    box(.31,.44,z,.58,.84,.548,'ivory');
-    box(.619,.49,z,.035,.72,.524,'ivory');
-    rod([.65,.66,z-.15],[.65,.80,z-.15],.010,'steel');
+  const sinkZ=3.95, openingStart=3.56, openingEnd=4.34;
+  for(const [low,high] of [[.43,openingStart],[openingEnd,7.91]]){
+    box(.35,.93,(low+high)/2,.70,.063,high-low,'stone');
   }
-  box(.40,.967,3.95,.47,.022,.72,'steel');
-  box(.40,.980,3.95,.39,.014,.61,'dark');
-  box(.40,.982,3.95,.32,.015,.53,'steel');
-  const faucet=new T.CatmullRomCurve3([[.12,.95,3.92],[.12,1.24,3.92],[.26,1.35,3.92],[.41,1.26,3.92]].map(p=>new T.Vector3(...p)));
-  add(new T.TubeGeometry(faucet,18,.023,8,false),'steel',0,0,0);
+  box(.055,.93,sinkZ,.11,.063,.78,'stone');
+  box(.658,.93,sinkZ,.084,.063,.78,'stone');
+  box(.035,.998,4.17,.046,.082,7.48,'stone');
+  box(.29,.068,4.17,.52,.125,7.48,'trim');
+  for(let z=.72;z<7.85;z+=.56){
+    const underSink=Math.abs(z-sinkZ)<.72;
+    box(.31,underSink?.34:.46,z,.58,underSink?.55:.81,.548,'ivory');
+    box(.619,.49,z,.035,.72,.516,'ivory');
+    for(const y of [.68,.79])rod([.635,y,z-.15],[.669,y,z-.15],.008,'chrome');
+    rod([.669,.68,z-.15],[.669,.79,z-.15],.008,'chrome');
+  }
+  const sinkX=.365;
+  const rimShape=new T.Shape();
+  rimShape.moveTo(-.284,-.414);rimShape.lineTo(.284,-.414);rimShape.lineTo(.284,.414);rimShape.lineTo(-.284,.414);rimShape.closePath();
+  function bowlOutline(target,a,b,r){
+    target.moveTo(-a+r,-b);target.lineTo(a-r,-b);target.quadraticCurveTo(a,-b,a,-b+r);
+    target.lineTo(a,b-r);target.quadraticCurveTo(a,b,a-r,b);target.lineTo(-a+r,b);
+    target.quadraticCurveTo(-a,b,-a,b-r);target.lineTo(-a,-b+r);target.quadraticCurveTo(-a,-b,-a+r,-b);
+    target.closePath();
+  }
+  const sinkHole=new T.Path();
+  bowlOutline(sinkHole,.246,.369,.063);
+  rimShape.holes.push(sinkHole);
+  const rim=add(new T.ShapeGeometry(rimShape),'steel',sinkX,.967,sinkZ);
+  rim.rotation.x=-Math.PI/2;
+  const inside=new T.Path();
+  bowlOutline(inside,.195,.315,.064);
+  const upper=sinkHole.getPoints(8),lower=inside.getPoints(8),verts=[];
+  for(let i=0;i<upper.length-1;i++){
+    const top=p=>[p.x,.966,-p.y], bottom=p=>[p.x,.753,-p.y];
+    verts.push(...top(upper[i]),...bottom(lower[i+1]),...bottom(lower[i]),
+      ...top(upper[i]),...top(upper[i+1]),...bottom(lower[i+1]));
+  }
+  const slope=new T.BufferGeometry();
+  slope.setAttribute('position',new T.Float32BufferAttribute(verts,3));
+  slope.computeVertexNormals();
+  const bowlMaterial=m.steel.clone();bowlMaterial.side=T.DoubleSide;
+  add(slope,'steel',sinkX,0,sinkZ).material=bowlMaterial;
+  const baseShape=new T.Shape();
+  bowlOutline(baseShape,.195,.315,.064);
+  add(new T.ShapeGeometry(baseShape),'steel',sinkX,.753,sinkZ).rotation.x=-Math.PI/2;
+  cyl(sinkX,.757,sinkZ+.093,.052,.007,'chrome');
+  cyl(sinkX,.762,sinkZ+.093,.036,.004,'dark');
+  for(let i=0;i<7;i++)box(sinkX-.026+i*.009,.765,sinkZ+.093,.003,.003,.044,'chrome');
+  cyl(.085,.983,3.92,.049,.026,'chrome');
+  const faucet=new T.CatmullRomCurve3([[.085,.99,3.92],[.085,1.24,3.92],[.225,1.365,3.92],[.381,1.28,3.92],[.391,1.23,3.92]].map(p=>new T.Vector3(...p)));
+  add(new T.TubeGeometry(faucet,36,.018,14,false),'chrome',0,0,0);
+  cyl(.391,1.226,3.92,.023,.030,'chrome');
+  cyl(.10,1.015,4.061,.024,.078,'chrome');
+  rod([.10,1.055,4.061],[.183,1.067,4.061],.009,'chrome');
   for(let i=0;i<5;i++)cyl(.38,.995+i%2*.018,1.3+i*.20,.04,.11,i%2?'amber':'plastic');
   box(10.48,.48,3.06,.60,.91,4.48,'ivory');
   box(10.48,.953,3.06,.64,.062,4.48,'stone');
@@ -298,6 +374,38 @@ export function createLab(){
     add(new T.TubeGeometry(curve,20,.008,7,false),key,0,0,0,gel);
   }
 
+  const viewer=device('led');
+  rounded(0,.065,0,.50,.128,.39,'dark',viewer,.019);
+  rounded(0,.135,-.015,.452,.023,.327,'screen',viewer,.008);
+  for(const x of [-.206,.206])box(x,.148,-.01,.023,.013,.31,'trim',viewer);
+  rounded(0,.162,-.045,.454,.016,.29,'filter',viewer,.007);
+  label('BLUE LED',-.094,.068,.197,.179,.032,viewer);
+  rounded(.16,.066,.199,.044,.032,.013,'screen',viewer,.005);
+  rod([-.21,.151,-.177],[.21,.151,-.177],.008,'steel',viewer);
+
+  const vortex=device('vortex');
+  rounded(0,.068,0,.31,.134,.286,'blue',vortex,.022);
+  rounded(0,.131,-.013,.287,.025,.247,'plastic',vortex,.01);
+  cyl(0,.171,-.036,.098,.072,'rubber',vortex);
+  cyl(0,.210,-.036,.072,.012,'dark',vortex);
+  const grip=add(new T.TorusGeometry(.051,.0035,8,24),'trim',0,.218,-.036,vortex);
+  grip.rotation.x=Math.PI/2;
+  const speed=cyl(.092,.071,.155,.035,.028,'rubber',vortex);speed.rotation.x=Math.PI/2;
+  box(.092,.089,.169,.004,.021,.003,'plastic',vortex);
+  label('VORTEX',-.050,.070,.147,.136,.028,vortex);
+
+  const centrifuge=device('spin');
+  rounded(0,.105,0,.445,.206,.405,'plastic',centrifuge,.033);
+  rounded(0,.211,-.026,.404,.026,.343,'dark',centrifuge,.011);
+  rounded(0,.253,-.031,.400,.075,.339,'plastic',centrifuge,.025);
+  rounded(0,.287,-.035,.284,.022,.226,'cabinetGlass',centrifuge,.008);
+  rounded(0,.211,.15,.105,.032,.031,'dark',centrifuge,.008);
+  const spinPanel=new T.Group();spinPanel.position.set(0,.114,.214);spinPanel.rotation.x=-.25;centrifuge.add(spinPanel);
+  rounded(0,0,0,.285,.08,.017,'dark',spinPanel,.006);
+  label('CENTRIFUGE',-.027,.004,.011,.193,.033,spinPanel);
+  rounded(.104,.002,.012,.038,.028,.012,'screen',spinPanel,.005);
+  for(let i=0;i<7;i++)box(-.168+i*.023,.045,.204,.011,.020,.005,'trim',centrifuge);
+
   scene.add(new T.HemisphereLight('#e6f3ff','#a9a398',2.0));
   scene.add(new T.AmbientLight('#fff0da',.52));
   const sun=new T.DirectionalLight('#fff1d3',2.55);
@@ -331,7 +439,7 @@ export function createLab(){
   carried.scale.setScalar(.81);
   carried.position.y=-.075;
   carried.visible=false;
-  return {scene,carried,ready:exterior.ready};
+  return {scene,carried,ready:Promise.all([exterior.ready,reflectionReady])};
 }
 
 function batchStaticGeometry(scene,geometries){
