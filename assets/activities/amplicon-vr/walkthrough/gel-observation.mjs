@@ -34,12 +34,15 @@ export function createGelObservation(root,experiment,onResult,onClose){
       field.reportValidity();
       return;
     }
-    const title=document.createElement('strong');
-    title.textContent=result.correct?'판정이 모범 해석과 일치합니다.':'판정을 모범 해석과 비교해 보세요.';
+    const title=document.createElement('h4');
+    title.className=result.correct?'lab-answer-correct':'lab-answer-review';
+    title.tabIndex=-1;
+    title.textContent=result.correct?'정답입니다!':'판정을 다시 비교해 보세요';
     feedback.replaceChildren(title,...result.model.map(text=>{
       const p=document.createElement('p');p.textContent=text;return p;
     }));
     feedback.hidden=false;
+    title.focus();
     onResult();
   });
   form.elements.reason.addEventListener('input',()=>form.elements.reason.setCustomValidity(''));

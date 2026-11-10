@@ -1,18 +1,19 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
 import {createLab} from './lab-scene.mjs?v=10';
-import {createPcrLesson} from './pcr-lesson.mjs?v=2';
-import {createGelObservation} from './gel-observation.mjs';
+import {createPcrLesson} from './pcr-lesson.mjs?v=3';
+import {createGelObservation} from './gel-observation.mjs?v=2';
 
 const standing=1.62;
 const stationReach=1.15;
 const mixHoldMs=1500;
+const stationSteps={ice:1,prep:2,vortex:3,spin:3,pcr:4,gel:5,led:6};
 const movement={
   KeyW:'forward',KeyS:'back',KeyA:'left',KeyD:'right',
   ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'turnLeft',ArrowRight:'turnRight'
 };
 
-export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
+export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]}={}){
   root.innerHTML=`<section class="lab-walk" aria-label="1인칭 과학실">
     <header class="lab-walk-title"><div><p>AMPLICON / 반응액 준비</p><h2>1인칭 과학실</h2></div></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
@@ -25,6 +26,10 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
       <div class="lab-mix-meter" hidden><span>볼텍스 혼합</span><progress max="${mixHoldMs}" value="0" aria-label="볼텍스 혼합 진행률"></progress></div>
       <span class="lab-drag-tube" aria-hidden="true" hidden></span>
       <div class="lab-pcr-panel"></div><div class="lab-gel-panel"></div>
+      <section class="lab-observation lab-review" hidden aria-labelledby="lab-review-title">
+        <header><span class="lab-observation-kicker">탐구 완료 · 단계 다시 보기</span><button type="button">닫기</button></header>
+        <h3 id="lab-review-title" tabindex="-1"></h3><p></p><ul></ul>
+      </section>
       <div class="lab-pad" aria-label="터치 이동">
         <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
         <button type="button" data-dir="forward" aria-label="앞으로 이동">↑</button>
@@ -49,6 +54,11 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   const objectButtons=find('.lab-object-buttons');
   const mixMeter=find('.lab-mix-meter'),mixProgress=mixMeter.querySelector('progress');
   const tubeGhost=find('.lab-drag-tube');
+  const review=find('.lab-review');
+  review.querySelector('button').addEventListener('click',()=>{
+    review.hidden=true;
+    viewport.focus({preventScroll:true});
+  });
   let tubeDrag=null;
   const anchor=new T.Vector3();
   const actionButtons=actions.querySelector('div');
@@ -155,7 +165,10 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
       if(distance<reach){near=station;reach=distance;}
     }
     prompt.hidden=true;
-    if(experiment&&!experiment.finished){
+    if(experiment?.finished){
+      const instruction='탐구 완료 · 원하는 장비를 다시 살펴보세요.';
+      if(note.textContent!==instruction)note.textContent=instruction;
+    }else if(experiment){
       const destination=stations.find(station=>station.id===experiment.destination);
       const instruction=near?.id===destination.id?'E를 눌러 작업 위치에 들어가세요.':destination.name+'로 이동하세요.';
       if(note.textContent!==instruction)note.textContent=instruction;
@@ -214,9 +227,10 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     let pcrProgress=0,gelProgress=0;
     if(pcrRun){
       const observation=lesson.update(now);
-      pcrProgress=observation.progress;
+      if(!experiment.finished)pcrProgress=observation.progress;
       if(observation.done){
-        pcrRun=false;lesson.close();experiment.completePcr();
+        pcrRun=false;lesson.close();
+        if(!experiment.finished)experiment.completePcr();
         note.textContent=experiment.message;refreshActions();viewport.focus({preventScroll:true});
       }
     }
@@ -272,7 +286,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
       note.textContent='장비 앞 통로까지 직접 걸어가 장비를 바라본 뒤 E를 누르세요.';
       return;
     }
-    if(experiment&&near.id!==experiment.destination){
+    if(experiment&&!experiment.finished&&near.id!==experiment.destination){
       const next=stations.find(station=>station.id===experiment.destination);
       note.textContent='지금은 '+next.name+'에서 작업할 차례입니다.';
       return;
@@ -284,7 +298,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     pose={x:target.x,y:target.eye,z:target.viewZ,yaw:0,pitch:target.tilt};
     transition={from:{...player,y:standing},to:pose,start:performance.now(),done(){
       zone.textContent=target.name;
-      note.textContent=experiment?(target.id==='ice'
+      note.textContent=experiment?.finished?'탐구 완료 · 장비와 실험 단계를 다시 살펴보세요.':experiment?(target.id==='ice'
         ?experiment.lid?'냉각 랙을 집으세요.':'아이스박스 뚜껑을 여세요.'
         :experiment.carrying?'랙을 내려놓으세요.':experiment.message):target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
       refreshActions();
@@ -302,7 +316,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     const ids=autoQueue?[]:experiment.controls(working.id);
     mixMeter.hidden=!ids.includes('holdMix')&&!ids.includes('removeMix');
     if(holdStarted===null)mixProgress.value=ids.includes('removeMix')?mixHoldMs:0;
-    const next=experiment.nextAction(working.id,ids);
+    const next=experiment.finished?null:experiment.nextAction(working.id,ids);
     const fixed=[],tagged=[];
     for(const id of ids){
       const button=document.createElement('button');
@@ -319,6 +333,13 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
         button.className='lab-object-button';
         tagged.push(button);
       }else fixed.push(button);
+    }
+    if(experiment.finished&&working.id!=='led'){
+      const button=document.createElement('button');
+      button.type='button';
+      button.dataset.labReview='';
+      button.textContent=working.id==='pcr'?'PCR 모식도 다시 보기':'실험 단계 다시 보기';
+      fixed.push(button);
     }
     actions.hidden=!fixed.length;
     actionButtons.replaceChildren(...fixed);
@@ -397,7 +418,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     refreshActions();
     schedule();
   }
-  const observationIsOpen=()=>!!find('.lab-gel-observation:not([hidden])');
+  const observationIsOpen=()=>!review.hidden||!!find('.lab-gel-observation:not([hidden])');
   function perform(id){
     if(id==='holdMix'||!experiment||transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||gelRun||observationIsOpen()||!experiment.controls(working?.id).includes(id))return;
     if(['runSpin','runPcr'].includes(id)&&performance.now()<handlingUntil)return;
@@ -459,6 +480,27 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   window.addEventListener('pointercancel',cancelMix);
   window.addEventListener('keyup',event=>{if([' ','Enter'].includes(event.key))cancelMix();});
   window.addEventListener('blur',cancelMix);
+  actions.addEventListener('click',event=>{
+    if(!event.target.closest('[data-lab-review]')||!working||!experiment.finished)return;
+    if(working.id==='pcr'){
+      pcrRun=true;
+      lesson.open(true);
+      schedule();
+      return;
+    }
+    const step=reviewSteps[stationSteps[working.id]];
+    if(!step)return;
+    const heading=review.querySelector('h3');
+    heading.textContent=working.name+' · '+step.title;
+    review.querySelector('p').textContent=step.why;
+    review.querySelector('ul').replaceChildren(...step.tasks.map(text=>{
+      const item=document.createElement('li');
+      item.textContent=text;
+      return item;
+    }));
+    review.hidden=false;
+    heading.focus({preventScroll:true});
+  });
   for(const controls of [actions,objectButtons])controls.addEventListener('click',event=>{
     const button=event.target.closest('[data-lab-action]');
     if(button)perform(button.dataset.labAction);

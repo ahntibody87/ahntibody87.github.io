@@ -140,3 +140,8 @@
   vertical-align:-.15rem;background:linear-gradient(#264f77 26%,#d9f7ff 26%);
   border:1px solid #38596a;border-radius:2px 2px 45% 45%;
 }
+
+.lab-gel-feedback h4 {margin:0;padding:.4rem .55rem;background:#f4f8fc;border-radius:4px;}
+.lab-gel-feedback .lab-answer-correct {color:#a51d2d;}
+.lab-gel-feedback .lab-answer-review {color:#214eb8;}
+.lab-review ul {padding-left:1.35rem;font-size:.85rem;}
