@@ -369,7 +369,7 @@ export function createLab(experiment){
   const sampleIds=experiment?.samples.map(sample=>sample.id)??['A','B','positive','negative'];
   const reagentIds=experiment?.reagents.map(reagent=>reagent.id)??['buffer','primer','rt','taq'];
   const sampleLabels=['A','B','+','−'];
-  const reactionLiquid=[];
+  const reactionLiquid=[],reactionTubes=[];
   rounded(0,.023,.045,.47,.044,.20,'blue',prep,.008);
   for(let row=0;row<5;row++)for(let col=0;col<12;col++)cyl(-.192+col*.035,.046,-.026+row*.035,.011,.003,'dark',prep);
   rounded(-.32,.051,-.035,.17,.095,.14,'blue',prep,.009);
@@ -380,14 +380,16 @@ export function createLab(experiment){
   rounded(.368,.109,-.055,.108,.008,.101,'dark',prep,.003);
   target('discard',prep,.368,.105,-.055,.14,.14,.15);
   target('place',prep,-.05,.065,-.24,.30,.13,.13);
+  target('collect',prep,0,.11,.045,.48,.15,.22);
   rounded(0,.015,-.104,.51,.028,.123,'steel',prep,.008);
   for(let i=0;i<4;i++){
     const x=-.159+i*.106;
-    const rim=add(new T.TorusGeometry(.019,.0038,8,20),'plastic',x,.144,.065,prep);rim.rotation.x=Math.PI/2;
-    const vial=add(new T.CylinderGeometry(.019,.012,.092,20,1,true),'tubeGlass',x,.097,.065,prep);
+    const tube=new T.Group();prep.add(tube);reactionTubes.push(tube);
+    const rim=add(new T.TorusGeometry(.019,.0038,8,20),'plastic',x,.144,.065,tube);rim.rotation.x=Math.PI/2;
+    const vial=add(new T.CylinderGeometry(.019,.012,.092,20,1,true),'tubeGlass',x,.097,.065,tube);
     vial.material.side=T.DoubleSide;
-    cyl(x,.052,.065,.012,.009,'plastic',prep);
-    reactionLiquid.push(cyl(x,.056,.065,.012,.010,'screen',prep));
+    cyl(x,.052,.065,.012,.009,'plastic',tube);
+    reactionLiquid.push(cyl(x,.056,.065,.012,.010,'screen',tube));
     label(sampleLabels[i],x,.046,.094,.049,.027,prep);
     target('tube:'+sampleIds[i],prep,x,.126,.065,.075,.16,.076);
     cyl(x,.065,-.103,.025,.084,'glass',prep);
@@ -408,7 +410,7 @@ export function createLab(experiment){
   const transferDrop=add(new T.SphereGeometry(.005,12,8),'screen',0,0,0,prep);
   transferDrop.castShadow=false;
   pipetteTip.visible=tipLiquid.visible=transferDrop.visible=false;
-  const animated=[lid,coldRack,prepRack,pipette,transferDrop,...reactionLiquid];
+  const animated=[lid,coldRack,prepRack,pipette,transferDrop,...reactionTubes];
   animated.forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
 
   let motion=null;
@@ -430,6 +432,7 @@ export function createLab(experiment){
       }};
       return;
     }
+    if(!['tips','discard','aspirate','dispense'].includes(effect))return;
     const point=targets.get(id);
     if(!point)return;
     const position=prep.worldToLocal(point.getWorldPosition(new T.Vector3()));
@@ -457,6 +460,7 @@ export function createLab(experiment){
     if(preparation){
       coldRack.visible=preparation.phase==='ice'||!!motion&&preparation.phase==='carry'&&coldRack.position.y>.085;
       prepRack.visible=preparation.phase==='prep';
+      reactionTubes.forEach(tube=>{tube.visible=preparation.phase==='prep';});
       if(!motion){
         pipetteTip.visible=!!preparation.state.tip;
         tipLiquid.visible=!!preparation.liquid;
@@ -521,15 +525,90 @@ export function createLab(experiment){
 
   const centrifuge=device('spin');
   rounded(0,.105,0,.445,.206,.405,'plastic',centrifuge,.033);
-  rounded(0,.211,-.026,.404,.026,.343,'dark',centrifuge,.011);
-  rounded(0,.253,-.031,.400,.075,.339,'plastic',centrifuge,.025);
-  rounded(0,.287,-.035,.284,.022,.226,'cabinetGlass',centrifuge,.008);
-  rounded(0,.211,.15,.105,.032,.031,'dark',centrifuge,.008);
+  const spinRim=add(new T.RingGeometry(.153,.186,40),'dark',0,.214,-.035,centrifuge);
+  spinRim.rotation.x=-Math.PI/2;
+  const spinLid=new T.Group();spinLid.position.set(0,.222,-.190);centrifuge.add(spinLid);
+  for(const side of [-1,1]){
+    rounded(side*.169,.035,.159,.064,.063,.339,'plastic',spinLid,.014);
+    rounded(0,.035,.159+side*.139,.310,.063,.064,'plastic',spinLid,.014);
+  }
+  rounded(0,.061,.159,.274,.018,.218,'cabinetGlass',spinLid,.007);
+  rounded(0,-.011,.34,.105,.032,.031,'dark',spinLid,.008);
+  const rotor=new T.Group();rotor.position.set(0,.213,-.035);centrifuge.add(rotor);
+  cyl(0,.006,0,.15,.022,'steel',rotor);
+  const rotorPositions=[];
+  for(let i=0;i<4;i++){
+    const angle=Math.PI/4+i*Math.PI/2;
+    const x=Math.cos(angle)*.093,z=Math.sin(angle)*.093;
+    rotorPositions.push(new T.Vector3(x,.039,z));
+    cyl(x,.018,z,.023,.008,'dark',rotor);
+    target('slot:'+i,rotor,x,.03,z,.069,.081,.065);
+  }
   const spinPanel=new T.Group();spinPanel.position.set(0,.114,.214);spinPanel.rotation.x=-.25;centrifuge.add(spinPanel);
   rounded(0,0,0,.285,.08,.017,'dark',spinPanel,.006);
   label('CENTRIFUGE',-.027,.004,.011,.193,.033,spinPanel);
   rounded(.104,.002,.012,.038,.028,.012,'screen',spinPanel,.005);
   for(let i=0;i<7;i++)box(-.168+i*.023,.045,.204,.011,.020,.005,'trim',centrifuge);
+
+  function handlingTube(id,parent){
+    const tube=new T.Group();parent.add(tube);
+    add(new T.CylinderGeometry(.016,.010,.082,20),'tubeGlass',0,.041,0,tube);
+    cyl(0,.084,0,.019,.015,'plastic',tube);
+    cyl(0,.027,0,.011,.024,'screen',tube);
+    label(sampleLabels[sampleIds.indexOf(id)],0,.046,.017,.028,.021,tube);
+    return tube;
+  }
+  const workRack=new T.Group();workRack.visible=false;scene.add(workRack);
+  rounded(0,.02,0,.33,.04,.12,'blue',workRack,.01);
+  const workTubes=sampleIds.map((id,i)=>{
+    const tube=handlingTube(id,scene);tube.visible=false;
+    target('handle:'+id,tube,0,.053,0,.073,.13,.08);
+    return tube;
+  });
+  for(const [action,station] of [['dockMix',vortex],['carrySpin',vortex],['dockSpin',centrifuge]]){
+    target(action,station,-.43,.085,.12,.32,.15,.15);
+  }
+  target('holdMix',vortex,0,.27,-.036,.16,.14,.15);
+  target('removeMix',vortex,0,.28,-.036,.16,.14,.15);
+  target('openSpin',centrifuge,0,.29,-.02,.35,.13,.28);
+  target('closeSpin',spinLid,0,.034,.22,.25,.11,.18);
+  target('collectSpin',centrifuge,0,.27,-.025,.31,.13,.28);
+  target('runSpin',spinPanel,.10,0,.03,.09,.075,.055);
+  [spinLid,rotor,workRack,...workTubes].forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
+
+  const tubePoint=new T.Vector3();
+  let lastHandling=0;
+  function updateHandling(now,experiment,holding){
+    const dt=Math.min(.05,(now-lastHandling)/1000);
+    lastHandling=now;
+    if(!experiment)return;
+    const phase=experiment.phase;
+    const atSpin=['spin','readySpin','spinning','recoverSpin'].includes(phase);
+    const atMix=phase==='mix';
+    const station=atSpin?centrifuge:vortex;
+    workRack.visible=atSpin||atMix;
+    workRack.position.copy(station.position).add(new T.Vector3(-.43,0,.12));
+    const lidGoal=experiment.spinOpen?-1.78:0;
+    spinLid.rotation.x=T.MathUtils.lerp(spinLid.rotation.x,lidGoal,Math.min(1,dt*14));
+    if(Math.abs(spinLid.rotation.x-lidGoal)<.008)spinLid.rotation.x=lidGoal;
+    if(phase==='spinning')rotor.rotation.y+=dt*23;
+    rotor.updateWorldMatrix(true,false);
+    workTubes.forEach((tube,i)=>{
+      tube.visible=workRack.visible;
+      if(!tube.visible){tube.position.set(0,0,0);return;}
+      const id=sampleIds[i];
+      const slot=experiment.slots.indexOf(id);
+      if(atSpin&&slot>=0)tubePoint.copy(rotorPositions[slot]).applyMatrix4(rotor.matrixWorld);
+      else if(atMix&&experiment.vortexTube===id){
+        tubePoint.copy(vortex.position).add(new T.Vector3(holding?Math.sin(now*.10)*.006:0,.219,-.036));
+      }else{
+        tubePoint.copy(workRack.position).add(new T.Vector3(-.105+i*.07,.033,0));
+        if(atSpin&&experiment.selected===id)tubePoint.y+=.025;
+      }
+      if(tube.position.lengthSq()===0||atSpin&&slot>=0&&phase==='spinning')tube.position.copy(tubePoint);
+      else tube.position.lerp(tubePoint,Math.min(1,dt*16));
+    });
+  }
 
   scene.add(new T.HemisphereLight('#e6f3ff','#a9a398',2.0));
   scene.add(new T.AmbientLight('#fff0da',.52));
@@ -586,7 +665,7 @@ export function createLab(experiment){
   carried.scale.setScalar(.90);
   carried.position.y=-.012;
   carried.visible=false;
-  return {scene,carried,targets,prepareAction,updatePreparation,ready:Promise.all([exterior.ready,reflectionReady])};
+  return {scene,carried,targets,prepareAction,updatePreparation,updateHandling,ready:Promise.all([exterior.ready,reflectionReady])};
 }
 
 function batchStaticGeometry(scene,geometries){

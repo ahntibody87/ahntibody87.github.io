@@ -33,14 +33,18 @@
   color:#fff; background:#12232bea; border:1px solid #91b4be; border-radius:8px;
 }
 .lab-preparation div {display:flex;flex-wrap:wrap;gap:.28rem;}
-.amp-lab .lab-preparation button {padding:.25rem .5rem;min-height:1.9rem;color:white;background:#244651;border:1px solid #7fa8b1;font-size:.78rem;}
+.amp-lab .lab-preparation button {
+  min-height:56px;max-width:100%;padding:.7rem 1.1rem;
+  color:#102c35;background:#c8edf2;border:1px solid #e4fbff;
+  font-size:clamp(1rem,1.45vw,1.2rem);font-weight:750;line-height:1.25;white-space:normal;
+}
 .lab-viewport:has(.lab-preparation:not([hidden])) .lab-spot-working {left:auto;right:.7rem;transform:none;}
 .lab-viewport:has(.lab-preparation:not([hidden])) .lab-pad {display:none;}
 @media(max-width:650px){
   .lab-preparation {width:calc(100% - 1.3rem);bottom:.65rem;}
   .lab-viewport:has(.lab-preparation:not([hidden])) .lab-spot-working {bottom:41%;}
 }
-.amp-lab .lab-preparation button:is(:hover,:focus-visible,:active) {color:#fff;background:#365d6a;border-color:#c7e6ec;}
+.amp-lab .lab-preparation button:is(:hover,:focus-visible,:active) {color:#102c35;background:#e1f8fa;border-color:#fff;}
 .lab-object-buttons {position:absolute;inset:0;z-index:2;pointer-events:none;}
 .amp-lab .lab-object-button {
   position:absolute;transform:translate(-50%,4px);pointer-events:auto;

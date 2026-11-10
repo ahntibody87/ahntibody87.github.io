@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
-import {createLab} from './lab-scene.mjs?v=5';
+import {createLab} from './lab-scene.mjs?v=6';
 
 const standing=1.62;
 const movement={
@@ -72,7 +72,7 @@ export function mountWalkthrough(root,experiment=null){
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
   let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
-  let autoQueue=null,autoAt=0;
+  let autoQueue=null,autoAt=0,holdStarted=null,spinEnds=0,handlingUntil=0;
   const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 
   function schedule(){
@@ -177,20 +177,29 @@ export function mountWalkthrough(root,experiment=null){
       view=Object.fromEntries(['x','y','z','yaw','pitch'].map(key=>[key,T.MathUtils.lerp(from[key],to[key],eased)]));
       if(t===1){transition=null;done();}
     }
-    const fov=working?.id==='prep'
-      ?Math.max(51,T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(28))/camera.aspect))):51;
+    const halfView=working?.id==='prep'?28:['vortex','spin'].includes(working?.id)?32:0;
+    const fov=Math.max(51,T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(halfView))/camera.aspect)));
     if(fov!==camera.fov){camera.fov=fov;camera.updateProjectionMatrix();}
     camera.position.set(view.x,view.y,view.z);
     camera.rotation.set(view.pitch,view.yaw,0,'YXZ');
     const wasAnimating=animating;
     animating=lab.updatePreparation(now,experiment);
-    lab.carried.visible=experiment?experiment.phase==='carry'&&!animating:carrying&&!working;
+    if(holdStarted!==null&&now-holdStarted>=1050){
+      holdStarted=null;experiment.perform('holdMix');
+      note.textContent=experiment.message;refreshActions();
+    }
+    if(spinEnds&&now>=spinEnds){
+      spinEnds=0;experiment.completeSpin();handlingUntil=now+360;
+      note.textContent=experiment.message;refreshActions();
+    }
+    lab.updateHandling(now,experiment,holdStarted!==null);
+    lab.carried.visible=experiment?experiment.carrying&&!animating:carrying&&!working;
     if(wasAnimating&&!animating&&!autoQueue)renderer.shadowMap.needsUpdate=true;
     renderer.render(lab.scene,camera);
     updateHint();
     positionObjectButtons();
     if(autoQueue&&!animating&&now>=autoAt)advanceAuto(now);
-    if(transition||animating||autoQueue||keys.size&&!working)frame=requestAnimationFrame(render);
+    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
     const {width,height}=viewport.getBoundingClientRect();
@@ -203,7 +212,7 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
   function enter(){
-    if(transition||animating||autoQueue)return;
+    if(transition||animating||autoQueue||holdStarted!==null||spinEnds)return;
     if(working){
       const old=working;
       if(!experiment){
@@ -215,7 +224,7 @@ export function mountWalkthrough(root,experiment=null){
       transition={from:pose,to:{...player,y:standing},start:performance.now(),done(){
         working=null;
         pose=null;
-        zone.textContent=(experiment?experiment.phase==='carry':carrying)?'냉각 랙 운반 중':'자유 탐색';
+        zone.textContent=experiment?.carrying?(experiment.phase==='carry'?'냉각 랙 운반 중':'반응관 랙 운반 중'):carrying?'냉각 랙 운반 중':'자유 탐색';
         note.textContent=experiment?experiment.message:old.id==='ice'?'랙을 들고 통로로 물러난 뒤, 옆 피펫 작업대까지 걸어가세요.':'통로를 따라 다른 장비에도 접근해 보세요.';
         entry.hidden=true;
       }};
@@ -232,7 +241,7 @@ export function mountWalkthrough(root,experiment=null){
       return;
     }
     if(experiment?.finished){
-      note.textContent='반응액 준비를 완료했습니다. 볼텍스 혼합부터는 다음 구간입니다.';
+      note.textContent='원심분리까지 완료했습니다. PCR 기기는 다음 구간입니다.';
       return;
     }
     working=near;
@@ -256,7 +265,7 @@ export function mountWalkthrough(root,experiment=null){
   const shortNames={buffer:'버퍼·dNTP',primer:'프라이머',rt:'역전사 효소',taq:'Taq',
     'sample:A':'A 원본','sample:B':'B 원본','sample:positive':'+ 원본','sample:negative':'− 원본',
     'tube:A':'A 반응관','tube:B':'B 반응관','tube:positive':'+ 반응관','tube:negative':'− 반응관',
-    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기'};
+    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기',holdMix:'눌러서 혼합',removeMix:'반응관 되돌리기',collectSpin:'반응관 회수'};
 
   function refreshActions(){
     if(!experiment||!working){actions.hidden=true;objectButtons.replaceChildren();return;}
@@ -290,6 +299,7 @@ export function mountWalkthrough(root,experiment=null){
       target.getWorldPosition(anchor).project(camera);
       const visible=anchor.z<1&&Math.abs(anchor.x)<1&&Math.abs(anchor.y)<1;
       button.hidden=!visible;
+      if(button.dataset.labAction==='runSpin')button.disabled=performance.now()<handlingUntil;
       if(!visible)continue;
       const kind=button.dataset.kind;
       const item={button,x:(anchor.x+1)*width/2,y:(1-anchor.y)*height/2};
@@ -297,6 +307,7 @@ export function mountWalkthrough(root,experiment=null){
       groups.get(kind).push(item);
     }
     for(const [kind,items] of groups){
+      items.sort((a,b)=>a.x-b.x);
       const count=items.length;
       const widest=Math.max(...items.map(({button})=>button.offsetWidth));
       const middle=(items[0].x+items.at(-1).x)/2;
@@ -319,7 +330,9 @@ export function mountWalkthrough(root,experiment=null){
     const effect=experiment.perform(id);
     if(!effect)return false;
     lab.prepareAction(effect,id,now,duration);
-    animating=duration>0;
+    animating=duration>0&&['lid','rack','place','tips','discard','aspirate','dispense'].includes(effect);
+    if(!animating)handlingUntil=now+420;
+    if(effect==='runSpin')spinEnds=now+(motionPreference.matches?800:2400);
     if(effect==='lid'){
       pose.pitch=-.55;
       renderer.shadowMap.needsUpdate=true;
@@ -346,7 +359,8 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
   function perform(id){
-    if(!experiment||transition||animating||autoQueue||!experiment.controls(working?.id).includes(id))return;
+    if(id==='holdMix'||!experiment||transition||animating||autoQueue||holdStarted!==null||spinEnds||!experiment.controls(working?.id).includes(id))return;
+    if(id==='runSpin'&&performance.now()<handlingUntil)return;
     if(id==='auto'){
       const sequence=experiment.autoActions();
       if(!sequence.length)return;
@@ -363,6 +377,30 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
 
+  function beginMix(){
+    if(!experiment?.controls(working?.id).includes('holdMix')||holdStarted!==null)return;
+    holdStarted=performance.now();
+    note.textContent='혼합 중 · 버튼을 계속 누르세요.';
+    schedule();
+  }
+  function cancelMix(){
+    if(holdStarted===null)return;
+    holdStarted=null;handlingUntil=performance.now()+140;
+    note.textContent='혼합이 끝날 때까지 접촉판 버튼을 누르고 있으세요.';
+    schedule();
+  }
+  objectButtons.addEventListener('pointerdown',event=>{
+    if(event.button===0&&event.target.closest('[data-lab-action="holdMix"]'))beginMix();
+  });
+  objectButtons.addEventListener('keydown',event=>{
+    if([' ','Enter'].includes(event.key)&&event.target.closest('[data-lab-action="holdMix"]')){
+      event.preventDefault();beginMix();
+    }
+  });
+  window.addEventListener('pointerup',cancelMix);
+  window.addEventListener('pointercancel',cancelMix);
+  window.addEventListener('keyup',event=>{if([' ','Enter'].includes(event.key))cancelMix();});
+  window.addEventListener('blur',cancelMix);
   for(const controls of [actions,objectButtons])controls.addEventListener('click',event=>{
     const button=event.target.closest('[data-lab-action]');
     if(button)perform(button.dataset.labAction);
@@ -411,6 +449,8 @@ export function mountWalkthrough(root,experiment=null){
   canvas.addEventListener('pointerdown',event=>{
     skipClick=false;
     if(event.button!==0||event.pointerType==='mouse'&&!working)return;
+    pointAt(event);
+    if(pickTarget()==='holdMix'){beginMix();return;}
     viewport.focus({preventScroll:true});
     entry.hidden=true;
     canvas.setPointerCapture(event.pointerId);
