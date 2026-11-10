@@ -476,14 +476,66 @@ export function createLab(experiment){
   }
 
   const pcr=device('pcr');
-  rounded(0,.137,0,.60,.268,.475,'plastic',pcr,.035);
-  rounded(0,.29,-.060,.50,.074,.344,'ivory',pcr,.024);
-  rounded(0,.276,-.057,.46,.016,.30,'dark',pcr,.007);
-  rounded(0,.33,-.050,.28,.035,.061,'plastic',pcr,.011);
-  const panel=new T.Group();panel.position.set(0,.213,.268);panel.rotation.x=-.39;pcr.add(panel);
-  rounded(0,0,0,.31,.134,.034,'dark',panel,.009);
-  label('RT-PCR',0,.008,.018,.265,.091,panel);
+  rounded(0,.093,0,.60,.182,.475,'plastic',pcr,.030);
+  for(const side of [-1,1]){
+    rounded(side*.268,.210,-.03,.055,.070,.40,'plastic',pcr,.013);
+    rounded(0,.21,-.03+side*.166,.50,.070,.07,'plastic',pcr,.013);
+  }
+  rounded(0,.19,-.055,.44,.028,.27,'steel',pcr,.008);
+  const pcrWells=[];
+  for(let row=0;row<3;row++)for(let column=0;column<6;column++){
+    const x=-.161+column*.064,z=-.13+row*.072;
+    cyl(x,.205,z,.019,.006,'dark',pcr);
+    if(row===1&&column>=1&&column<=4)pcrWells.push(new T.Vector3(x,.156,z));
+  }
+  const pcrLid=new T.Group();pcrLid.position.set(0,.247,-.238);pcr.add(pcrLid);
+  rounded(0,.041,.178,.52,.076,.36,'ivory',pcrLid,.024);
+  rounded(0,.003,.177,.44,.016,.29,'dark',pcrLid,.007);
+  rounded(0,.082,.279,.27,.033,.058,'plastic',pcrLid,.010);
+  const panel=new T.Group();panel.position.set(0,.197,.264);panel.rotation.x=-.39;pcr.add(panel);
+  rounded(0,0,0,.38,.162,.04,'dark',panel,.010);
+  const pcrCanvas=document.createElement('canvas');
+  pcrCanvas.width=512;pcrCanvas.height=208;
+  const pcrContext=pcrCanvas.getContext('2d');
+  const pcrTexture=new T.CanvasTexture(pcrCanvas);
+  pcrTexture.colorSpace=T.SRGBColorSpace;
+  const pcrScreen=new T.Mesh(new T.PlaneGeometry(.340,.139),new T.MeshBasicMaterial({map:pcrTexture,toneMapped:false}));
+  pcrScreen.position.z=.022;panel.add(pcrScreen);
+  let pcrFrame='';
+  function paintPcr(mode,progress){
+    const frame=mode+':'+Math.floor(progress*40);
+    if(frame===pcrFrame)return;
+    pcrFrame=frame;
+    const ctx=pcrContext;
+    ctx.fillStyle='#0b283d';ctx.fillRect(0,0,512,208);
+    ctx.fillStyle='#c5edf7';ctx.font='bold 34px system-ui';ctx.fillText('RT-PCR',22,49);
+    ctx.font='bold 25px system-ui';
+    const labels={idle:'대기',open:'반응관 장착',ready:'가동 준비',run:'증폭 관찰',done:'완료'};
+    ctx.fillText(labels[mode],23,99);
+    if(mode==='run'||mode==='done'){
+      const tracks=mode==='done'?5:Math.min(5,1+Math.floor(progress*5));
+      for(let i=0;i<tracks;i++){
+        ctx.strokeStyle=i%2?'#cbe8fc':'#57c7e7';ctx.lineWidth=3;ctx.beginPath();
+        for(let x=0;x<=148;x++){
+          const y=45+i*17+Math.sin(x*.13+i+progress*12)*5;
+          if(x===0)ctx.moveTo(334+x,y);else ctx.lineTo(334+x,y);
+        }
+        ctx.stroke();
+      }
+      ctx.fillStyle='#264e60';ctx.fillRect(24,149,464,16);
+      ctx.fillStyle='#75d8e5';ctx.fillRect(24,149,464*(mode==='done'?1:progress),16);
+    }
+    pcrTexture.needsUpdate=true;
+  }
+  paintPcr('idle',0);
   for(let i=0;i<8;i++)box(-.215+i*.026,.086,.239,.012,.027,.004,'trim',pcr);
+  target('dockPcr',pcr,-.43,.085,.12,.32,.15,.15);
+  target('openPcr',pcr,0,.31,-.025,.49,.13,.33);
+  target('loadPcr',pcr,0,.224,-.053,.43,.11,.27);
+  target('closePcr',pcrLid,0,.041,.21,.48,.12,.26);
+  target('runPcr',panel,0,.012,.038,.35,.132,.064);
+  target('recoverPcr',pcr,0,.31,-.025,.49,.13,.33);
+  target('collectPcr',pcr,0,.24,-.053,.43,.15,.27);
 
   const gel=device('gel');
   box(0,.016,0,.51,.029,.30,'dark',gel);
@@ -578,19 +630,24 @@ export function createLab(experiment){
   target('closeSpin',spinLid,0,.034,.22,.25,.11,.18);
   target('collectSpin',centrifuge,0,.27,-.025,.31,.13,.28);
   target('runSpin',spinPanel,.10,0,.03,.09,.075,.055);
-  [spinLid,rotor,workRack,...workTubes].forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
+  [pcrLid,spinLid,rotor,workRack,...workTubes].forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
 
   const tubePoint=new T.Vector3();
   let lastHandling=0;
-  function updateHandling(now,experiment,holding){
+  function updateHandling(now,experiment,holding,pcrProgress=0){
     const dt=Math.min(.05,(now-lastHandling)/1000);
     lastHandling=now;
     if(!experiment)return;
     const phase=experiment.phase;
     const atSpin=['spin','readySpin','spinning','recoverSpin'].includes(phase);
     const atMix=phase==='mix';
-    const station=atSpin?centrifuge:vortex;
-    workRack.visible=atSpin||atMix;
+    const atPcr=experiment.destination==='pcr'&&phase!=='toPcr';
+    const station=atPcr?pcr:atSpin?centrifuge:vortex;
+    workRack.visible=atSpin||atMix||atPcr;
+    const pcrGoal=experiment.pcrOpen?-1.62:0;
+    pcrLid.rotation.x=T.MathUtils.lerp(pcrLid.rotation.x,pcrGoal,Math.min(1,dt*14));
+    if(Math.abs(pcrLid.rotation.x-pcrGoal)<.008)pcrLid.rotation.x=pcrGoal;
+    paintPcr(phase==='runningPcr'?'run':experiment.state.amplified?'done':phase==='readyPcr'?'ready':experiment.pcrOpen?'open':'idle',pcrProgress);
     workRack.position.copy(station.position).add(new T.Vector3(-.43,0,.12));
     const lidGoal=experiment.spinOpen?-1.78:0;
     spinLid.rotation.x=T.MathUtils.lerp(spinLid.rotation.x,lidGoal,Math.min(1,dt*14));
@@ -602,7 +659,8 @@ export function createLab(experiment){
       if(!tube.visible){tube.position.set(0,0,0);return;}
       const id=sampleIds[i];
       const slot=experiment.slots.indexOf(id);
-      if(atSpin&&slot>=0)tubePoint.copy(rotorPositions[slot]).applyMatrix4(rotor.matrixWorld);
+      if(atPcr&&experiment.state.pcrLoaded.includes(id))tubePoint.copy(pcrWells[i]).add(pcr.position);
+      else if(atSpin&&slot>=0)tubePoint.copy(rotorPositions[slot]).applyMatrix4(rotor.matrixWorld);
       else if(atMix&&experiment.vortexTube===id){
         tubePoint.copy(vortex.position).add(new T.Vector3(holding?Math.sin(now*.10)*.006:0,.219,-.036));
       }else{

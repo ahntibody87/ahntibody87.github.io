@@ -6,12 +6,12 @@ if (view === 'legacy') {
   await import('../amplicon/lab.mjs?v=vr5');
 } else {
   try{
-    const {mountWalkthrough} = await import('./walkthrough/walkthrough.mjs?v=8');
+    const {mountWalkthrough} = await import('./walkthrough/walkthrough.mjs?v=9');
     if(view==='preview')mountWalkthrough(lab);
     else{
       const response=await fetch(lab.dataset.scenario);
       if(!response.ok)throw Error('Scenario unavailable');
-      const {createPreparation}=await import('./walkthrough/preparation.mjs?v=3');
+      const {createPreparation}=await import('./walkthrough/preparation.mjs?v=4');
       mountWalkthrough(lab,createPreparation(await response.json()));
     }
   }catch{

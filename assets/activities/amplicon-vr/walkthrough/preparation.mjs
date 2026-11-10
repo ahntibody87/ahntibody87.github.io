@@ -19,9 +19,10 @@ export function createPreparation(scenario){
   let phase='ice',lid=false,liquid=null,prepared=false;
   let vortexTube=null,selected=null,spinOpen=false;
   const slots=Array(samples.length).fill(null);
+  let pcrOpen=false;
   for(const sample of samples)actions.set('handle:'+sample.id,sample.name+' 반응관');
   for(let i=0;i<slots.length;i++)actions.set('slot:'+i,(i+1)+'번 로터 자리');
-  for(const [id,label] of Object.entries({collect:'반응관 랙 들기',dockMix:'랙 내려놓기',holdMix:'접촉판에 누르고 있기',removeMix:'반응관을 랙에 되돌리기',carrySpin:'혼합한 랙 들기',dockSpin:'랙 내려놓기',openSpin:'원심분리기 뚜껑 열기',closeSpin:'뚜껑 닫기',runSpin:'원심분리 시작',collectSpin:'반응관을 랙에 회수하기'}))actions.set(id,label);
+  for(const [id,label] of Object.entries({collect:'반응관 랙 들기',dockMix:'랙 내려놓기',holdMix:'접촉판에 누르고 있기',removeMix:'반응관을 랙에 되돌리기',carrySpin:'혼합한 랙 들기',dockSpin:'랙 내려놓기',openSpin:'원심분리기 뚜껑 열기',closeSpin:'뚜껑 닫기',runSpin:'원심분리 시작',collectSpin:'반응관을 랙에 회수하기',dockPcr:'랙 내려놓기',openPcr:'PCR 기기 뚜껑 열기',loadPcr:'네 반응관 장착하기',closePcr:'PCR 뚜껑 닫기',runPcr:'PCR 시작',recoverPcr:'PCR 뚜껑 열기',collectPcr:'반응관을 랙에 회수하기'}))actions.set(id,label);
   let message='아이스박스로 이동하세요.';
   const completed=id=>state.tubes[id].additions.length===reagents.length+1;
   const expected=id=>reagents[state.tubes[id].additions.length]?.id??'sample:'+id;
@@ -101,8 +102,31 @@ export function createPreparation(scenario){
       phase='spinning';message='원심분리 중 · 로터가 멈출 때까지 기다리세요.';return id;
     }
     if(id==='collectSpin'&&phase==='recoverSpin'){
-      phase='done';slots.fill(null);message='원심분리 완료 · 다음 작업 위치는 PCR 기기입니다.';return id;
+      phase='toPcr';slots.fill(null);message='E를 누르고 물러나 PCR 기기로 가세요.';return id;
     }
+    if(id==='dockPcr'&&phase==='toPcr'){
+      phase='pcr';message='PCR 기기 뚜껑을 여세요.';return id;
+    }
+    if(id==='openPcr'&&phase==='pcr'){
+      pcrOpen=true;phase='loadPcr';message='네 반응관을 장착하세요.';return id;
+    }
+    if(id==='loadPcr'&&phase==='loadPcr'&&!issues(state,scenario,3).length){
+      state.pcrLoaded=samples.map(sample=>sample.id);
+      phase='closePcr';message='반응관을 장착했습니다. 뚜껑을 닫으세요.';return id;
+    }
+    if(id==='closePcr'&&phase==='closePcr'){
+      pcrOpen=false;phase='readyPcr';message='뚜껑이 닫혔습니다. PCR을 시작하세요.';return id;
+    }
+    if(id==='runPcr'&&phase==='readyPcr'){
+      phase='runningPcr';message='PCR 진행 중 · 기기 화면에서 증폭을 관찰하세요.';return id;
+    }
+    if(id==='recoverPcr'&&phase==='recoverPcr'){
+      pcrOpen=true;phase='collectPcr';message='반응관을 랙에 회수하세요.';return id;
+    }
+    if(id==='collectPcr'&&phase==='collectPcr'){
+      state.pcrLoaded=[];phase='done';message='PCR 완료 · 다음 작업 위치는 전기영동 장치입니다.';return id;
+    }
+
     if(id==='lid'&&phase==='ice'&&!lid){
       lid=true;
       message='아이스박스 안의 냉각 랙을 집으세요.';
@@ -160,7 +184,16 @@ export function createPreparation(scenario){
     for(const id of slots)state.tubes[id].spun=true;
     spinOpen=true;phase='recoverSpin';message='로터가 멈췄습니다. 반응관을 랙에 회수하세요.';
   }
+  function completePcr(){
+    if(phase!=='runningPcr')return;
+    state.amplified=true;phase='recoverPcr';message='PCR이 끝났습니다. 뚜껑을 열어 반응관을 꺼내세요.';
+  }
   function controls(station){
+    if(station==='pcr'){
+      const action={toPcr:'dockPcr',pcr:'openPcr',loadPcr:'loadPcr',closePcr:'closePcr',
+        readyPcr:'runPcr',recoverPcr:'recoverPcr',collectPcr:'collectPcr'}[phase];
+      return action?[action]:[];
+    }
     if(station==='prep'&&phase==='prep'&&prepared)return ['collect'];
     if(station==='vortex'){
       if(phase==='toMix')return ['dockMix'];
@@ -187,11 +220,15 @@ export function createPreparation(scenario){
   }
 
   return {
-    state,samples,reagents,actions,perform,controls,autoActions,completeSpin,
+    state,samples,reagents,actions,perform,controls,autoActions,completeSpin,completePcr,
     get phase(){return phase;},get lid(){return lid;},get liquid(){return liquid;},
     get finished(){return phase==='done';},get vortexTube(){return vortexTube;},get slots(){return slots;},
-    get spinOpen(){return spinOpen;},get selected(){return selected;},
-    get carrying(){return ['carry','toMix','toSpin','done'].includes(phase);},get message(){return message;},
-    get destination(){return phase==='ice'?'ice':phase==='done'?'pcr':['carry','prep'].includes(phase)?'prep':['toMix','mix'].includes(phase)?'vortex':'spin';}
+    get spinOpen(){return spinOpen;},get pcrOpen(){return pcrOpen;},get selected(){return selected;},
+    get carrying(){return ['carry','toMix','toSpin','toPcr','done'].includes(phase);},get message(){return message;},
+    get destination(){
+      if(phase==='done')return 'gel';
+      if(['toPcr','pcr','loadPcr','closePcr','readyPcr','runningPcr','recoverPcr','collectPcr'].includes(phase))return 'pcr';
+      return phase==='ice'?'ice':['carry','prep'].includes(phase)?'prep':['toMix','mix'].includes(phase)?'vortex':'spin';
+    }
   };
 }

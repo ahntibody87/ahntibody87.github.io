@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
-import {createLab} from './lab-scene.mjs?v=7';
+import {createLab} from './lab-scene.mjs?v=8';
 
 const standing=1.62;
 const movement={
@@ -73,6 +73,7 @@ export function mountWalkthrough(root,experiment=null){
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
   let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
   let autoQueue=null,autoAt=0,holdStarted=null,spinEnds=0,handlingUntil=0;
+  let pcrRun=null;
   const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 
   function schedule(){
@@ -125,7 +126,7 @@ export function mountWalkthrough(root,experiment=null){
   function updateHint(){
     near=null;
     viewport.classList.toggle('lab-working',!!working);
-    if(transition||autoQueue){prompt.hidden=true;return;}
+    if(transition||autoQueue||pcrRun||spinEnds){prompt.hidden=true;return;}
     if(working){
       prompt.classList.add('lab-spot-working');
       prompt.hidden=false;
@@ -177,7 +178,7 @@ export function mountWalkthrough(root,experiment=null){
       view=Object.fromEntries(['x','y','z','yaw','pitch'].map(key=>[key,T.MathUtils.lerp(from[key],to[key],eased)]));
       if(t===1){transition=null;done();}
     }
-    const halfView=working?.id==='prep'?28:['vortex','spin'].includes(working?.id)?32:0;
+    const halfView=working?.id==='prep'?28:['vortex','spin','pcr'].includes(working?.id)?32:0;
     const fov=Math.max(51,T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(halfView))/camera.aspect)));
     if(fov!==camera.fov){camera.fov=fov;camera.updateProjectionMatrix();}
     camera.position.set(view.x,view.y,view.z);
@@ -192,14 +193,22 @@ export function mountWalkthrough(root,experiment=null){
       spinEnds=0;experiment.completeSpin();handlingUntil=now+360;
       note.textContent=experiment.message;refreshActions();
     }
-    lab.updateHandling(now,experiment,holdStarted!==null);
+    let pcrProgress=0;
+    if(pcrRun){
+      pcrProgress=Math.min(1,(now-pcrRun.start)/pcrRun.duration);
+      if(pcrProgress===1){
+        pcrRun=null;experiment.completePcr();
+        note.textContent=experiment.message;refreshActions();
+      }
+    }
+    lab.updateHandling(now,experiment,holdStarted!==null,pcrProgress);
     lab.carried.visible=experiment?experiment.carrying&&!animating:carrying&&!working;
     if(wasAnimating&&!animating&&!autoQueue)renderer.shadowMap.needsUpdate=true;
     renderer.render(lab.scene,camera);
     updateHint();
     positionObjectButtons();
     if(autoQueue&&!animating&&now>=autoAt)advanceAuto(now);
-    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
+    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
     const {width,height}=viewport.getBoundingClientRect();
@@ -212,7 +221,7 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
   function enter(){
-    if(transition||animating||autoQueue||holdStarted!==null||spinEnds)return;
+    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun)return;
     if(working){
       const old=working;
       if(!experiment){
@@ -241,7 +250,7 @@ export function mountWalkthrough(root,experiment=null){
       return;
     }
     if(experiment?.finished){
-      note.textContent='원심분리까지 완료했습니다. PCR 기기는 다음 구간입니다.';
+      note.textContent='PCR을 완료했습니다. 전기영동은 다음 구간입니다.';
       return;
     }
     working=near;
@@ -253,7 +262,7 @@ export function mountWalkthrough(root,experiment=null){
       zone.textContent=target.name;
       note.textContent=experiment?(target.id==='ice'
         ?experiment.lid?'냉각 랙을 집으세요.':'아이스박스 뚜껑을 여세요.'
-        :experiment.phase==='carry'?'작업대에 냉각 랙을 놓으세요.':experiment.message):target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
+        :experiment.carrying?'랙을 내려놓으세요.':experiment.message):target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
       visits.add(target.id);
       find('[data-visit="'+target.id+'"]').dataset.visited='true';
       if(!experiment&&visits.size===stations.length)note.textContent+=' 모든 장비의 작업 위치를 확인했습니다.';
@@ -299,7 +308,7 @@ export function mountWalkthrough(root,experiment=null){
       target.getWorldPosition(anchor).project(camera);
       const visible=anchor.z<1&&Math.abs(anchor.x)<1&&Math.abs(anchor.y)<1;
       button.hidden=!visible;
-      if(button.dataset.labAction==='runSpin')button.disabled=performance.now()<handlingUntil;
+      if(button.dataset.labAction==='runSpin'||button.dataset.labAction==='runPcr')button.disabled=performance.now()<handlingUntil;
       if(!visible)continue;
       const kind=button.dataset.kind;
       const item={button,x:(anchor.x+1)*width/2,y:(1-anchor.y)*height/2};
@@ -333,6 +342,7 @@ export function mountWalkthrough(root,experiment=null){
     animating=duration>0&&['lid','rack','place','tips','discard','aspirate','dispense'].includes(effect);
     if(!animating)handlingUntil=now+420;
     if(effect==='runSpin')spinEnds=now+(motionPreference.matches?800:2400);
+    if(effect==='runPcr')pcrRun={start:now,duration:motionPreference.matches?1400:6400};
     if(effect==='lid'){
       pose.pitch=-.55;
       renderer.shadowMap.needsUpdate=true;
@@ -359,8 +369,8 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
   function perform(id){
-    if(id==='holdMix'||!experiment||transition||animating||autoQueue||holdStarted!==null||spinEnds||!experiment.controls(working?.id).includes(id))return;
-    if(id==='runSpin'&&performance.now()<handlingUntil)return;
+    if(id==='holdMix'||!experiment||transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun||!experiment.controls(working?.id).includes(id))return;
+    if(['runSpin','runPcr'].includes(id)&&performance.now()<handlingUntil)return;
     if(id==='auto'){
       const sequence=experiment.autoActions();
       if(!sequence.length)return;
