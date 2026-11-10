@@ -405,8 +405,10 @@ export function createLab(experiment){
   label('µL',0,.065,.026,.030,.024,pipette);
   const pipetteTip=add(new T.CylinderGeometry(.008,.002,.055,18),'glass',0,-.082,0,pipette);
   const tipLiquid=cyl(0,-.087,0,.003,.021,'screen',pipette);
-  pipetteTip.visible=tipLiquid.visible=false;
-  const animated=[lid,coldRack,prepRack,pipette,...reactionLiquid];
+  const transferDrop=add(new T.SphereGeometry(.005,12,8),'screen',0,0,0,prep);
+  transferDrop.castShadow=false;
+  pipetteTip.visible=tipLiquid.visible=transferDrop.visible=false;
+  const animated=[lid,coldRack,prepRack,pipette,transferDrop,...reactionLiquid];
   animated.forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
 
   let motion=null;
@@ -428,7 +430,6 @@ export function createLab(experiment){
       }};
       return;
     }
-    if(effect==='auto')return;
     const point=targets.get(id);
     if(!point)return;
     const position=prep.worldToLocal(point.getWorldPosition(new T.Vector3()));
@@ -436,11 +437,15 @@ export function createLab(experiment){
     const rotation=pipette.rotation.clone();
     const end=new T.Vector3(position.x,position.y+.137,position.z+.008);
     motion={start:now,duration,apply:t=>{
-      pipette.position.lerpVectors(initial,end,t);
-      pipette.position.y+=Math.sin(Math.PI*t)*.06;
-      pipette.rotation.set(rotation.x*(1-t),0,rotation.z*(1-t));
-      plunger.position.y=.149-.012*Math.sin(Math.PI*t);
-      button.position.y=.174-.012*Math.sin(Math.PI*t);
+      const travel=Math.min(1,t/.76);
+      const press=Math.sin(Math.PI*Math.max(0,(t-.76)/.24));
+      pipette.position.lerpVectors(initial,end,travel);
+      pipette.position.y+=Math.sin(Math.PI*travel)*.06;
+      pipette.rotation.set(rotation.x*(1-travel),0,rotation.z*(1-travel));
+      plunger.position.y=.149-.012*press;
+      button.position.y=.174-.012*press;
+      transferDrop.visible=effect==='dispense'&&t>.80&&t<.99;
+      if(transferDrop.visible)transferDrop.position.set(end.x,end.y-.106-(t-.80)*.20,end.z);
     }};
   }
   function updatePreparation(now,preparation){

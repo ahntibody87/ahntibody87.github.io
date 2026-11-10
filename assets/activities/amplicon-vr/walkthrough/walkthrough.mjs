@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
-import {createLab} from './lab-scene.mjs?v=4';
+import {createLab} from './lab-scene.mjs?v=5';
 
 const standing=1.62;
 const movement={
@@ -14,12 +14,11 @@ export function mountWalkthrough(root,experiment=null){
     <a href="${experiment?'?room=preview':'./'}">${experiment?'공간만 둘러보기':'실험 활동으로 돌아가기'}</a></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
       <canvas aria-hidden="true"></canvas>
-      <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-zone">입구 · 자유 탐색</span></div>
+      <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-note" role="status">${experiment?experiment.message:'왼쪽 앞의 아이스박스부터 살펴보세요.'}</span><span class="lab-zone">입구 · 자유 탐색</span></div>
       <button class="lab-enter" type="button">클릭해서 둘러보기</button>
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
-      <output class="lab-aim" hidden></output>
       <div class="lab-object-buttons" aria-label="기구 옆 조작 버튼"></div>
-      <section class="lab-preparation" hidden aria-label="현재 실험 조작"><p></p><small>기기 옆 이름표나 물체를 직접 클릭하세요.</small><div></div></section>
+      <section class="lab-preparation" hidden aria-label="자동 준비"><div></div></section>
       <div class="lab-pad" aria-label="터치 이동">
         <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
         <button type="button" data-dir="forward" aria-label="앞으로 이동">↑</button>
@@ -31,7 +30,6 @@ export function mountWalkthrough(root,experiment=null){
     </div>
     <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 마우스 시점 · <kbd>E</kbd> 작업 위치 보기 또는 일어나기 · 작업 중에는 빈 곳을 드래그해 시점 조정</p>
     <ul class="lab-station-list" aria-label="방문한 장비">${stations.map(station=>`<li data-visit="${station.id}">${station.name}</li>`).join('')}</ul>
-    <p class="lab-note" role="status">${experiment?experiment.message:'빈 통로에서 출발합니다. 왼쪽 앞의 아이스박스부터 살펴보세요.'}</p>
   </section>`;
   const find=selector=>root.querySelector(selector);
   const viewport=find('.lab-viewport');
@@ -43,10 +41,8 @@ export function mountWalkthrough(root,experiment=null){
   const zone=find('.lab-zone');
   const note=find('.lab-note');
   const actions=find('.lab-preparation');
-  const aim=find('.lab-aim');
   const objectButtons=find('.lab-object-buttons');
   const anchor=new T.Vector3();
-  const actionReadout=actions.querySelector('p');
   const actionButtons=actions.querySelector('div');
   const raycaster=new T.Raycaster();
   const pointer=new T.Vector2();
@@ -76,6 +72,7 @@ export function mountWalkthrough(root,experiment=null){
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
   let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
+  let autoQueue=null,autoAt=0;
   const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 
   function schedule(){
@@ -127,11 +124,12 @@ export function mountWalkthrough(root,experiment=null){
   }
   function updateHint(){
     near=null;
-    if(transition){prompt.hidden=true;return;}
+    viewport.classList.toggle('lab-working',!!working);
+    if(transition||autoQueue){prompt.hidden=true;return;}
     if(working){
       prompt.classList.add('lab-spot-working');
       prompt.hidden=false;
-      promptLabel.textContent=working.action;
+      promptLabel.textContent=experiment?'':working.action;
       promptButton.textContent=experiment?'E · 작업 위치에서 나오기':working.id==='ice'?'랙 들고 물러나기':working.id==='prep'&&carrying?'랙 내려놓고 일어나기':'작업 위치에서 나오기';
       return;
     }
@@ -142,6 +140,11 @@ export function mountWalkthrough(root,experiment=null){
       if(distance<reach){near=station;reach=distance;}
     }
     prompt.hidden=true;
+    if(experiment&&!experiment.finished){
+      const destination=stations.find(station=>station.id===experiment.destination);
+      const instruction=near?.id===destination.id?'E를 눌러 작업 위치에 들어가세요.':destination.name+'로 이동하세요.';
+      if(note.textContent!==instruction)note.textContent=instruction;
+    }
     if(!near)return;
     labelPoint.set(near.x,near.id==='ice'?1.27:1.16,near.z);
     labelPoint.project(camera);
@@ -182,14 +185,12 @@ export function mountWalkthrough(root,experiment=null){
     const wasAnimating=animating;
     animating=lab.updatePreparation(now,experiment);
     lab.carried.visible=experiment?experiment.phase==='carry'&&!animating:carrying&&!working;
-    if(wasAnimating&&!animating)renderer.shadowMap.needsUpdate=true;
+    if(wasAnimating&&!animating&&!autoQueue)renderer.shadowMap.needsUpdate=true;
     renderer.render(lab.scene,camera);
     updateHint();
-    const aimed=pickTarget();
-    aim.hidden=!aimed;
-    if(aimed)aim.textContent=experiment.actions.get(aimed);
     positionObjectButtons();
-    if(transition||animating||keys.size&&!working)frame=requestAnimationFrame(render);
+    if(autoQueue&&!animating&&now>=autoAt)advanceAuto(now);
+    if(transition||animating||autoQueue||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
     const {width,height}=viewport.getBoundingClientRect();
@@ -202,7 +203,7 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
   function enter(){
-    if(transition||animating)return;
+    if(transition||animating||autoQueue)return;
     if(working){
       const old=working;
       if(!experiment){
@@ -241,7 +242,9 @@ export function mountWalkthrough(root,experiment=null){
     pose={x:target.x,y:target.eye,z:target.viewZ,yaw:0,pitch:target.tilt};
     transition={from:{...player,y:standing},to:pose,start:performance.now(),done(){
       zone.textContent=target.name;
-      note.textContent=experiment?experiment.message:target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
+      note.textContent=experiment?(target.id==='ice'
+        ?experiment.lid?'냉각 랙을 집으세요.':'아이스박스 뚜껑을 여세요.'
+        :experiment.phase==='carry'?'작업대에 냉각 랙을 놓으세요.':experiment.message):target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
       visits.add(target.id);
       find('[data-visit="'+target.id+'"]').dataset.visited='true';
       if(!experiment&&visits.size===stations.length)note.textContent+=' 모든 장비의 작업 위치를 확인했습니다.';
@@ -257,11 +260,7 @@ export function mountWalkthrough(root,experiment=null){
 
   function refreshActions(){
     if(!experiment||!working){actions.hidden=true;objectButtons.replaceChildren();return;}
-    const ids=experiment.controls(working.id);
-    const counts=working.id==='prep'&&experiment.phase==='prep'
-      ?' · '+experiment.samples.map(({id,name})=>name+' '+experiment.state.tubes[id].additions.length+'/'+(experiment.reagents.length+1)).join(' · '):'';
-    actionReadout.textContent=experiment.message+counts;
-    actions.hidden=false;
+    const ids=autoQueue?[]:experiment.controls(working.id);
     const fixed=[],tagged=[];
     for(const id of ids){
       const button=document.createElement('button');
@@ -271,12 +270,13 @@ export function mountWalkthrough(root,experiment=null){
       button.textContent=shortNames[id]??fullName;
       button.title=fullName;
       button.setAttribute('aria-label',fullName);
-      if(working.id==='prep'&&lab.targets.has(id)){
+      if(lab.targets.has(id)){
         button.dataset.kind=experiment.reagents.some(item=>item.id===id)?'reagent':id.split(':')[0];
         button.className='lab-object-button';
         tagged.push(button);
       }else fixed.push(button);
     }
+    actions.hidden=!fixed.length;
     actionButtons.replaceChildren(...fixed);
     objectButtons.replaceChildren(...tagged);
     positionObjectButtons();
@@ -305,7 +305,7 @@ export function mountWalkthrough(root,experiment=null){
       const center=T.MathUtils.clamp(middle,span,width-span);
       items.forEach(({button,x,y},i)=>{
         const left=center+(i-(count-1)/2)*spacing;
-        const gap=kind==='sample'?-30:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
+        const gap=['sample','lid','rack'].includes(kind)?-32:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
         const top=T.MathUtils.clamp(y+gap,62,height*.74);
         button.style.left=left+'px';
         button.style.top=top+'px';
@@ -315,19 +315,49 @@ export function mountWalkthrough(root,experiment=null){
     }
   }
 
-  function perform(id){
-    if(!experiment||transition||animating||!experiment.controls(working?.id).includes(id))return;
+  function animateAction(id,now,duration){
     const effect=experiment.perform(id);
-    if(effect){
-      const duration=motionPreference.matches?0:['lid','rack','place'].includes(effect)?360:220;
-      lab.prepareAction(effect,id,performance.now(),duration);
-      animating=duration>0&&effect!=='auto';
-      if(effect==='lid'){
-        pose.pitch=-.55;
-        renderer.shadowMap.needsUpdate=true;
+    if(!effect)return false;
+    lab.prepareAction(effect,id,now,duration);
+    animating=duration>0;
+    if(effect==='lid'){
+      pose.pitch=-.55;
+      renderer.shadowMap.needsUpdate=true;
+    }
+    return true;
+  }
+  function advanceAuto(now){
+    if(autoQueue.length){
+      const next=autoQueue.shift();
+      const duration=motionPreference.matches?0:165;
+      if(animateAction(next,now,duration)){
+        autoAt=now+(duration||65);
+        const label=experiment.actions.get(next);
+        const operation=next==='tips'?'새 팁 장착':next==='discard'?'사용한 팁 폐기'
+          :next.startsWith('tube:')?label+'에 주입':label+' 흡입';
+        note.textContent='자동 준비 중 · '+operation;
+        return;
       }
     }
+    autoQueue=null;
+    renderer.shadowMap.needsUpdate=true;
     note.textContent=experiment.message;
+    refreshActions();
+    schedule();
+  }
+  function perform(id){
+    if(!experiment||transition||animating||autoQueue||!experiment.controls(working?.id).includes(id))return;
+    if(id==='auto'){
+      const sequence=experiment.autoActions();
+      if(!sequence.length)return;
+      autoQueue=sequence;
+      autoAt=0;
+      note.textContent='나머지 반응관을 자동으로 준비합니다.';
+    }else{
+      const duration=motionPreference.matches?0:['lid','rack','place'].includes(id)?360:220;
+      animateAction(id,performance.now(),duration);
+      note.textContent=experiment.message;
+    }
     refreshActions();
     viewport.focus({preventScroll:true});
     schedule();
@@ -346,7 +376,7 @@ export function mountWalkthrough(root,experiment=null){
     pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
   }
   function pickTarget(){
-    if(!experiment||!working||transition||animating)return null;
+    if(!experiment||!working||transition||animating||autoQueue)return null;
     raycaster.setFromCamera(pointer,camera);
     const ids=experiment.controls(working.id);
     return raycaster.intersectObjects(ids.map(id=>lab.targets.get(id)).filter(Boolean),false)[0]?.object.userData.action??null;
@@ -400,7 +430,6 @@ export function mountWalkthrough(root,experiment=null){
     }
   });
   canvas.addEventListener('lostpointercapture',()=>{drag=null;});
-  canvas.addEventListener('pointerleave',()=>{aim.hidden=true;});
   root.querySelectorAll('[data-dir]').forEach(button=>{
     button.addEventListener('pointerdown',event=>{
       event.preventDefault();
