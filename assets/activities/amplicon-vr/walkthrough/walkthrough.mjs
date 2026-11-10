@@ -10,14 +10,13 @@ const movement={
   ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'turnLeft',ArrowRight:'turnRight'
 };
 
-export function mountWalkthrough(root,experiment=null){
+export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   root.innerHTML=`<section class="lab-walk" aria-label="1인칭 과학실">
-    <header class="lab-walk-title"><div><p>AMPLICON / ${experiment?'반응액 준비':'공간 확인본'}</p><h2>1인칭 과학실</h2></div>
-    <a href="${experiment?'?room=preview':'./'}">${experiment?'공간만 둘러보기':'실험 활동으로 돌아가기'}</a></header>
+    <header class="lab-walk-title"><div><p>AMPLICON / 반응액 준비</p><h2>1인칭 과학실</h2></div></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
       <canvas aria-hidden="true"></canvas>
       <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-note" role="status">${experiment?experiment.message:'왼쪽 앞의 아이스박스부터 살펴보세요.'}</span><span class="lab-zone">입구 · 자유 탐색</span></div>
-      <button class="lab-enter" type="button">클릭해서 둘러보기</button>
+      <button class="lab-enter" type="button">클릭해서 이동 조작하기</button>
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
       <div class="lab-object-buttons" aria-label="기구 옆 조작 버튼"></div>
       <section class="lab-preparation" hidden aria-label="자동 준비"><div></div></section>
@@ -32,7 +31,6 @@ export function mountWalkthrough(root,experiment=null){
       </div>
     </div>
     <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 마우스 시점 · <kbd>E</kbd> 작업 위치 보기 또는 일어나기 · 작업 중에는 빈 곳을 드래그해 시점 조정</p>
-    <ul class="lab-station-list" aria-label="방문한 장비">${stations.map(station=>`<li data-visit="${station.id}">${station.name}</li>`).join('')}</ul>
   </section>`;
   const find=selector=>root.querySelector(selector);
   const viewport=find('.lab-viewport');
@@ -71,7 +69,6 @@ export function mountWalkthrough(root,experiment=null){
   lab.scene.add(camera);
   const player={...spawn,pitch:-.055};
   const keys=new Map();
-  const visits=new Set();
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
   let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
@@ -81,7 +78,7 @@ export function mountWalkthrough(root,experiment=null){
   const observation=experiment&&createGelObservation(find('.lab-gel-panel'),experiment,()=>{
     note.textContent=experiment.message;refreshActions();schedule();
   },()=>viewport.focus({preventScroll:true}));
-  const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+  const reduceMotion=lowMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function schedule(){
     if(!frame){last=performance.now();frame=requestAnimationFrame(render);}
@@ -180,7 +177,7 @@ export function mountWalkthrough(root,experiment=null){
     let view=pose??{...player,y:standing};
     if(transition){
       const {from,to,start,done}=transition;
-      const t=motionPreference.matches?1:Math.min(1,(now-start)/280);
+      const t=reduceMotion?1:Math.min(1,(now-start)/280);
       const eased=t*t*(3-2*t);
       view=Object.fromEntries(['x','y','z','yaw','pitch'].map(key=>[key,T.MathUtils.lerp(from[key],to[key],eased)]));
       if(t===1){transition=null;done();}
@@ -275,9 +272,6 @@ export function mountWalkthrough(root,experiment=null){
       note.textContent=experiment?(target.id==='ice'
         ?experiment.lid?'냉각 랙을 집으세요.':'아이스박스 뚜껑을 여세요.'
         :experiment.carrying?'랙을 내려놓으세요.':experiment.message):target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
-      visits.add(target.id);
-      find('[data-visit="'+target.id+'"]').dataset.visited='true';
-      if(!experiment&&visits.size===stations.length)note.textContent+=' 모든 장비의 작업 위치를 확인했습니다.';
       refreshActions();
     }};
     schedule();
@@ -354,9 +348,9 @@ export function mountWalkthrough(root,experiment=null){
     lab.prepareAction(effect,id,now,duration);
     animating=duration>0&&['lid','rack','place','tips','discard','aspirate','dispense','selectGel','loadGel'].includes(effect);
     if(!animating)handlingUntil=now+420;
-    if(effect==='runSpin')spinEnds=now+(motionPreference.matches?800:2400);
+    if(effect==='runSpin')spinEnds=now+(reduceMotion?800:2400);
     if(effect==='runPcr'){pcrRun=true;lesson.open();}
-    if(effect==='runGel')gelRun={start:now,duration:motionPreference.matches?1200:3900};
+    if(effect==='runGel')gelRun={start:now,duration:reduceMotion?1200:3900};
     if(effect==='inspectLed')observation.open();
     if(effect==='lid'){
       pose.pitch=-.55;
@@ -367,7 +361,7 @@ export function mountWalkthrough(root,experiment=null){
   function advanceAuto(now){
     if(autoQueue.length){
       const next=autoQueue.shift();
-      const duration=motionPreference.matches?0:165;
+      const duration=reduceMotion?0:165;
       if(animateAction(next,now,duration)){
         autoAt=now+(duration||65);
         const label=experiment.actions.get(next);
@@ -394,7 +388,7 @@ export function mountWalkthrough(root,experiment=null){
       autoAt=0;
       note.textContent='나머지 반응관을 자동으로 준비합니다.';
     }else{
-      const duration=motionPreference.matches?0:['lid','rack','place'].includes(id)?360:220;
+      const duration=reduceMotion?0:['lid','rack','place'].includes(id)?360:220;
       animateAction(id,performance.now(),duration);
       note.textContent=experiment.message;
     }

@@ -2,7 +2,6 @@
 .lab-walk-title {display:flex;align-items:end;justify-content:space-between;gap:1rem;margin:0 0 .8rem;}
 .lab-walk-title h2 {margin:.12rem 0;font-size:clamp(1.35rem,3vw,2.2rem);}
 .lab-walk-title p {margin:0;font-size:.75rem;letter-spacing:.09em;font-weight:800;color:#447075;}
-.lab-walk-title a {font-size:.85rem;}
 .lab-viewport {position:relative;width:100%;height:clamp(410px,78svh,950px);background:#2b3637;border-radius:12px;overflow:hidden;isolation:isolate;}
 .lab-viewport canvas {display:block;width:100%;height:100%;touch-action:none;}
 .lab-viewbar {position:absolute;inset:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:.65rem .9rem;background:#111b20ba;color:#fff;pointer-events:none;}
@@ -17,10 +16,6 @@
 .lab-pad button {padding:0;height:2.4rem;touch-action:none;}
 .lab-keys,.lab-note {margin:.6rem 0;font-size:.87rem;}
 .lab-keys kbd {padding:.07rem .23rem;border:1px solid #b9c9ca;border-radius:3px;font-family:inherit;}
-.lab-station-list {display:flex;flex-wrap:wrap;gap:.4rem;padding:0;list-style:none;margin:.7rem 0;}
-.lab-station-list li {padding:.2rem .5rem;border:1px solid #c0d0d1;border-radius:20px;font-size:.78rem;}
-.lab-station-list li[data-visited=true] {background:#dbefea;border-color:#5b998b;}
-.lab-station-list li[data-visited=true]::before {content:"✓ ";font-weight:800;}
 @media(max-width:580px) {
   .lab-walk-title {align-items:start;flex-direction:column;gap:.2rem;}
   .lab-viewport {height:clamp(330px,72svh,620px);}

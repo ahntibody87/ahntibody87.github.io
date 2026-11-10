@@ -1,21 +1,37 @@
-const lab = document.getElementById('amp-lab');
-const view = new URLSearchParams(location.search).get('room');
-if (view === 'legacy') {
-  const {createPerspective} = await import('./room.mjs?v=5');
-  lab.perspective = createPerspective();
-  await import('../amplicon/lab.mjs?v=vr5');
-} else {
-  try{
-    const {mountWalkthrough} = await import('./walkthrough/walkthrough.mjs?v=10');
-    if(view==='preview')mountWalkthrough(lab);
-    else{
-      const response=await fetch(lab.dataset.scenario);
-      if(!response.ok)throw Error('Scenario unavailable');
-      const {createPreparation}=await import('./walkthrough/preparation.mjs?v=5');
-      mountWalkthrough(lab,createPreparation(await response.json()));
-    }
-  }catch{
-    const message=lab.querySelector('[role="status"]');
-    if(message)message.textContent='실험실을 불러오지 못했습니다. 새로고침해 주세요.';
+import {mountScreeningIntro,mountBriefing} from '../amplicon/intro.mjs?v=1';
+
+const lab=document.getElementById('amp-lab');
+
+function showError(){
+  let status=lab.querySelector('[role="status"]');
+  if(!status){
+    status=document.createElement('p');
+    status.setAttribute('role','status');
+    lab.append(status);
   }
+  status.textContent='실험실을 불러오지 못했습니다. 새로고침해 주세요.';
+}
+
+async function startExperiment(scenario,button,quality){
+  button.disabled=true;
+  try{
+    const [{createPreparation},{mountWalkthrough}]=await Promise.all([
+      import('./walkthrough/preparation.mjs?v=5'),
+      import('./walkthrough/walkthrough.mjs?v=11')
+    ]);
+    mountWalkthrough(lab,createPreparation(scenario),{lowMotion:quality==='low'});
+    lab.querySelector('.lab-viewport')?.focus({preventScroll:true});
+  }catch{
+    button.disabled=false;
+    showError();
+  }
+}
+
+try{
+  const response=await fetch(lab.dataset.scenario,{cache:'no-cache'});
+  if(!response.ok)throw new Error('Scenario unavailable');
+  const scenario=await response.json();
+  mountScreeningIntro(lab,()=>mountBriefing(lab,scenario,(button,quality)=>startExperiment(scenario,button,quality)));
+}catch{
+  showError();
 }

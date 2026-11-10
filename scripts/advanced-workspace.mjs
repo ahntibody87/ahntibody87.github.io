@@ -8,14 +8,15 @@ const previews = {
   'rna-lab':['RNA STRUCTURE','RNA 접힘 개념도'],
   'x-inactivation':['XIST & CHROMATIN','X 불활성화 개념도'],
   'embryo-atlas':['HUMAN DEVELOPMENT','상실배와 포배낭의 구조','/assets/activities/embryo-atlas/preview.webp'],
-  amplicon:['RT-PCR & GEL ELECTROPHORESIS','써멀 사이클러와 전기영동 겔 밴드 개념도']
+  amplicon:['RT-PCR & GEL ELECTROPHORESIS','써멀 사이클러와 전기영동 겔 밴드 개념도','/assets/biology-art-v1/tool-amplicon-2d.webp','피펫과 써멀 사이클러, 전기영동 겔을 그린 수채화'],
+  'amplicon-vr':['RT-PCR & GEL ELECTROPHORESIS','써멀 사이클러와 전기영동 겔 밴드 개념도',null,'피펫을 든 손 너머로 실험대와 장비가 보이는 1인칭 3D 과학실']
 };
 export function unitNavigation(course, unit) {
   return `<nav class="workspace-units" aria-label="고급 생명과학 단원">${course.units.map((u,i)=>`<a href="/${course.id}/${u.id}/"${u.id===unit.id?' aria-current="page"':''}><span>${String(i+1).padStart(2,'0')}</span>${esc(u.title)}</a>`).join('')}</nav>`;
 }
 export function workspaceCard(course, unit, activity, destination) {
   const preview=previews[activity.id];
-  return `<a class="workspace-card" href="${esc(destination)}" data-tool-type="${esc(activity.type)}" data-tool-search="${esc(activity.title+' '+(activity.description||'')+' '+types[activity.type])}"${destination.startsWith('https://')?' target="_blank" rel="noopener noreferrer"':''}>${preview?`<div class="workspace-preview"><div class="workspace-preview-label" lang="en">${preview[0]}</div><img src="${preview[2]||`/assets/biology-art-v1/tool-${activity.id}.webp`}" alt="${esc(preview[1])}" width="640" height="360" loading="lazy" decoding="async"></div>`:''}<div class="workspace-card-body"><p class="workspace-type" lang="en">${esc(types[activity.type])}</p><h3>${esc(activity.title)}</h3><p class="workspace-card-description">${esc(activity.description||'')}</p><span class="workspace-card-footer">${preview?`<span>${esc(preview[1])}</span>`:'<span></span>'}<strong>활동 열기 <span aria-hidden="true">↗</span></strong></span></div></a>`;
+  return `<a class="workspace-card" href="${esc(destination)}" data-tool-type="${esc(activity.type)}" data-tool-search="${esc(activity.title+' '+(activity.description||'')+' '+types[activity.type])}"${destination.startsWith('https://')?' target="_blank" rel="noopener noreferrer"':''}>${preview?`<div class="workspace-preview"><div class="workspace-preview-label" lang="en">${preview[0]}</div><img src="${preview[2]||`/assets/biology-art-v1/tool-${activity.id}.webp`}" alt="${esc(preview[3]??preview[1])}" width="640" height="360" loading="lazy" decoding="async"></div>`:''}<div class="workspace-card-body"><p class="workspace-type" lang="en">${esc(types[activity.type])}</p><h3>${esc(activity.title)}</h3><p class="workspace-card-description">${esc(activity.description||'')}</p><span class="workspace-card-footer">${preview?`<span>${esc(preview[1])}</span>`:'<span></span>'}<strong>활동 열기 <span aria-hidden="true">↗</span></strong></span></div></a>`;
 }
 export function unitWorkspace(course,unit,index,cards) {
   const filters=[...new Set(unit.activities.map(a=>a.type))];
