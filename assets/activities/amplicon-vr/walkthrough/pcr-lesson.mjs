@@ -2,9 +2,9 @@ const color={rna:'#ffa24d',dna:'#80b6ff',primer:'#ffdc70',copy:'#57e6c5'};
 const targetStart=82,targetEnd=158,primerLength=17;
 const detailedTime=2500,fastTime=5000,totalCycles=30;
 const stages=[
-  ['95°C · DNA 가닥 분리','이중가닥 DNA가 갈라지면 기존 가닥과 직전 사이클에서 합성된 가닥이 각각 주형이 됩니다.'],
-  ['55°C · 프라이머 결합','프라이머는 서로 반대쪽 주형의 상보적 위치에 붙습니다. 두 프라이머의 3′ 끝은 표적 구간 안쪽을 향합니다.'],
-  ['72°C · DNA 합성','중합효소는 프라이머의 3′ 끝에서 출발해 새 가닥을 5′ → 3′로 늘립니다. 각 이중가닥에는 기존 가닥 하나와 새 가닥 하나가 들어 있습니다.']
+  ['95°C / DNA 가닥 분리','이중가닥 DNA가 갈라지면 기존 가닥과 직전 사이클에서 합성된 가닥이 각각 주형이 됩니다.'],
+  ['55°C / 프라이머 결합','프라이머는 서로 반대쪽 주형의 상보적 위치에 붙습니다. 두 프라이머의 3′ 끝은 표적 구간 안쪽을 향합니다.'],
+  ['72°C / DNA 합성','중합효소는 프라이머의 3′ 끝에서 출발해 새 가닥을 5′ → 3′로 늘립니다. 각 이중가닥에는 기존 가닥 하나와 새 가닥 하나가 들어 있습니다.']
 ];
 const initial=[[{start:18,end:222,forward:true},{start:18,end:222,forward:false}]];
 function copyOf(strand,synthesizedIn){
@@ -70,7 +70,7 @@ function molecules(cycle,stage,progress){
 
 export function createPcrLesson(root,wake){
   root.innerHTML=`<section class="lab-observation lab-pcr-lesson" hidden aria-labelledby="lab-pcr-title">
-    <header><span class="lab-observation-kicker">반응관 안에서 일어나는 일 · 모식도</span><strong class="lab-cycle"></strong></header>
+    <header><span class="lab-observation-kicker">반응관 안에서 일어나는 일 / 모식도</span><strong class="lab-cycle"></strong></header>
     <h3 id="lab-pcr-title" tabindex="-1"></h3><p class="lab-molecule-note"></p>
     <svg viewBox="0 0 530 180" class="lab-molecule-graphic" role="img" aria-label="PCR 단계별 분자 모식도"></svg>
     <ul class="lab-molecule-legend"><li style="--ink:${color.rna}">RNA</li><li style="--ink:${color.dna}">DNA 주형</li><li style="--ink:${color.primer}">프라이머</li><li style="--ink:${color.copy}">새 DNA</li></ul>
@@ -92,12 +92,12 @@ export function createPcrLesson(root,wake){
     const progress=clamp(elapsed/(index===fastIndex?fastTime:detailedTime));
     if(shown!==index){
       shown=index;
-      const [heading,note]=index===0?['역전사 · cDNA 만들기','RNA를 주형으로 cDNA가 만들어집니다.']
+      const [heading,note]=index===0?['역전사 / cDNA 만들기','RNA를 주형으로 cDNA가 만들어집니다.']
         :index===summaryIndex?['표적 이중가닥 DNA가 처음 완성되었습니다','2번째 사이클에서는 표적 길이의 단일가닥이 생깁니다. 3번째 사이클에서 양쪽 가닥의 길이가 모두 맞는 표적 DNA 두 개가 처음 생깁니다.']
-        :index===fastIndex?['PCR 반복 · 증폭','3번째 사이클에 생긴 표적 이중가닥 두 개의 후손을 따라가면, 이상적으로 매 사이클마다 2 → 4 → 8 → 16개로 늘어납니다.']
+        :index===fastIndex?['PCR 반복 / 증폭','3번째 사이클에 생긴 표적 이중가닥 두 개의 후손을 따라가면, 이상적으로 매 사이클마다 2 → 4 → 8 → 16개로 늘어납니다.']
         :stages[stage];
       title.textContent=heading;description.textContent=note;
-      cycleLabel.textContent=index===0?'사이클 전 · 역전사':index===summaryIndex?'3번째 사이클 완료':cycle+'번째 사이클';
+      cycleLabel.textContent=index===0?'사이클 전 / 역전사':index===summaryIndex?'3번째 사이클 완료':cycle+'번째 사이클';
     }
     if(index===0){
       graphic.setAttribute('viewBox','0 0 530 132');
@@ -107,7 +107,7 @@ export function createPcrLesson(root,wake){
       const completed=elapsed<previewEnd?3+Math.floor(elapsed/previewInterval):
         Math.min(totalCycles,7+Math.floor((elapsed-previewEnd)/(fastTime-previewEnd)*(totalCycles-7)));
       const copies=2**(completed-2);
-      cycleLabel.textContent=completed+' / '+totalCycles+' 사이클 · '+copies.toLocaleString('ko-KR')+'개';
+      cycleLabel.textContent=completed+' / '+totalCycles+' 사이클 / '+copies.toLocaleString('ko-KR')+'개';
       const visible=Math.min(80,copies);
       graphic.setAttribute('viewBox','0 0 530 160');
       graphic.innerHTML=Array.from({length:visible},(_,i)=>{

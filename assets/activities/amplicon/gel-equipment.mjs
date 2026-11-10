@@ -26,7 +26,7 @@ export function electrodeDiagram(reversed,running){
 }
 
 export function uvEquipment(placed,closed){
-  return `<svg class="amp-uv-machine" viewBox="0 0 500 260" role="img" aria-label="UV 관찰기 · ${closed?'보호 덮개 닫힘':placed?'겔 장착, 보호 덮개 열림':'받침 비어 있음, 보호 덮개 열림'}">
+  return `<svg class="amp-uv-machine" viewBox="0 0 500 260" role="img" aria-label="UV 관찰기 / ${closed?'보호 덮개 닫힘':placed?'겔 장착, 보호 덮개 열림':'받침 비어 있음, 보호 덮개 열림'}">
     <ellipse cx="256" cy="231" rx="192" ry="15" fill="#cedae5"/>
     <path d="M77 169l75-58h235l44 58v43l-48 20H111l-34-20Z" fill="#667a91" stroke="#334b61" stroke-width="3"/>
     <path d="M77 169l75-58h235l44 58-48 24H111Z" fill="#aabbd0" stroke="#334b61" stroke-width="3"/>

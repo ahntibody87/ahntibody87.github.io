@@ -1,4 +1,4 @@
-import {mountScreeningIntro,mountBriefing} from '../amplicon/intro.mjs?v=1';
+import {mountScreeningIntro,mountBriefing} from '../amplicon/intro.mjs?v=1-nodot1';
 
 const lab=document.getElementById('amp-lab');
 
@@ -16,8 +16,8 @@ async function startExperiment(scenario,button,quality){
   button.disabled=true;
   try{
     const [{createPreparation},{mountWalkthrough}]=await Promise.all([
-      import('./walkthrough/preparation.mjs?v=7'),
-      import('./walkthrough/walkthrough.mjs?v=15')
+      import('./walkthrough/preparation.mjs?v=7-nodot1'),
+      import('./walkthrough/walkthrough.mjs?v=15-nodot1')
     ]);
     mountWalkthrough(lab,createPreparation(scenario),{lowMotion:quality==='low',reviewSteps:scenario.steps});
     lab.querySelector('.lab-viewport')?.focus({preventScroll:true});

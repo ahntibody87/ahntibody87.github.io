@@ -1,4 +1,4 @@
-import {createState,freshTip,addReagent,planRemainingTransfers,issues,bands} from '../../amplicon/model.mjs?v=pcr17';
+import {createState,freshTip,addReagent,planRemainingTransfers,issues,bands} from '../../amplicon/model.mjs?v=pcr17-nodot1';
 
 export function createPreparation(scenario){
   const state=createState(scenario);
@@ -24,7 +24,7 @@ export function createPreparation(scenario){
   }))actions.set(id,label);
   state.lanePlan.forEach((id,index)=>{
     actions.set('gelSource:'+id,laneNames[index]+(id==='marker'?'':' PCR 산물'));
-    actions.set('well:'+index,(index+1)+'번 웰 · '+laneNames[index]);
+    actions.set('well:'+index,(index+1)+'번 웰 / '+laneNames[index]);
   });
 
   let phase='ice',lid=false,liquid=null,prepared=false;
@@ -38,7 +38,7 @@ export function createPreparation(scenario){
   const completed=id=>state.tubes[id].additions.length===reagents.length+1;
   const expected=id=>reagents[state.tubes[id].additions.length]?.id??'sample:'+id;
   const nextTube=()=>samples.find(sample=>!completed(sample.id));
-  const sourceName=id=>({primer:'프라이머',buffer:'버퍼·dNTP',rt:'역전사 효소',taq:'Taq'}[id]??actions.get(id));
+  const sourceName=id=>({primer:'프라이머',buffer:'버퍼와 dNTP',rt:'역전사 효소',taq:'Taq'}[id]??actions.get(id));
   function expectedSource(){
     const next=nextTube();
     if(!next)return '준비한 반응관을 확인하세요.';
@@ -56,7 +56,7 @@ export function createPreparation(scenario){
   function finish(){
     if(!state.tip&&issues(state,scenario,2).length===0){
       prepared=true;
-      message='반응액 준비 완료 · 반응관 랙을 드세요.';
+      message='반응액 준비 완료 / 반응관 랙을 드세요.';
     }
   }
 
@@ -75,7 +75,7 @@ export function createPreparation(scenario){
       }
       if(id==='holdMix'&&vortexTube&&!state.tubes[vortexTube].mixed){
         state.tubes[vortexTube].mixed=true;
-        message='혼합 완료 · 반응관을 랙에 되돌리세요.';return id;
+        message='혼합 완료 / 반응관을 랙에 되돌리세요.';return id;
       }
       if(id==='removeMix'&&vortexTube&&state.tubes[vortexTube].mixed){
         vortexTube=null;
@@ -110,7 +110,7 @@ export function createPreparation(scenario){
       }
     }
     if(id==='runSpin'&&phase==='readySpin'){
-      phase='spinning';message='원심분리 중 · 로터가 멈출 때까지 기다리세요.';return id;
+      phase='spinning';message='원심분리 중 / 로터가 멈출 때까지 기다리세요.';return id;
     }
     if(id==='collectSpin'&&phase==='recoverSpin'){
       phase='toPcr';slots.fill(null);message='E를 누르고 물러나 PCR 기기로 가세요.';return id;
@@ -129,7 +129,7 @@ export function createPreparation(scenario){
       pcrOpen=false;phase='readyPcr';message='뚜껑이 닫혔습니다. PCR을 시작하세요.';return id;
     }
     if(id==='runPcr'&&phase==='readyPcr'){
-      phase='runningPcr';message='PCR 진행 중 · 기기 화면에서 증폭을 관찰하세요.';return id;
+      phase='runningPcr';message='PCR 진행 중 / 기기 화면에서 증폭을 관찰하세요.';return id;
     }
     if(id==='recoverPcr'&&phase==='recoverPcr'){
       pcrOpen=true;phase='collectPcr';message='반응관을 랙에 회수하세요.';return id;
@@ -165,7 +165,7 @@ export function createPreparation(scenario){
       }
       if(id==='runGel'&&state.lanes.every(Boolean)){
         if(state.polarity!=='normal')return blocked('웰이 −극 쪽에 오도록 전극을 바꾸세요.');
-        phase='runningGel';message='전기영동 중 · 추적 색소가 +극 쪽으로 이동합니다.';return id;
+        phase='runningGel';message='전기영동 중 / 추적 색소가 +극 쪽으로 이동합니다.';return id;
       }
     }
     if(id==='collectGel'&&phase==='recoverGel'){
@@ -247,7 +247,7 @@ export function createPreparation(scenario){
   function result(answer,reason){
     if(!state.viewed||!['A','B','both','neither'].includes(answer)||!reason.trim())return null;
     state.answer=answer;state.reason=reason.trim();state.submitted=true;
-    phase='done';message='탐구 완료 · 판정과 근거를 모범 해석과 비교하세요.';
+    phase='done';message='탐구 완료 / 판정과 근거를 모범 해석과 비교하세요.';
     return {correct:answer===scenario.answer,model:scenario.modelInterpretation};
   }
   function controls(station){

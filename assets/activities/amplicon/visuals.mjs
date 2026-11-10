@@ -34,7 +34,7 @@ export function labMap(carrying=false){
   <g id="amp-near" transform="translate(480 550)"><text text-anchor="middle" font-size="14" fill="#315efb"></text></g></svg>`;
 }
 export function equipmentArt(id){return `<svg viewBox="-100 -100 200 170" aria-label="${stations.find(s=>s.id===id)?.label}" role="img">${device(id)}</svg>`;}
-export function handArt(){return `<svg class="amp-hand-scene" viewBox="0 0 600 145" role="img" aria-label="손으로 피펫에 팁을 끼우고 흡입·분주한 뒤 팁을 버리는 과정">
+export function handArt(){return `<svg class="amp-hand-scene" viewBox="0 0 600 145" role="img" aria-label="손으로 피펫에 팁을 끼우고 흡입과 분주한 뒤 팁을 버리는 과정">
   <path d="M20 113H580" stroke="#bfcadd" stroke-width="3"/>
   <g fill="#d2dff4" stroke="#8097b4"><rect x="32" y="86" width="68" height="27" rx="4"/><path d="m45 85 3-15 3 15m12 0 3-15 3 15m12 0 3-15 3 15"/><rect x="188" y="74" width="42" height="39" rx="5"/><path d="M362 76v27q13 24 26 0V76Z"/><path d="M508 77h49l-5 36h-39Z"/></g>
   <path d="M366 96h18l-9 15Z" fill="#8caaf0"/><text x="63" y="136" text-anchor="middle">팁 박스</text><text x="209" y="136" text-anchor="middle">선택 용액</text><text x="375" y="136" text-anchor="middle">반응 튜브</text><text x="534" y="136" text-anchor="middle">폐기통</text>
@@ -50,7 +50,7 @@ export function molecule(frame,progress,positive){
   let art='',note='';
   if(!positive){
     art=Array.from({length:4},(_,i)=>{const x=55+i*83,y=65+Math.sin(p*6+i)*22;return strand(x,x+22,y,c.primer,i%2?'3′':'5′',i%2?'5′':'3′');}).join('');
-    note='표적 RNA 없음 → 결합·증폭 없음';
+    note='표적 RNA 없음 → 결합과 증폭 없음';
   }else if(frame.phase==='rt'){
     art=strand(65,330,56,c.rna)+strand(277,330,88+30*Math.max(0,1-p/.2),c.primer,p>.2?'':'3′','5′');
     const x=277-212*Math.max(0,(p-.2)/.8);
@@ -59,7 +59,7 @@ export function molecule(frame,progress,positive){
     note=p<.2?'역방향 프라이머가 상보적 서열로 이동':'RNA–cDNA 혼성 이중 가닥 형성';
   }else if(frame.phase==='initial'){
     art=strand(65,330,56-22*p,c.rna)+strand(65,330,88+22*p,c.template,'3′','5′');
-    note='RNA와 cDNA 분리 · 역전사 효소 열 비활성화';
+    note='RNA와 cDNA 분리 / 역전사 효소 열 비활성화';
   }else{
     const first=frame.cycle===1,phase=frame.phase;
     const gap=phase==='denature'?15+40*p:phase==='anneal'?55:phase==='final'?30:55-25*p;
@@ -88,7 +88,7 @@ export function temperatureGraph(frames,time){
     <polyline points="${points}" fill="none" stroke="#5984a9" stroke-width="1.65"/>
     <path d="M${x(time)} 12V91" stroke="#276c86" stroke-width="2"/>
     <circle cx="${x(time)}" cy="${y(temp)}" r="4" fill="#276c86"/>
-    <text x="39" y="106" font-size="10" fill="#40556a">0초</text><text x="341" y="106" text-anchor="end" font-size="10" fill="#40556a">${Math.round(total/1000)}초 · 학습용</text>
+    <text x="39" y="106" font-size="10" fill="#40556a">0초</text><text x="341" y="106" text-anchor="end" font-size="10" fill="#40556a">${Math.round(total/1000)}초 / 학습용</text>
   </svg>`;
 }
 export function quantityGraph(cycle,max){

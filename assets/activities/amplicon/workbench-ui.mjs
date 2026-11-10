@@ -27,7 +27,7 @@ export function preparationObjects(state,scenario){
   ));
   const reagents=scenario.reagents.map((reagent,i)=>target(
     reagent.id,columns[i],reagent.enzyme&&!state.ice?.18:-.47,
-    ['버퍼·dNTP','프라이머','역전사 효소','Taq'][i]??reagent.label,
+    ['버퍼와 dNTP','프라이머','역전사 효소','Taq'][i]??reagent.label,
     'bottle',{color:reagentColors[i],title:reagent.label,base:reagent.enzyme&&!state.ice?0:.32,toolHeight:reagent.enzyme&&!state.ice?.78:1.10,labelHeight:.32}
   ));
   const reactions=scenario.samples.map((sample,i)=>target(
@@ -49,7 +49,7 @@ export function electrophoresisObjects(state,scenario,progress=null){
     ...sources.map((id,i)=>target('load:'+id,(i-2)*wellSpacing,-1.9,i===0?'크기 마커':sampleName(scenario.samples[i-1],i-1)+' 산물','bottle',
       {color:i===0?'#ac83bc':stockColors[i-1],toolHeight:.9,labelHeight:.26})),
     ...state.lanes.map((id,i)=>target('well:'+i,(i-2)*wellSpacing,wellZ,(i+1)+'번 웰'+(id?' ✓':''),'well',
-      {color:id?'#53788a':'#365856',toolHeight:.56,labelHeight:.35,title:(i+1)+'번 웰 · '+(i===0?'DNA 크기 마커':scenario.samples[i-1].label)}))
+      {color:id?'#53788a':'#365856',toolHeight:.56,labelHeight:.35,title:(i+1)+'번 웰 / '+(i===0?'DNA 크기 마커':scenario.samples[i-1].label)}))
   ];
 }
 

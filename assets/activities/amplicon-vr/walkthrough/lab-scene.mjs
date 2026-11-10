@@ -1,5 +1,5 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {roomSize,benches,stools,stations} from './layout.mjs?v=4';
+import {roomSize,benches,stools,stations} from './layout.mjs?v=4-nodot1';
 
 function surface(kind){
   const canvas=document.createElement('canvas');

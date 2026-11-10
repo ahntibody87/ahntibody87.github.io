@@ -29,7 +29,7 @@ export function mixEquipment({spin,active,closed,slots,sample,index,button,label
       </g>
       ${sample?'<rect data-vortex-contact x="164" y="58" width="92" height="104" fill="transparent"/>':''}
     </svg>
-    ${sample?`<span class="amp-machine-label">${escape(label(sample))} 반응관 · 접촉판 위</span>`:''}
+    ${sample?`<span class="amp-machine-label">${escape(label(sample))} 반응관 / 접촉판 위</span>`:''}
   </div>`;
 
   return `<div class="amp-machine amp-centrifuge ${active?'amp-machine-running':''}">

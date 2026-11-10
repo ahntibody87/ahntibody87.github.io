@@ -1,4 +1,4 @@
-import {benchVisual,closedCoolerTexture} from './photo-bench.mjs?v=2';
+import {benchVisual,closedCoolerTexture} from './photo-bench.mjs?v=2-nodot1';
 import {daylightMaterials,referencePose,eyeHeight,fieldOfView,referenceAspect} from './room-materials.mjs';
 import * as T from '../embryo-atlas/vendor/three.module.min.js';
 
@@ -373,7 +373,7 @@ export function createPerspective(){
     room.append(hud);
     const nearLabel=cargo==='gel'?'전기영동 겔':cargo==='tubes'?'혼합한 반응관':'냉각 랙';
     room.classList.toggle('vr-carrying-rack',cargo===true);
-    cargoLabel.hidden=!cargo; cargoLabel.textContent='운반 중 · '+nearLabel;
+    cargoLabel.hidden=!cargo; cargoLabel.textContent='운반 중 / '+nearLabel;
     room.classList.toggle('vr-fallback',!renderer);
     if(renderer){
       backdrop.append(canvas);
@@ -400,7 +400,7 @@ export function createPerspective(){
       point.project(camera);
       if(local.z>=0||Math.abs(point.x)>.84||Math.abs(point.y)>.76)return;
       marker.hidden=false;
-      marker.textContent=target.label+(near===expected?' · 조작':'');
+      marker.textContent=target.label+(near===expected?' / 조작':'');
       marker.style.left=(50+point.x*50)+'%';
       marker.style.top=(50-point.y*50)+'%';
     }
