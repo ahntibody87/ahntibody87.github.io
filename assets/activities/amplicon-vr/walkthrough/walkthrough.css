@@ -104,3 +104,9 @@
   .lab-observation {padding:.6rem;}
   .lab-observation header {align-items:flex-start;}
 }
+.amp-lab .lab-observation button:is(:hover,:focus-visible,:active) {
+  color:#fff;background:#37647b;border-color:#d0f4fd;
+}
+.amp-lab .lab-observation button[data-pcr=fast]:is(:hover,:focus-visible,:active) {
+  color:#102c35;background:#e3fbfb;
+}
