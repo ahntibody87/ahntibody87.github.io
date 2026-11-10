@@ -3,7 +3,9 @@
 .lab-walk-title h2 {margin:.12rem 0;font-size:clamp(1.35rem,3vw,2.2rem);}
 .lab-walk-title p {margin:0;font-size:.75rem;letter-spacing:.09em;font-weight:800;color:#447075;}
 .lab-viewport {position:relative;width:100%;height:clamp(410px,78svh,950px);background:#2b3637;border-radius:12px;overflow:hidden;isolation:isolate;}
-.lab-viewport:fullscreen {border-radius:0;}
+.lab-viewport:fullscreen,.lab-viewport.lab-expanded {border-radius:0;}
+.lab-viewport.lab-expanded {position:fixed;inset:0;z-index:1000;width:100%;height:100%;}
+html:has(.lab-expanded) {overflow:hidden;}
 .lab-viewport canvas {display:block;width:100%;height:100%;touch-action:none;}
 .lab-viewbar {position:absolute;inset:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:.65rem .9rem;background:#111b20ba;color:#fff;pointer-events:none;}
 .lab-viewbar strong {letter-spacing:.05em;}
@@ -72,7 +74,7 @@
   flex:1;min-width:0;margin:0;color:#ff9290;font-size:clamp(.70rem,1.3vw,.97rem);
   font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.lab-viewport:fullscreen .lab-note {white-space:normal;overflow-wrap:anywhere;}
+.lab-viewport:is(:fullscreen,.lab-expanded) .lab-note {white-space:normal;overflow-wrap:anywhere;}
 .amp-lab .lab-fullscreen {
   flex:none;pointer-events:auto;white-space:nowrap;color:#fff;background:#152b31;
   border:1px solid #9bc4c9;border-radius:6px;padding:.35rem .55rem;cursor:pointer;

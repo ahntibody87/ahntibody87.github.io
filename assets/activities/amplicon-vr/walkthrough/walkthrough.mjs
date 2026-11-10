@@ -531,25 +531,31 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     if(event.pointerType==='touch'){viewport.focus({preventScroll:true});entry.hidden=true;return;}
     capture();
   });
-  if(document.fullscreenEnabled&&viewport.requestFullscreen){
-    fullscreenButton.hidden=false;
-    viewport.addEventListener('fullscreenchange',()=>{
-      fullscreenButton.textContent=document.fullscreenElement===viewport?'전체화면 종료':'전체화면';
-    });
-    fullscreenButton.addEventListener('click',async()=>{
-      fullscreenButton.disabled=true;
-      releaseMouse();
-      try{
-        if(document.fullscreenElement===viewport)await document.exitFullscreen();
-        else await viewport.requestFullscreen();
-        viewport.focus({preventScroll:true});
-      }catch{
-        if(document.fullscreenElement!==viewport)fullscreenButton.textContent='전체화면 다시 시도';
-      }finally{
-        fullscreenButton.disabled=false;
-      }
-    });
+  const expanded=()=>viewport.classList.contains('lab-expanded');
+  function updateFullscreenButton(){
+    fullscreenButton.textContent=document.fullscreenElement===viewport||expanded()?'전체화면 종료':'전체화면';
   }
+  fullscreenButton.hidden=false;
+  viewport.addEventListener('fullscreenchange',updateFullscreenButton);
+  fullscreenButton.addEventListener('click',async()=>{
+    fullscreenButton.disabled=true;
+    releaseMouse();
+    try{
+      if(expanded())viewport.classList.remove('lab-expanded');
+      else if(document.fullscreenElement===viewport)await document.exitFullscreen().catch(()=>{});
+      else if(document.fullscreenEnabled&&viewport.requestFullscreen){
+        try{
+          await viewport.requestFullscreen();
+        }catch{
+          viewport.classList.add('lab-expanded');
+        }
+      }else viewport.classList.add('lab-expanded');
+    }finally{
+      updateFullscreenButton();
+      fullscreenButton.disabled=false;
+      viewport.focus({preventScroll:true});
+    }
+  });
   function pointAt(event){
     const rect=canvas.getBoundingClientRect();
     pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
@@ -616,6 +622,11 @@ export function mountWalkthrough(root,experiment,{lowMotion=false,reviewSteps=[]
     enter();
   });
   viewport.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&expanded()&&!mouseLocked()){
+      viewport.classList.remove('lab-expanded');
+      updateFullscreenButton();
+      return;
+    }
     if(event.code==='KeyE'){
       event.preventDefault();
       if(!event.repeat)enter();
