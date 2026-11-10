@@ -1,5 +1,5 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {roomSize,benches,stools,stations} from './layout.mjs?v=3';
+import {roomSize,benches,stools,stations} from './layout.mjs?v=4';
 
 function surface(kind){
   const canvas=document.createElement('canvas');
@@ -98,6 +98,9 @@ export function createLab(experiment){
     cabinetGlass:new T.MeshPhysicalMaterial({color:'#d5e4e7',metalness:.12,roughness:.13,transparent:true,opacity:.19,depthWrite:false}),
     chrome:material('#f3f7fa',{metalness:.9,roughness:.18}),
     rubber:material('#242529',{roughness:.94}),
+    glove:material('#3365b3',{roughness:.55}),
+    cuff:material('#edf1f2',{roughness:.9}),
+    tubeGlass:new T.MeshPhysicalMaterial({color:'#d9f1f6',roughness:.17,transparent:true,opacity:.47,depthWrite:false}),
     filter:material('#cf9342',{roughness:.24,transparent:true,opacity:.53,depthWrite:false}),
     glass:new T.MeshPhysicalMaterial({color:'#b7d2d9',roughness:.13,transparent:true,opacity:.28,depthWrite:false,side:T.DoubleSide}),
     daylight:new T.MeshBasicMaterial({map:exterior.texture,color:'#e8f4ff',toneMapped:false}),
@@ -380,11 +383,13 @@ export function createLab(experiment){
   rounded(0,.015,-.104,.51,.028,.123,'steel',prep,.008);
   for(let i=0;i<4;i++){
     const x=-.159+i*.106;
-    const rim=add(new T.TorusGeometry(.014,.0027,8,18),'plastic',x,.112,.065,prep);rim.rotation.x=Math.PI/2;
-    cyl(x,.079,.065,.014,.061,'glass',prep);
-    reactionLiquid.push(cyl(x,.052,.065,.011,.010,'screen',prep));
-    label(sampleLabels[i],x,.047,.091,.036,.021,prep);
-    target('tube:'+sampleIds[i],prep,x,.104,.065,.075,.14,.064);
+    const rim=add(new T.TorusGeometry(.019,.0038,8,20),'plastic',x,.144,.065,prep);rim.rotation.x=Math.PI/2;
+    const vial=add(new T.CylinderGeometry(.019,.012,.092,20,1,true),'tubeGlass',x,.097,.065,prep);
+    vial.material.side=T.DoubleSide;
+    cyl(x,.052,.065,.012,.009,'plastic',prep);
+    reactionLiquid.push(cyl(x,.056,.065,.012,.010,'screen',prep));
+    label(sampleLabels[i],x,.046,.094,.049,.027,prep);
+    target('tube:'+sampleIds[i],prep,x,.126,.065,.075,.16,.076);
     cyl(x,.065,-.103,.025,.084,'glass',prep);
     cyl(x,.108,-.103,.026,.020,i%2?'blue':'ivory',prep);
     label(['BUF','PR','RT','TAQ'][i],x,.066,-.076,.039,.023,prep);
@@ -545,9 +550,36 @@ export function createLab(experiment){
 
   const carried=new T.Group();
   rack(carried).position.set(0,-.22,-.46);
-  for(const x of [-.147,.147])rounded(x,-.218,-.433,.083,.054,.086,'blue',carried,.017);
-  carried.scale.setScalar(.81);
-  carried.position.y=-.075;
+  const joint=new T.SphereGeometry(1,18,12);
+  function softPart(x,y,z,sx,sy,sz,key,parent=carried){
+    const mesh=add(joint,key,x,y,z,parent);
+    mesh.scale.set(sx,sy,sz);
+    return mesh;
+  }
+  function sleeve(start,end){
+    const a=new T.Vector3(...start),b=new T.Vector3(...end);
+    const mid=a.clone().lerp(b,.5);
+    const part=add(new T.CylinderGeometry(.044,.072,a.distanceTo(b),24),'cuff',mid.x,mid.y,mid.z,carried);
+    part.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),b.sub(a).normalize());
+  }
+  for(const sign of [-1,1]){
+    sleeve([sign*.34,-.27,-.22],[sign*.222,-.151,-.392]);
+    rod([sign*.222,-.151,-.39],[sign*.164,-.185,-.408],.035,'glove',carried);
+    const palm=softPart(sign*.159,-.184,-.413,.043,.032,.063,'glove');
+    palm.rotation.y=sign*.29;
+    for(let i=0;i<4;i++){
+      const z=-.49+i*.022;
+      const outer=sign*(.161+i*.004);
+      rod([outer,-.171,z],[sign*.147,-.153,z-.009],.010,'glove',carried);
+      rod([sign*.147,-.153,z-.009],[sign*.124,-.162,z-.012],.009,'glove',carried);
+      softPart(sign*.124,-.162,z-.012,.010,.009,.010,'glove');
+    }
+    rod([sign*.168,-.18,-.397],[sign*.130,-.184,-.395],.013,'glove',carried);
+    softPart(sign*.125,-.184,-.397,.017,.013,.012,'glove');
+  }
+  carried.traverse(object=>{object.castShadow=false;});
+  carried.scale.setScalar(.90);
+  carried.position.y=-.012;
   carried.visible=false;
   return {scene,carried,targets,prepareAction,updatePreparation,ready:Promise.all([exterior.ready,reflectionReady])};
 }

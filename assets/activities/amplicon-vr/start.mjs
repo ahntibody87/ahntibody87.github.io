@@ -6,7 +6,7 @@ if (view === 'legacy') {
   await import('../amplicon/lab.mjs?v=vr5');
 } else {
   try{
-    const {mountWalkthrough} = await import('./walkthrough/walkthrough.mjs?v=4');
+    const {mountWalkthrough} = await import('./walkthrough/walkthrough.mjs?v=5');
     if(view==='preview')mountWalkthrough(lab);
     else{
       const response=await fetch(lab.dataset.scenario);

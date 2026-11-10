@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {canStand,spawn,stations} from './layout.mjs?v=3';
-import {createLab} from './lab-scene.mjs?v=3';
+import {canStand,spawn,stations} from './layout.mjs?v=4';
+import {createLab} from './lab-scene.mjs?v=4';
 
 const standing=1.62;
 const movement={
@@ -14,12 +14,12 @@ export function mountWalkthrough(root,experiment=null){
     <a href="${experiment?'?room=preview':'./'}">${experiment?'공간만 둘러보기':'실험 활동으로 돌아가기'}</a></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
       <canvas aria-hidden="true"></canvas>
-      <span class="lab-crosshair" aria-hidden="true"></span>
       <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-zone">입구 · 자유 탐색</span></div>
       <button class="lab-enter" type="button">클릭해서 둘러보기</button>
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
       <output class="lab-aim" hidden></output>
-      <section class="lab-preparation" hidden aria-label="현재 실험 조작"><p></p><small>기기를 직접 클릭하거나 Esc로 마우스를 해제하고 아래 버튼을 누르세요.</small><div></div></section>
+      <div class="lab-object-buttons" aria-label="기구 옆 조작 버튼"></div>
+      <section class="lab-preparation" hidden aria-label="현재 실험 조작"><p></p><small>기기 옆 이름표나 물체를 직접 클릭하세요.</small><div></div></section>
       <div class="lab-pad" aria-label="터치 이동">
         <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
         <button type="button" data-dir="forward" aria-label="앞으로 이동">↑</button>
@@ -29,7 +29,7 @@ export function mountWalkthrough(root,experiment=null){
         <button type="button" data-dir="right" aria-label="오른쪽 이동">→</button>
       </div>
     </div>
-    <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 마우스 시점 · <kbd>E</kbd> 작업 위치 보기 또는 일어나기 · <kbd>Esc</kbd> 마우스 해제</p>
+    <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 마우스 시점 · <kbd>E</kbd> 작업 위치 보기 또는 일어나기 · 작업 중에는 빈 곳을 드래그해 시점 조정</p>
     <ul class="lab-station-list" aria-label="방문한 장비">${stations.map(station=>`<li data-visit="${station.id}">${station.name}</li>`).join('')}</ul>
     <p class="lab-note" role="status">${experiment?experiment.message:'빈 통로에서 출발합니다. 왼쪽 앞의 아이스박스부터 살펴보세요.'}</p>
   </section>`;
@@ -44,6 +44,8 @@ export function mountWalkthrough(root,experiment=null){
   const note=find('.lab-note');
   const actions=find('.lab-preparation');
   const aim=find('.lab-aim');
+  const objectButtons=find('.lab-object-buttons');
+  const anchor=new T.Vector3();
   const actionReadout=actions.querySelector('p');
   const actionButtons=actions.querySelector('div');
   const raycaster=new T.Raycaster();
@@ -73,9 +75,8 @@ export function mountWalkthrough(root,experiment=null){
   const visits=new Set();
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
-  let mouseMode=false,drag=null,carrying=false,animating=false;
+  let mouseMode=false,drag=null,carrying=false,animating=false,skipClick=false;
   const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
-  const locked=()=>document.pointerLockElement===canvas;
 
   function schedule(){
     if(!frame){last=performance.now();frame=requestAnimationFrame(render);}
@@ -86,19 +87,11 @@ export function mountWalkthrough(root,experiment=null){
   }
   function setMouse(active){
     mouseMode=active;
-    viewport.classList.toggle('lab-mouse',active);
     entry.hidden=active||!!working;
   }
   function capture(){
     viewport.focus({preventScroll:true});
     setMouse(true);
-    if(locked())return;
-    try{canvas.requestPointerLock?.()?.catch(()=>{});}catch{}
-  }
-  function releaseMouse(){
-    if(locked())document.exitPointerLock();
-    setMouse(false);
-    stop();
   }
   function look(dx,dy){
     const target=working?pose:player;
@@ -181,6 +174,9 @@ export function mountWalkthrough(root,experiment=null){
       view=Object.fromEntries(['x','y','z','yaw','pitch'].map(key=>[key,T.MathUtils.lerp(from[key],to[key],eased)]));
       if(t===1){transition=null;done();}
     }
+    const fov=working?.id==='prep'
+      ?Math.max(51,T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(28))/camera.aspect))):51;
+    if(fov!==camera.fov){camera.fov=fov;camera.updateProjectionMatrix();}
     camera.position.set(view.x,view.y,view.z);
     camera.rotation.set(view.pitch,view.yaw,0,'YXZ');
     const wasAnimating=animating;
@@ -192,6 +188,7 @@ export function mountWalkthrough(root,experiment=null){
     const aimed=pickTarget();
     aim.hidden=!aimed;
     if(aimed)aim.textContent=experiment.actions.get(aimed);
+    positionObjectButtons();
     if(transition||animating||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
@@ -213,6 +210,7 @@ export function mountWalkthrough(root,experiment=null){
         if(old.id==='prep')carrying=false;
       }
       actions.hidden=true;
+      objectButtons.replaceChildren();
       transition={from:pose,to:{...player,y:standing},start:performance.now(),done(){
         working=null;
         pose=null;
@@ -252,20 +250,69 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
 
+  const shortNames={buffer:'버퍼·dNTP',primer:'프라이머',rt:'역전사 효소',taq:'Taq',
+    'sample:A':'A 원본','sample:B':'B 원본','sample:positive':'+ 원본','sample:negative':'− 원본',
+    'tube:A':'A 반응관','tube:B':'B 반응관','tube:positive':'+ 반응관','tube:negative':'− 반응관',
+    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기'};
+
   function refreshActions(){
-    if(!experiment||!working){actions.hidden=true;return;}
+    if(!experiment||!working){actions.hidden=true;objectButtons.replaceChildren();return;}
     const ids=experiment.controls(working.id);
     const counts=working.id==='prep'&&experiment.phase==='prep'
       ?' · '+experiment.samples.map(({id,name})=>name+' '+experiment.state.tubes[id].additions.length+'/'+(experiment.reagents.length+1)).join(' · '):'';
     actionReadout.textContent=experiment.message+counts;
     actions.hidden=false;
-    actionButtons.replaceChildren(...ids.map(id=>{
+    const fixed=[],tagged=[];
+    for(const id of ids){
       const button=document.createElement('button');
       button.type='button';
       button.dataset.labAction=id;
-      button.textContent=experiment.actions.get(id);
-      return button;
-    }));
+      const fullName=experiment.actions.get(id);
+      button.textContent=shortNames[id]??fullName;
+      button.title=fullName;
+      button.setAttribute('aria-label',fullName);
+      if(working.id==='prep'&&lab.targets.has(id)){
+        button.dataset.kind=experiment.reagents.some(item=>item.id===id)?'reagent':id.split(':')[0];
+        button.className='lab-object-button';
+        tagged.push(button);
+      }else fixed.push(button);
+    }
+    actionButtons.replaceChildren(...fixed);
+    objectButtons.replaceChildren(...tagged);
+    positionObjectButtons();
+  }
+  function positionObjectButtons(){
+    if(!objectButtons.children.length)return;
+    const width=viewport.clientWidth,height=viewport.clientHeight;
+    const groups=new Map();
+    for(const button of objectButtons.children){
+      const target=lab.targets.get(button.dataset.labAction);
+      target.getWorldPosition(anchor).project(camera);
+      const visible=anchor.z<1&&Math.abs(anchor.x)<1&&Math.abs(anchor.y)<1;
+      button.hidden=!visible;
+      if(!visible)continue;
+      const kind=button.dataset.kind;
+      const item={button,x:(anchor.x+1)*width/2,y:(1-anchor.y)*height/2};
+      if(!groups.has(kind))groups.set(kind,[]);
+      groups.get(kind).push(item);
+    }
+    for(const [kind,items] of groups){
+      const count=items.length;
+      const widest=Math.max(...items.map(({button})=>button.offsetWidth));
+      const middle=(items[0].x+items.at(-1).x)/2;
+      const spacing=count>1?Math.min((width-widest-12)/(count-1),Math.max(widest+7,(items.at(-1).x-items[0].x)/(count-1))):0;
+      const span=(count-1)*spacing/2+widest/2+5;
+      const center=T.MathUtils.clamp(middle,span,width-span);
+      items.forEach(({button,x,y},i)=>{
+        const left=center+(i-(count-1)/2)*spacing;
+        const gap=kind==='sample'?-30:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
+        const top=T.MathUtils.clamp(y+gap,62,height*.74);
+        button.style.left=left+'px';
+        button.style.top=top+'px';
+        button.style.setProperty('--tag-line',Math.hypot(x-left,y-top)+'px');
+        button.style.setProperty('--tag-angle',Math.atan2(y-top,x-left)+'rad');
+      });
+    }
   }
 
   function perform(id){
@@ -286,7 +333,7 @@ export function mountWalkthrough(root,experiment=null){
     schedule();
   }
 
-  actions.addEventListener('click',event=>{
+  for(const controls of [actions,objectButtons])controls.addEventListener('click',event=>{
     const button=event.target.closest('[data-lab-action]');
     if(button)perform(button.dataset.labAction);
   });
@@ -296,35 +343,26 @@ export function mountWalkthrough(root,experiment=null){
   });
   function pointAt(event){
     const rect=canvas.getBoundingClientRect();
-    if(locked())pointer.set(0,0);
-    else pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
+    pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
   }
   function pickTarget(){
     if(!experiment||!working||transition||animating)return null;
-    if(locked())pointer.set(0,0);
     raycaster.setFromCamera(pointer,camera);
     const ids=experiment.controls(working.id);
     return raycaster.intersectObjects(ids.map(id=>lab.targets.get(id)).filter(Boolean),false)[0]?.object.userData.action??null;
   }
   canvas.addEventListener('click',event=>{
+    if(skipClick){skipClick=false;return;}
     pointAt(event);
     const hit=pickTarget();
     if(hit){perform(hit);return;}
-    if(event.pointerType!=='touch'&&!locked())capture();
+    if(event.pointerType!=='touch')capture();
   });
   promptButton.addEventListener('click',()=>{
     viewport.focus({preventScroll:true});
     enter();
   });
-  document.addEventListener('pointerlockchange',()=>{
-    if(locked())setMouse(true);
-    else if(mouseMode)releaseMouse();
-  });
-  document.addEventListener('mousemove',event=>{
-    if(locked()||mouseMode&&event.target===canvas)look(event.movementX,event.movementY);
-  });
   viewport.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){releaseMouse();return;}
     if(event.code==='KeyE'){
       event.preventDefault();
       if(!event.repeat)enter();
@@ -336,12 +374,13 @@ export function mountWalkthrough(root,experiment=null){
     }
   });
   window.addEventListener('keyup',event=>keys.delete(event.code));
-  window.addEventListener('blur',releaseMouse);
+  window.addEventListener('blur',()=>{setMouse(false);stop();});
   viewport.addEventListener('focusout',event=>{
-    if(!viewport.contains(event.relatedTarget)&&!locked())stop();
+    if(!viewport.contains(event.relatedTarget))stop();
   });
   canvas.addEventListener('pointerdown',event=>{
-    if(event.pointerType==='mouse')return;
+    skipClick=false;
+    if(event.button!==0||event.pointerType==='mouse'&&!working)return;
     viewport.focus({preventScroll:true});
     entry.hidden=true;
     canvas.setPointerCapture(event.pointerId);
@@ -349,11 +388,19 @@ export function mountWalkthrough(root,experiment=null){
   });
   canvas.addEventListener('pointermove',event=>{
     if(working){pointAt(event);schedule();}
-    if(!drag)return;
-    look((event.clientX-drag.x)*2,(event.clientY-drag.y)*2);
-    drag={x:event.clientX,y:event.clientY};
+    if(drag){
+      const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+      if(skipClick||Math.hypot(dx,dy)>5){
+        skipClick=true;
+        look(dx*2,dy*2);
+        drag={x:event.clientX,y:event.clientY};
+      }
+    }else if(!working&&mouseMode&&event.pointerType==='mouse'){
+      look(event.movementX,event.movementY);
+    }
   });
   canvas.addEventListener('lostpointercapture',()=>{drag=null;});
+  canvas.addEventListener('pointerleave',()=>{aim.hidden=true;});
   root.querySelectorAll('[data-dir]').forEach(button=>{
     button.addEventListener('pointerdown',event=>{
       event.preventDefault();
