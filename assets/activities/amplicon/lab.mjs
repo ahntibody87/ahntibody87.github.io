@@ -1,4 +1,4 @@
-import {mountScreeningIntro,briefingMarkup} from './intro.mjs?v=2-nodot1';
+import {mountScreeningIntro,briefingMarkup} from './intro.mjs?v=3-nodot1';
 import {createState,freshTip,addReagent,resetTube,planRemainingTransfers,issues,nextIssues,timeline,frameAt,bands} from './model.mjs?v=pcr17-nodot1';
 import {stations as mapStations,project,unproject,labMap,equipmentArt,molecule,temperatureGraph,quantityGraph} from './visuals.mjs?v=pcr21-nodot1';
 

@@ -1,4 +1,4 @@
-import {mountScreeningIntro,mountBriefing} from '../amplicon/intro.mjs?v=2-nodot1';
+import {mountScreeningIntro,mountBriefing} from '../amplicon/intro.mjs?v=3-nodot1';
 
 const lab=document.getElementById('amp-lab');
 
