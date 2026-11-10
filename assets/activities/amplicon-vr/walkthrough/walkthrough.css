@@ -114,3 +114,29 @@
 }
 
 .amp-lab .lab-viewport button:focus-visible {outline:2px solid #fff;outline-offset:2px;}
+
+.lab-mix-meter {
+  position:absolute;top:4rem;left:.75rem;z-index:2;pointer-events:none;
+  width:min(12rem,48%);padding:.5rem .65rem;background:#132a32ed;color:#fff;
+  border:1px solid #8bb5bd;border-radius:6px;font-size:.78rem;font-weight:750;
+}
+.lab-mix-meter progress {display:block;width:100%;height:.7rem;margin-top:.3rem;accent-color:#81dbde;}
+.amp-lab .lab-object-button:is([data-kind=holdMix],[data-kind=removeMix],[data-kind=handle]) {
+  min-height:32px;touch-action:none;user-select:none;-webkit-touch-callout:none;
+}
+.amp-lab .lab-object-button[data-kind=handle] {cursor:grab;}
+.lab-drag-tube {
+  position:absolute;z-index:4;pointer-events:none;transform:translate(12px,-115%);
+  padding:.35rem .55rem;white-space:nowrap;background:#c8edf2;color:#102c35;
+  border:1px solid #efffff;border-radius:6px;font-size:.78rem;font-weight:750;
+}
+.amp-lab .lab-viewport button[data-lab-drop] {outline:2px solid #83e5bb;outline-offset:3px;}
+@media(pointer:coarse){
+  .amp-lab .lab-object-button:is([data-kind=holdMix],[data-kind=removeMix],[data-kind=handle]) {min-height:44px;}
+}
+
+.lab-drag-tube::before {
+  content:"";display:inline-block;width:.42rem;height:.77rem;margin-right:.35rem;
+  vertical-align:-.15rem;background:linear-gradient(#264f77 26%,#d9f7ff 26%);
+  border:1px solid #38596a;border-radius:2px 2px 45% 45%;
+}

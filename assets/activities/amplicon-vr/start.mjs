@@ -16,8 +16,8 @@ async function startExperiment(scenario,button,quality){
   button.disabled=true;
   try{
     const [{createPreparation},{mountWalkthrough}]=await Promise.all([
-      import('./walkthrough/preparation.mjs?v=6'),
-      import('./walkthrough/walkthrough.mjs?v=12')
+      import('./walkthrough/preparation.mjs?v=7'),
+      import('./walkthrough/walkthrough.mjs?v=13')
     ]);
     mountWalkthrough(lab,createPreparation(scenario),{lowMotion:quality==='low'});
     lab.querySelector('.lab-viewport')?.focus({preventScroll:true});

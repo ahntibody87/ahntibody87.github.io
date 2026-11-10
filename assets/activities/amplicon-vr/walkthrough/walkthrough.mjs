@@ -1,10 +1,12 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
 import {canStand,spawn,stations} from './layout.mjs?v=4';
-import {createLab} from './lab-scene.mjs?v=9';
-import {createPcrLesson} from './pcr-lesson.mjs';
+import {createLab} from './lab-scene.mjs?v=10';
+import {createPcrLesson} from './pcr-lesson.mjs?v=2';
 import {createGelObservation} from './gel-observation.mjs';
 
 const standing=1.62;
+const stationReach=1.15;
+const mixHoldMs=1500;
 const movement={
   KeyW:'forward',KeyS:'back',KeyA:'left',KeyD:'right',
   ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'turnLeft',ArrowRight:'turnRight'
@@ -20,6 +22,8 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
       <div class="lab-object-buttons" aria-label="기구 옆 조작 버튼"></div>
       <section class="lab-preparation" hidden aria-label="자동 준비"><div></div></section>
+      <div class="lab-mix-meter" hidden><span>볼텍스 혼합</span><progress max="${mixHoldMs}" value="0" aria-label="볼텍스 혼합 진행률"></progress></div>
+      <span class="lab-drag-tube" aria-hidden="true" hidden></span>
       <div class="lab-pcr-panel"></div><div class="lab-gel-panel"></div>
       <div class="lab-pad" aria-label="터치 이동">
         <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
@@ -43,6 +47,9 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   const note=find('.lab-note');
   const actions=find('.lab-preparation');
   const objectButtons=find('.lab-object-buttons');
+  const mixMeter=find('.lab-mix-meter'),mixProgress=mixMeter.querySelector('progress');
+  const tubeGhost=find('.lab-drag-tube');
+  let tubeDrag=null;
   const anchor=new T.Vector3();
   const actionButtons=actions.querySelector('div');
   const raycaster=new T.Raycaster();
@@ -142,7 +149,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
       return;
     }
     prompt.classList.remove('lab-spot-working');
-    let reach=.67;
+    let reach=stationReach;
     for(const station of stations){
       const distance=Math.hypot(player.x-station.x,player.z-station.standZ);
       if(distance<reach){near=station;reach=distance;}
@@ -156,9 +163,9 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     if(!near)return;
     labelPoint.set(near.x,near.id==='ice'?1.27:1.16,near.z);
     labelPoint.project(camera);
-    if(labelPoint.z>1||Math.abs(labelPoint.x)>.88)return;
+    if(labelPoint.z>1||Math.abs(labelPoint.x)>.98)return;
     prompt.hidden=false;
-    prompt.style.setProperty('--lab-x',(50+50*labelPoint.x)+'%');
+    prompt.style.setProperty('--lab-x',T.MathUtils.clamp(50+50*labelPoint.x,15,85)+'%');
     prompt.style.setProperty('--lab-y',T.MathUtils.clamp(50-50*labelPoint.y,18,77)+'%');
     promptLabel.textContent=near.name;
     promptButton.toggleAttribute('data-lab-next',!experiment.finished&&near.id===experiment.destination);
@@ -193,9 +200,12 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     camera.rotation.set(view.pitch,view.yaw,0,'YXZ');
     const wasAnimating=animating;
     animating=lab.updatePreparation(now,experiment);
-    if(holdStarted!==null&&now-holdStarted>=1050){
-      holdStarted=null;experiment.perform('holdMix');
-      note.textContent=experiment.message;refreshActions();
+    if(holdStarted!==null){
+      mixProgress.value=now-holdStarted;
+      if(mixProgress.value===mixHoldMs){
+        holdStarted=null;experiment.perform('holdMix');
+        note.textContent=experiment.message;refreshActions();
+      }
     }
     if(spinEnds&&now>=spinEnds){
       spinEnds=0;experiment.completeSpin();handlingUntil=now+360;
@@ -217,7 +227,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
         note.textContent=experiment.message;refreshActions();
       }
     }
-    lab.updateHandling(now,experiment,holdStarted!==null,pcrProgress,gelProgress);
+    lab.updateHandling(now,experiment,holdStarted!==null&&!reduceMotion,pcrProgress,gelProgress);
     lab.showCarriedGel(experiment?.phase==='toLed');
     lab.carried.visible=experiment?experiment.carrying&&!animating:carrying&&!working;
     if(wasAnimating&&!animating&&!autoQueue)renderer.shadowMap.needsUpdate=true;
@@ -225,7 +235,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     updateHint();
     positionObjectButtons();
     if(autoQueue&&!animating&&now>=autoAt)advanceAuto(now);
-    if(transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun&&lesson.playing||gelRun||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
+    if(tubeDrag?.active||transition||animating||autoQueue||holdStarted!==null||spinEnds||pcrRun&&lesson.playing||gelRun||now<handlingUntil||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
     const {width,height}=viewport.getBoundingClientRect();
@@ -246,6 +256,7 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
         if(old.id==='prep')carrying=false;
       }
       actions.hidden=true;
+      mixMeter.hidden=true;
       objectButtons.replaceChildren();
       transition={from:pose,to:{...player,y:standing},start:performance.now(),done(){
         working=null;
@@ -284,11 +295,13 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
   const shortNames={buffer:'버퍼·dNTP',primer:'프라이머',rt:'역전사 효소',taq:'Taq',
     'sample:A':'A 원본','sample:B':'B 원본','sample:positive':'+ 원본','sample:negative':'− 원본',
     'tube:A':'A 반응관','tube:B':'B 반응관','tube:positive':'+ 반응관','tube:negative':'− 반응관',
-    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기',holdMix:'눌러서 혼합',removeMix:'반응관 되돌리기',collectSpin:'반응관 회수','gelSource:marker':'마커','gelSource:A':'A 산물','gelSource:B':'B 산물','gelSource:positive':'+ 대조군','gelSource:negative':'− 대조군'};
+    tips:'새 팁',discard:'팁 버리기',place:'랙 놓기',holdMix:'꾹 눌러 믹싱하기',removeMix:'반응관 되돌리기',collectSpin:'반응관 회수','gelSource:marker':'마커','gelSource:A':'A 산물','gelSource:B':'B 산물','gelSource:positive':'+ 대조군','gelSource:negative':'− 대조군'};
 
   function refreshActions(){
     if(!experiment||!working){actions.hidden=true;objectButtons.replaceChildren();return;}
     const ids=autoQueue?[]:experiment.controls(working.id);
+    mixMeter.hidden=!ids.includes('holdMix')&&!ids.includes('removeMix');
+    if(holdStarted===null)mixProgress.value=ids.includes('removeMix')?mixHoldMs:0;
     const next=experiment.nextAction(working.id,ids);
     const fixed=[],tagged=[];
     for(const id of ids){
@@ -337,8 +350,9 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
       const span=(count-1)*spacing/2+widest/2+5;
       const center=T.MathUtils.clamp(middle,span,width-span);
       items.forEach(({button,x,y},i)=>{
-        const left=center+(i-(count-1)/2)*spacing;
-        const gap=['sample','lid','rack','well'].includes(kind)?-32:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
+        const mixTag=kind==='holdMix'||kind==='removeMix';
+        const left=mixTag?T.MathUtils.clamp(x+widest/2+24,span,width-span):center+(i-(count-1)/2)*spacing;
+        const gap=mixTag?-38:['sample','lid','rack','well'].includes(kind)?-32:kind==='reagent'?22:kind==='discard'&&width<650?62:24;
         const top=T.MathUtils.clamp(y+gap,62,height*.74);
         button.style.left=left+'px';
         button.style.top=top+'px';
@@ -403,20 +417,38 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     schedule();
   }
 
-  function beginMix(){
+  let consumeMixClick=false;
+  function beginMix(event){
     if(!experiment?.controls(working?.id).includes('holdMix')||holdStarted!==null)return;
+    if(event?.type==='pointerdown'){
+      consumeMixClick=true;
+      viewport.setPointerCapture(event.pointerId);
+    }
     holdStarted=performance.now();
     note.textContent='혼합 중 · 버튼을 계속 누르세요.';
     schedule();
   }
   function cancelMix(){
     if(holdStarted===null)return;
-    holdStarted=null;handlingUntil=performance.now()+140;
+    holdStarted=null;mixProgress.value=0;handlingUntil=performance.now()+140;
     note.textContent='혼합이 끝날 때까지 접촉판 버튼을 누르고 있으세요.';
     schedule();
   }
+  viewport.addEventListener('pointerdown',()=>{consumeMixClick=false;},true);
+  viewport.addEventListener('keydown',()=>{consumeMixClick=false;},true);
+  viewport.addEventListener('click',event=>{
+    if(!consumeMixClick)return;
+    consumeMixClick=false;
+    event.stopPropagation();
+  },true);
   objectButtons.addEventListener('pointerdown',event=>{
-    if(event.button===0&&event.target.closest('[data-lab-action="holdMix"]'))beginMix();
+    if(event.button!==0)return;
+    const id=event.target.closest('[data-lab-action]')?.dataset.labAction;
+    if(id==='holdMix')beginMix(event);
+    else startTubeDrag(event,id);
+  });
+  objectButtons.addEventListener('contextmenu',event=>{
+    if(event.target.closest('[data-lab-action="holdMix"]'))event.preventDefault();
   });
   objectButtons.addEventListener('keydown',event=>{
     if([' ','Enter'].includes(event.key)&&event.target.closest('[data-lab-action="holdMix"]')){
@@ -439,6 +471,50 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     const rect=canvas.getBoundingClientRect();
     pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
   }
+  function startTubeDrag(event,id){
+    if(tubeDrag||working?.id!=='spin'||animating||transition||!id?.startsWith('handle:'))return false;
+    tubeDrag={id,pointerId:event.pointerId,x:event.clientX,y:event.clientY,active:false};
+    return true;
+  }
+
+  function dropSlot(event){
+    const label=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-lab-action^="slot:"]');
+    if(label&&objectButtons.contains(label))return label.dataset.labAction;
+    pointAt(event);
+    raycaster.setFromCamera(pointer,camera);
+    const slots=experiment.controls('spin').filter(id=>id.startsWith('slot:'));
+    return raycaster.intersectObjects(slots.map(id=>lab.targets.get(id)),false)[0]?.object.userData.action;
+  }
+
+  viewport.addEventListener('pointermove',event=>{
+    if(tubeDrag?.pointerId!==event.pointerId)return;
+    if(!tubeDrag.active){
+      if(Math.hypot(event.clientX-tubeDrag.x,event.clientY-tubeDrag.y)<7)return;
+      viewport.setPointerCapture(event.pointerId);
+      tubeDrag.active=true;
+      perform(tubeDrag.id);
+      tubeGhost.textContent=experiment.actions.get(tubeDrag.id);
+      tubeGhost.hidden=false;
+    }
+    const rect=viewport.getBoundingClientRect();
+    tubeGhost.style.left=(event.clientX-rect.left)+'px';
+    tubeGhost.style.top=(event.clientY-rect.top)+'px';
+    const slot=dropSlot(event);
+    for(const button of objectButtons.children)button.toggleAttribute('data-lab-drop',button.dataset.labAction===slot);
+  });
+
+  function endTubeDrag(event){
+    if(tubeDrag?.pointerId!==event.pointerId)return;
+    const slot=tubeDrag.active&&event.type==='pointerup'?dropSlot(event):null;
+    tubeDrag=null;
+    tubeGhost.hidden=true;
+    for(const button of objectButtons.children)button.removeAttribute('data-lab-drop');
+    if(slot)perform(slot);
+  }
+  window.addEventListener('pointerup',endTubeDrag);
+  window.addEventListener('pointercancel',endTubeDrag);
+  viewport.addEventListener('lostpointercapture',endTubeDrag);
+
   function pickTarget(){
     if(!experiment||!working||transition||animating||autoQueue)return null;
     raycaster.setFromCamera(pointer,camera);
@@ -476,7 +552,9 @@ export function mountWalkthrough(root,experiment,{lowMotion=false}={}){
     skipClick=false;
     if(event.button!==0||event.pointerType==='mouse'&&!working)return;
     pointAt(event);
-    if(pickTarget()==='holdMix'){beginMix();return;}
+    const hit=pickTarget();
+    if(hit==='holdMix'){beginMix(event);return;}
+    if(startTubeDrag(event,hit))return;
     viewport.focus({preventScroll:true});
     entry.hidden=true;
     canvas.setPointerCapture(event.pointerId);

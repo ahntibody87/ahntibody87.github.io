@@ -726,12 +726,14 @@ export function createLab(experiment){
       if(atPcr&&experiment.state.pcrLoaded.includes(id))tubePoint.copy(pcrWells[i]).add(pcr.position);
       else if(atSpin&&slot>=0)tubePoint.copy(rotorPositions[slot]).applyMatrix4(rotor.matrixWorld);
       else if(atMix&&experiment.vortexTube===id){
-        tubePoint.copy(vortex.position).add(new T.Vector3(holding?Math.sin(now*.10)*.006:0,.219,-.036));
+        tubePoint.copy(vortex.position).add(new T.Vector3(holding?Math.sin(now*.045)*.015:0,.219,-.036));
       }else{
         tubePoint.copy(workRack.position).add(new T.Vector3(-.105+i*.07,.033,0));
         if(atSpin&&experiment.selected===id)tubePoint.y+=.025;
       }
-      if(tube.position.lengthSq()===0||atSpin&&slot>=0&&phase==='spinning')tube.position.copy(tubePoint);
+      const mixing=atMix&&holding&&experiment.vortexTube===id;
+      tube.rotation.z=mixing?Math.sin(now*.045)*.16:0;
+      if(mixing||tube.position.lengthSq()===0||atSpin&&slot>=0&&phase==='spinning')tube.position.copy(tubePoint);
       else tube.position.lerp(tubePoint,Math.min(1,dt*16));
     });
   }

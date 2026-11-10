@@ -91,7 +91,7 @@ export function createPreparation(scenario){
     }
     if(phase==='spin'){
       if(id==='openSpin'&&!spinOpen){
-        spinOpen=true;message='반응관을 선택하고 로터의 빈 자리에 넣으세요.';return id;
+        spinOpen=true;message='반응관을 로터의 빈 자리로 끌어 놓거나, 반응관과 자리를 차례로 선택하세요.';return id;
       }
       if(id.startsWith('handle:')&&spinOpen){
         const tube=id.slice(7);
