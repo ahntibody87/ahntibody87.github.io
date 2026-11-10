@@ -12,10 +12,10 @@ export const stools=[
 ];
 export const stations=[
   {id:'ice',name:'아이스박스',x:1.88,z:5.67,standZ:6.83,viewZ:6.57,eye:1.62,tilt:-.41,action:'뚜껑을 내려다보는 위치'},
-  {id:'prep',name:'피펫 작업대',x:3.64,z:5.78,standZ:6.87,viewZ:6.50,eye:1.19,tilt:-.24,action:'의자에 앉은 높이'},
+  {id:'prep',name:'피펫 작업대',x:3.64,z:5.78,standZ:6.87,viewZ:6.52,eye:1.26,tilt:-.35,action:'의자에 앉은 높이'},
   {id:'pcr',name:'PCR 기기',x:8.06,z:4.15,standZ:5.46,viewZ:5.16,eye:1.56,tilt:-.32,action:'조작 패널을 마주 보는 위치'},
-  {id:'gel',name:'전기영동 장치',x:2.80,z:2.80,standZ:4.00,viewZ:3.67,eye:1.64,tilt:-.49,action:'수조와 웰을 내려다보는 위치'},
-  {id:'led',name:'LED 트랜스일루미네이터',x:4.15,z:2.82,standZ:4.02,viewZ:3.69,eye:1.60,tilt:-.48,action:'관찰판을 내려다보는 위치'},
+  {id:'gel',name:'전기영동 장치',x:4.08,z:2.82,standZ:4.02,viewZ:3.69,eye:1.64,tilt:-.49,action:'수조와 웰을 내려다보는 위치'},
+  {id:'led',name:'LED 트랜스일루미네이터',x:2.68,z:2.80,standZ:4.00,viewZ:3.67,eye:1.60,tilt:-.48,action:'관찰판을 내려다보는 위치'},
   {id:'vortex',name:'볼텍스 믹서',x:7.43,z:6.86,standZ:8.01,viewZ:7.73,eye:1.58,tilt:-.42,action:'고무 접촉판을 바라보는 위치'},
   {id:'spin',name:'원심분리기',x:8.73,z:6.86,standZ:8.01,viewZ:7.73,eye:1.61,tilt:-.43,action:'뚜껑과 조작부를 바라보는 위치'}
 ];

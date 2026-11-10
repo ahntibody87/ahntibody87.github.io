@@ -1,5 +1,5 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {roomSize,benches,stools,stations} from './layout.mjs?v=2';
+import {roomSize,benches,stools,stations} from './layout.mjs?v=3';
 
 function surface(kind){
   const canvas=document.createElement('canvas');
@@ -63,7 +63,7 @@ function photographMaterials(stone){
   return {texture,ready};
 }
 
-export function createLab(){
+export function createLab(experiment){
   const scene=new T.Scene();
   scene.background=new T.Color('#d9e6ed');
   const {width:w,depth:d,height:h}=roomSize;
@@ -317,33 +317,148 @@ export function createLab(){
     const group=new T.Group();group.position.set(x,.968,z);scene.add(group);
     return group;
   }
+  const targets=new Map();
+  const hidden=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false});
+  function target(id,parent,x,y,z,width,height,depth){
+    const hit=new T.Mesh(cube,hidden);
+    hit.position.set(x,y,z);
+    hit.scale.set(width,height,depth);
+    hit.userData.action=id;
+    hit.userData.moving=true;
+    parent.add(hit);
+    targets.set(id,hit);
+  }
+  function rack(parent){
+    const group=new T.Group();
+    parent.add(group);
+    rounded(0,.032,0,.292,.062,.105,'blue',group,.009);
+    for(let i=0;i<4;i++){
+      const x=-.104+i*.070;
+      cyl(x,.091,0,.017,.064,'glass',group);
+      cyl(x,.126,0,.019,.015,'plastic',group);
+      box(x,.096,.017,.026,.019,.002,'plastic',group);
+    }
+    return group;
+  }
+
   const cooler=device('ice');
-  rounded(0,.138,0,.60,.268,.406,'blue',cooler,.038);
-  rounded(0,.292,-.007,.62,.078,.422,'plastic',cooler,.018);
-  for(const x of [-.19,-.063,.063,.19])rounded(x,.336,0,.028,.012,.275,'ivory',cooler,.004);
-  rounded(0,.227,.215,.102,.105,.038,'ivory',cooler,.008);
-  label('ICE BOX',-.15,.148,.213,.125,.038,cooler);
+  rounded(0,.037,0,.60,.070,.406,'blue',cooler,.021);
+  for(const sign of [-1,1]){
+    rounded(sign*.28,.147,0,.042,.222,.399,'blue',cooler,.017);
+    rounded(0,.147,sign*.184,.564,.222,.037,'blue',cooler,.016);
+    box(sign*.256,.160,0,.018,.19,.358,'ivory',cooler);
+    box(0,.160,sign*.164,.50,.19,.018,'ivory',cooler);
+    rounded(sign*.21,.144,-.04,.055,.14,.22,'blue',cooler,.012);
+  }
+  const lid=new T.Group();lid.position.set(0,.256,-.208);cooler.add(lid);
+  rounded(0,.039,.201,.62,.078,.422,'plastic',lid,.018);
+  for(const x of [-.19,-.063,.063,.19])rounded(x,.082,.208,.028,.012,.275,'ivory',lid,.004);
+  rounded(0,-.022,.423,.102,.095,.036,'ivory',lid,.008);
+  label('ICE BOX',-.15,.148,.207,.125,.038,cooler);
+  const coldRack=rack(cooler);coldRack.position.set(0,.085,.036);
+  target('lid',cooler,0,.298,.035,.62,.115,.43);
+  target('rack',coldRack,0,.087,0,.31,.17,.14);
 
   const prep=device('prep');
-  rounded(0,.023,0,.44,.044,.21,'blue',prep,.008);
-  for(let row=0;row<5;row++)for(let col=0;col<12;col++)cyl(-.192+col*.035,.046,-.07+row*.035,.011,.003,'dark',prep);
+  const prepRack=rack(prep);
+  prepRack.position.set(-.05,0,-.24);
+  prepRack.visible=!experiment;
+  const sampleIds=experiment?.samples.map(sample=>sample.id)??['A','B','positive','negative'];
+  const reagentIds=experiment?.reagents.map(reagent=>reagent.id)??['buffer','primer','rt','taq'];
+  const sampleLabels=['A','B','+','−'];
+  const reactionLiquid=[];
+  rounded(0,.023,.045,.47,.044,.20,'blue',prep,.008);
+  for(let row=0;row<5;row++)for(let col=0;col<12;col++)cyl(-.192+col*.035,.046,-.026+row*.035,.011,.003,'dark',prep);
+  rounded(-.32,.051,-.035,.17,.095,.14,'blue',prep,.009);
+  box(-.32,.105,-.035,.175,.024,.145,'glass',prep);
+  for(let i=0;i<8;i++)cyl(-.4+i*.022,.14,-.035,.007,.06,'plastic',prep);
+  target('tips',prep,-.32,.112,-.035,.18,.16,.15);
+  rounded(.368,.054,-.055,.14,.105,.14,'ivory',prep,.011);
+  rounded(.368,.109,-.055,.108,.008,.101,'dark',prep,.003);
+  target('discard',prep,.368,.105,-.055,.14,.14,.15);
+  target('place',prep,-.05,.065,-.24,.30,.13,.13);
+  rounded(0,.015,-.104,.51,.028,.123,'steel',prep,.008);
   for(let i=0;i<4;i++){
-    const x=-.134+i*.085;
-    cyl(x,.074,.037,.013,.061,'glass',prep);
-    const rim=add(new T.TorusGeometry(.012,.0025,8,16),'plastic',x,.106,.037,prep);rim.rotation.x=Math.PI/2;
+    const x=-.159+i*.106;
+    const rim=add(new T.TorusGeometry(.014,.0027,8,18),'plastic',x,.112,.065,prep);rim.rotation.x=Math.PI/2;
+    cyl(x,.079,.065,.014,.061,'glass',prep);
+    reactionLiquid.push(cyl(x,.052,.065,.011,.010,'screen',prep));
+    label(sampleLabels[i],x,.047,.091,.036,.021,prep);
+    target('tube:'+sampleIds[i],prep,x,.104,.065,.075,.14,.064);
+    cyl(x,.065,-.103,.025,.084,'glass',prep);
+    cyl(x,.108,-.103,.026,.020,i%2?'blue':'ivory',prep);
+    label(['BUF','PR','RT','TAQ'][i],x,.066,-.076,.039,.023,prep);
+    target(reagentIds[i],prep,x,.077,-.103,.069,.134,.078);
+    label(sampleLabels[i],-.104+i*.070,.09,.018,.030,.018,prepRack);
+    target('sample:'+sampleIds[i],prepRack,-.104+i*.070,.10,0,.062,.14,.08);
   }
-  rounded(-.32,.051,-.06,.17,.095,.14,'blue',prep,.009);
-  box(-.32,.105,-.06,.175,.024,.145,'glass',prep);
-  for(let i=0;i<8;i++)cyl(-.4+i*.022,.14,-.06,.007,.06,'plastic',prep);
-  const pipette=new T.Group();pipette.position.set(.31,.033,.033);pipette.rotation.set(-.16,0,-1.24);prep.add(pipette);
-  rounded(0,.055,0,.036,.125,.043,'plastic',pipette,.008);
-  cyl(0,.135,0,.011,.033,'blue',pipette);
-  cyl(0,.153,0,.016,.008,'blue',pipette);
-  cyl(0,-.026,0,.010,.060,'ivory',pipette);
-  label('10.0',0,.063,.022,.026,.018,pipette);
-  for(let i=0;i<4;i++){
-    cyl(-.14+i*.075,.038,-.20,.023,.075,'glass',prep);
-    cyl(-.14+i*.075,.084,-.20,.024,.020,'blue',prep);
+  const pipette=new T.Group();pipette.position.set(.29,.038,.102);pipette.rotation.set(-.16,0,-1.24);prep.add(pipette);
+  rounded(0,.063,0,.046,.146,.051,'plastic',pipette,.011);
+  const plunger=cyl(0,.149,0,.012,.042,'blue',pipette);
+  const button=cyl(0,.174,0,.019,.009,'blue',pipette);
+  cyl(0,-.027,0,.013,.060,'ivory',pipette);
+  label('µL',0,.065,.026,.030,.024,pipette);
+  const pipetteTip=add(new T.CylinderGeometry(.008,.002,.055,18),'glass',0,-.082,0,pipette);
+  const tipLiquid=cyl(0,-.087,0,.003,.021,'screen',pipette);
+  pipetteTip.visible=tipLiquid.visible=false;
+  const animated=[lid,coldRack,prepRack,pipette,...reactionLiquid];
+  animated.forEach(group=>group.traverse(object=>{object.userData.moving=true;}));
+
+  let motion=null;
+  function prepareAction(effect,id,now,duration){
+    if(effect==='lid'){
+      motion={start:now,duration,apply:t=>{lid.rotation.x=-1.94*t;}};
+      return;
+    }
+    if(effect==='rack'){
+      motion={start:now,duration,apply:t=>{
+        coldRack.position.set(0,.085+t*.31,.036+t*.105);
+        coldRack.visible=t<1;
+      }};
+      return;
+    }
+    if(effect==='place'){
+      motion={start:now,duration,apply:t=>{
+        prepRack.position.set(-.05,(1-t)*.12,-.24+(1-t)*.45);
+      }};
+      return;
+    }
+    if(effect==='auto')return;
+    const point=targets.get(id);
+    if(!point)return;
+    const position=prep.worldToLocal(point.getWorldPosition(new T.Vector3()));
+    const initial=pipette.position.clone();
+    const rotation=pipette.rotation.clone();
+    const end=new T.Vector3(position.x,position.y+.137,position.z+.008);
+    motion={start:now,duration,apply:t=>{
+      pipette.position.lerpVectors(initial,end,t);
+      pipette.position.y+=Math.sin(Math.PI*t)*.06;
+      pipette.rotation.set(rotation.x*(1-t),0,rotation.z*(1-t));
+      plunger.position.y=.149-.012*Math.sin(Math.PI*t);
+      button.position.y=.174-.012*Math.sin(Math.PI*t);
+    }};
+  }
+  function updatePreparation(now,preparation){
+    if(motion){
+      const t=motion.duration?Math.min(1,(now-motion.start)/motion.duration):1;
+      motion.apply(t*t*(3-2*t));
+      if(t===1)motion=null;
+    }
+    if(preparation){
+      coldRack.visible=preparation.phase==='ice'||!!motion&&preparation.phase==='carry'&&coldRack.position.y>.085;
+      prepRack.visible=preparation.phase==='prep';
+      if(!motion){
+        pipetteTip.visible=!!preparation.state.tip;
+        tipLiquid.visible=!!preparation.liquid;
+        reactionLiquid.forEach((mesh,i)=>{
+          const count=preparation.state.tubes[sampleIds[i]].additions.length;
+          mesh.visible=count>0;
+          mesh.scale.y=.008+count*.006;
+          mesh.position.y=.047+mesh.scale.y/2;
+        });
+      }
+    }
+    return !!motion;
   }
 
   const pcr=device('pcr');
@@ -429,24 +544,19 @@ export function createLab(){
   batchStaticGeometry(scene,[cube,round]);
 
   const carried=new T.Group();
-  rounded(0,-.215,-.46,.29,.063,.115,'blue',carried,.01);
-  for(let i=0;i<4;i++){
-    const x=-.10+i*.067;
-    cyl(x,-.167,-.46,.015,.055,'glass',carried);
-    cyl(x,-.136,-.46,.018,.012,'plastic',carried);
-  }
+  rack(carried).position.set(0,-.22,-.46);
   for(const x of [-.147,.147])rounded(x,-.218,-.433,.083,.054,.086,'blue',carried,.017);
   carried.scale.setScalar(.81);
   carried.position.y=-.075;
   carried.visible=false;
-  return {scene,carried,ready:Promise.all([exterior.ready,reflectionReady])};
+  return {scene,carried,targets,prepareAction,updatePreparation,ready:Promise.all([exterior.ready,reflectionReady])};
 }
 
 function batchStaticGeometry(scene,geometries){
   scene.updateMatrixWorld(true);
   const groups=new Map();
   scene.traverse(object=>{
-    if(!object.isMesh||object.material.transparent||!geometries.includes(object.geometry))return;
+    if(!object.isMesh||object.userData.moving||object.material.transparent||!geometries.includes(object.geometry))return;
     const key=[object.geometry.id,object.material.id,object.castShadow,object.receiveShadow].join(':');
     if(!groups.has(key))groups.set(key,[]);
     groups.get(key).push(object);

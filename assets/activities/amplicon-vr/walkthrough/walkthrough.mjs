@@ -1,6 +1,6 @@
 import * as T from '../../embryo-atlas/vendor/three.module.min.js';
-import {canStand,spawn,stations} from './layout.mjs?v=2';
-import {createLab} from './lab-scene.mjs?v=2';
+import {canStand,spawn,stations} from './layout.mjs?v=3';
+import {createLab} from './lab-scene.mjs?v=3';
 
 const standing=1.62;
 const movement={
@@ -8,16 +8,18 @@ const movement={
   ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'turnLeft',ArrowRight:'turnRight'
 };
 
-export function mountWalkthrough(root){
-  root.innerHTML=`<section class="lab-walk" aria-label="실험실 공간 확인본">
-    <header class="lab-walk-title"><div><p>AMPLICON / 공간 확인본</p><h2>1인칭 과학실</h2></div>
-    <a href="./">실험 활동으로 돌아가기</a></header>
+export function mountWalkthrough(root,experiment=null){
+  root.innerHTML=`<section class="lab-walk" aria-label="1인칭 과학실">
+    <header class="lab-walk-title"><div><p>AMPLICON / ${experiment?'반응액 준비':'공간 확인본'}</p><h2>1인칭 과학실</h2></div>
+    <a href="${experiment?'?room=preview':'./'}">${experiment?'공간만 둘러보기':'실험 활동으로 돌아가기'}</a></header>
     <div class="lab-viewport" tabindex="0" aria-label="3D 과학실. WASD로 이동, 마우스로 시점 회전, E로 작업 위치 보기">
       <canvas aria-hidden="true"></canvas>
       <span class="lab-crosshair" aria-hidden="true"></span>
       <div class="lab-viewbar"><strong>AMPLICON</strong><span class="lab-zone">입구 · 자유 탐색</span></div>
       <button class="lab-enter" type="button">클릭해서 둘러보기</button>
       <div class="lab-spot" hidden><span></span><button type="button"></button></div>
+      <output class="lab-aim" hidden></output>
+      <section class="lab-preparation" hidden aria-label="현재 실험 조작"><p></p><small>기기를 직접 클릭하거나 Esc로 마우스를 해제하고 아래 버튼을 누르세요.</small><div></div></section>
       <div class="lab-pad" aria-label="터치 이동">
         <button type="button" data-dir="turnLeft" aria-label="왼쪽 보기">↶</button>
         <button type="button" data-dir="forward" aria-label="앞으로 이동">↑</button>
@@ -29,7 +31,7 @@ export function mountWalkthrough(root){
     </div>
     <p class="lab-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 마우스 시점 · <kbd>E</kbd> 작업 위치 보기 또는 일어나기 · <kbd>Esc</kbd> 마우스 해제</p>
     <ul class="lab-station-list" aria-label="방문한 장비">${stations.map(station=>`<li data-visit="${station.id}">${station.name}</li>`).join('')}</ul>
-    <p class="lab-note" role="status">빈 통로에서 출발합니다. 왼쪽 앞의 아이스박스부터 살펴보세요.</p>
+    <p class="lab-note" role="status">${experiment?experiment.message:'빈 통로에서 출발합니다. 왼쪽 앞의 아이스박스부터 살펴보세요.'}</p>
   </section>`;
   const find=selector=>root.querySelector(selector);
   const viewport=find('.lab-viewport');
@@ -40,6 +42,12 @@ export function mountWalkthrough(root){
   const promptButton=prompt.querySelector('button');
   const zone=find('.lab-zone');
   const note=find('.lab-note');
+  const actions=find('.lab-preparation');
+  const aim=find('.lab-aim');
+  const actionReadout=actions.querySelector('p');
+  const actionButtons=actions.querySelector('div');
+  const raycaster=new T.Raycaster();
+  const pointer=new T.Vector2();
   let renderer;
   try{
     renderer=new T.WebGLRenderer({canvas,antialias:true});
@@ -56,7 +64,7 @@ export function mountWalkthrough(root){
   renderer.shadowMap.type=T.PCFShadowMap;
   renderer.shadowMap.autoUpdate=false;
   renderer.shadowMap.needsUpdate=true;
-  const lab=createLab();
+  const lab=createLab(experiment);
   const camera=new T.PerspectiveCamera(51,1,.035,36);
   camera.add(lab.carried);
   lab.scene.add(camera);
@@ -65,7 +73,7 @@ export function mountWalkthrough(root){
   const visits=new Set();
   const labelPoint=new T.Vector3();
   let frame=0,last=0,working=null,near=null,pose=null,transition=null;
-  let mouseMode=false,drag=null,carrying=false;
+  let mouseMode=false,drag=null,carrying=false,animating=false;
   const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
   const locked=()=>document.pointerLockElement===canvas;
 
@@ -131,7 +139,7 @@ export function mountWalkthrough(root){
       prompt.classList.add('lab-spot-working');
       prompt.hidden=false;
       promptLabel.textContent=working.action;
-      promptButton.textContent=working.id==='ice'?'랙 들고 물러나기':working.id==='prep'&&carrying?'랙 내려놓고 일어나기':'작업 위치에서 나오기';
+      promptButton.textContent=experiment?'E · 작업 위치에서 나오기':working.id==='ice'?'랙 들고 물러나기':working.id==='prep'&&carrying?'랙 내려놓고 일어나기':'작업 위치에서 나오기';
       return;
     }
     prompt.classList.remove('lab-spot-working');
@@ -175,10 +183,16 @@ export function mountWalkthrough(root){
     }
     camera.position.set(view.x,view.y,view.z);
     camera.rotation.set(view.pitch,view.yaw,0,'YXZ');
-    lab.carried.visible=carrying&&!working;
+    const wasAnimating=animating;
+    animating=lab.updatePreparation(now,experiment);
+    lab.carried.visible=experiment?experiment.phase==='carry'&&!animating:carrying&&!working;
+    if(wasAnimating&&!animating)renderer.shadowMap.needsUpdate=true;
     renderer.render(lab.scene,camera);
     updateHint();
-    if(transition||keys.size&&!working)frame=requestAnimationFrame(render);
+    const aimed=pickTarget();
+    aim.hidden=!aimed;
+    if(aimed)aim.textContent=experiment.actions.get(aimed);
+    if(transition||animating||keys.size&&!working)frame=requestAnimationFrame(render);
   }
   function resize(){
     const {width,height}=viewport.getBoundingClientRect();
@@ -191,16 +205,19 @@ export function mountWalkthrough(root){
     schedule();
   }
   function enter(){
-    if(transition)return;
+    if(transition||animating)return;
     if(working){
       const old=working;
-      if(old.id==='ice')carrying=true;
-      if(old.id==='prep')carrying=false;
+      if(!experiment){
+        if(old.id==='ice')carrying=true;
+        if(old.id==='prep')carrying=false;
+      }
+      actions.hidden=true;
       transition={from:pose,to:{...player,y:standing},start:performance.now(),done(){
         working=null;
         pose=null;
-        zone.textContent=carrying?'냉각 랙 운반 중':'자유 탐색';
-        note.textContent=old.id==='ice'?'랙을 들고 통로로 물러난 뒤, 옆 피펫 작업대까지 걸어가세요.':'통로를 따라 다른 장비에도 접근해 보세요.';
+        zone.textContent=(experiment?experiment.phase==='carry':carrying)?'냉각 랙 운반 중':'자유 탐색';
+        note.textContent=experiment?experiment.message:old.id==='ice'?'랙을 들고 통로로 물러난 뒤, 옆 피펫 작업대까지 걸어가세요.':'통로를 따라 다른 장비에도 접근해 보세요.';
         entry.hidden=true;
       }};
       schedule();
@@ -210,6 +227,15 @@ export function mountWalkthrough(root){
       note.textContent='장비 앞 통로까지 직접 걸어가 장비를 바라본 뒤 E를 누르세요.';
       return;
     }
+    if(experiment&&near.id!==experiment.destination){
+      const next=stations.find(station=>station.id===experiment.destination);
+      note.textContent='지금은 '+next.name+'에서 작업할 차례입니다.';
+      return;
+    }
+    if(experiment?.finished){
+      note.textContent='반응액 준비를 완료했습니다. 볼텍스 혼합부터는 다음 구간입니다.';
+      return;
+    }
     working=near;
     const target=working;
     keys.clear();
@@ -217,19 +243,73 @@ export function mountWalkthrough(root){
     pose={x:target.x,y:target.eye,z:target.viewZ,yaw:0,pitch:target.tilt};
     transition={from:{...player,y:standing},to:pose,start:performance.now(),done(){
       zone.textContent=target.name;
-      note.textContent=target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
+      note.textContent=experiment?experiment.message:target.action+'입니다. 마우스로 주변을 둘러보거나 E를 눌러 일어나세요.';
       visits.add(target.id);
       find('[data-visit="'+target.id+'"]').dataset.visited='true';
-      if(visits.size===stations.length)note.textContent+=' 모든 장비의 작업 위치를 모두 확인했습니다.';
+      if(!experiment&&visits.size===stations.length)note.textContent+=' 모든 장비의 작업 위치를 확인했습니다.';
+      refreshActions();
     }};
     schedule();
   }
 
+  function refreshActions(){
+    if(!experiment||!working){actions.hidden=true;return;}
+    const ids=experiment.controls(working.id);
+    const counts=working.id==='prep'&&experiment.phase==='prep'
+      ?' · '+experiment.samples.map(({id,name})=>name+' '+experiment.state.tubes[id].additions.length+'/'+(experiment.reagents.length+1)).join(' · '):'';
+    actionReadout.textContent=experiment.message+counts;
+    actions.hidden=false;
+    actionButtons.replaceChildren(...ids.map(id=>{
+      const button=document.createElement('button');
+      button.type='button';
+      button.dataset.labAction=id;
+      button.textContent=experiment.actions.get(id);
+      return button;
+    }));
+  }
+
+  function perform(id){
+    if(!experiment||transition||animating||!experiment.controls(working?.id).includes(id))return;
+    const effect=experiment.perform(id);
+    if(effect){
+      const duration=motionPreference.matches?0:['lid','rack','place'].includes(effect)?360:220;
+      lab.prepareAction(effect,id,performance.now(),duration);
+      animating=duration>0&&effect!=='auto';
+      if(effect==='lid'){
+        pose.pitch=-.55;
+        renderer.shadowMap.needsUpdate=true;
+      }
+    }
+    note.textContent=experiment.message;
+    refreshActions();
+    viewport.focus({preventScroll:true});
+    schedule();
+  }
+
+  actions.addEventListener('click',event=>{
+    const button=event.target.closest('[data-lab-action]');
+    if(button)perform(button.dataset.labAction);
+  });
   entry.addEventListener('click',event=>{
     if(event.pointerType==='touch'){viewport.focus({preventScroll:true});entry.hidden=true;return;}
     capture();
   });
+  function pointAt(event){
+    const rect=canvas.getBoundingClientRect();
+    if(locked())pointer.set(0,0);
+    else pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
+  }
+  function pickTarget(){
+    if(!experiment||!working||transition||animating)return null;
+    if(locked())pointer.set(0,0);
+    raycaster.setFromCamera(pointer,camera);
+    const ids=experiment.controls(working.id);
+    return raycaster.intersectObjects(ids.map(id=>lab.targets.get(id)).filter(Boolean),false)[0]?.object.userData.action??null;
+  }
   canvas.addEventListener('click',event=>{
+    pointAt(event);
+    const hit=pickTarget();
+    if(hit){perform(hit);return;}
     if(event.pointerType!=='touch'&&!locked())capture();
   });
   promptButton.addEventListener('click',()=>{
@@ -268,6 +348,7 @@ export function mountWalkthrough(root){
     drag={x:event.clientX,y:event.clientY};
   });
   canvas.addEventListener('pointermove',event=>{
+    if(working){pointAt(event);schedule();}
     if(!drag)return;
     look((event.clientX-drag.x)*2,(event.clientY-drag.y)*2);
     drag={x:event.clientX,y:event.clientY};
