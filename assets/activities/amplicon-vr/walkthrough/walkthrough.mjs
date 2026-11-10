@@ -134,7 +134,7 @@ export function mountWalkthrough(root){
       return;
     }
     prompt.classList.remove('lab-spot-working');
-    near=stations.find(s=>Math.hypot(player.x-s.x,player.z-s.standZ)<.47);
+    near=stations.find(s=>Math.hypot(player.x-s.x,player.z-s.standZ)<.67);
     prompt.hidden=true;
     if(!near)return;
     labelPoint.set(near.x,near.id==='ice'?1.27:1.16,near.z);
