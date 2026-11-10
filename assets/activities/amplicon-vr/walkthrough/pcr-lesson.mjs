@@ -71,18 +71,14 @@ function molecules(cycle,stage,progress){
 export function createPcrLesson(root,wake,reduceMotion=false){
   root.innerHTML=`<section class="lab-observation lab-pcr-lesson" hidden aria-labelledby="lab-pcr-title">
     <header><span class="lab-observation-kicker">반응관 안에서 일어나는 일 / 모식도</span><strong class="lab-cycle"></strong></header>
-    <div class="lab-pcr-stage">
-      <div class="lab-temperature" hidden>
-        <svg viewBox="0 0 38 64" aria-hidden="true">
-          <path d="M12 8a5 5 0 0 1 10 0v40a8 8 0 1 1-10 0Z" fill="#132c3c" stroke="#c0deec" stroke-width="1.5"/>
-          <path d="M27 8h6m-6 10h4m-4 10h6m-6 10h4m-4 10h6" stroke="#c0deec" stroke-width="1.5"/>
-          <rect class="lab-temperature-fill" x="14" width="6" rx="3" fill="#ffad70"/>
-          <circle cx="17" cy="54" r="4.5" fill="#ffad70"/>
-        </svg>
-        <strong class="lab-temperature-value"></strong>
-      </div>
-      <div><h3 id="lab-pcr-title" tabindex="-1"></h3><p class="lab-molecule-note"></p></div>
-    </div>
+    <h3 id="lab-pcr-title" tabindex="-1">
+      <span class="lab-temperature" hidden>
+        <span class="lab-temperature-value"></span>
+        <span class="lab-temperature-track" aria-hidden="true"><span class="lab-temperature-fill"></span></span>
+      </span>
+      <span class="lab-pcr-heading"></span>
+    </h3>
+    <p class="lab-molecule-note"></p>
     <svg viewBox="0 0 530 180" class="lab-molecule-graphic" role="img" aria-label="PCR 단계별 분자 모식도"></svg>
     <ul class="lab-molecule-legend"><li style="--ink:${color.rna}">RNA</li><li style="--ink:${color.dna}">DNA 주형</li><li style="--ink:${color.primer}">프라이머</li><li style="--ink:${color.copy}">새 DNA</li></ul>
     <div class="lab-observation-controls">
@@ -93,6 +89,7 @@ export function createPcrLesson(root,wake,reduceMotion=false){
     </div>
   </section>`;
   const panel=root.firstElementChild,title=panel.querySelector('h3'),description=panel.querySelector('.lab-molecule-note');
+  const stageHeading=panel.querySelector('.lab-pcr-heading');
   const cycleLabel=panel.querySelector('.lab-cycle'),graphic=panel.querySelector('.lab-molecule-graphic');
   const thermometer=panel.querySelector('.lab-temperature'),fill=panel.querySelector('.lab-temperature-fill');
   const temperatureLabel=panel.querySelector('.lab-temperature-value');
@@ -111,7 +108,7 @@ export function createPcrLesson(root,wake,reduceMotion=false){
         :index===summaryIndex?['표적 이중가닥 DNA가 처음 완성되었습니다','2번째 사이클에서는 표적 길이의 단일가닥이 생깁니다. 3번째 사이클에서 양쪽 가닥의 길이가 모두 맞는 표적 DNA 두 개가 처음 생깁니다.']
         :index===fastIndex?['PCR 반복 / 증폭','3번째 사이클에 생긴 표적 이중가닥 두 개의 후손을 따라가면, 이상적으로 매 사이클마다 2 → 4 → 8 → 16개로 늘어납니다.']
         :stages[stage].slice(1);
-      title.textContent=heading;description.textContent=note;
+      stageHeading.textContent=heading;description.textContent=note;
       cycleLabel.textContent=index===0?'사이클 전 / 역전사':index===summaryIndex?'3번째 사이클 완료':cycle+'번째 사이클';
     }
     if(pcrStage){
@@ -122,9 +119,7 @@ export function createPcrLesson(root,wake,reduceMotion=false){
       const label=temperature+'°C';
       if(temperatureLabel.textContent!==label){
         temperatureLabel.textContent=label;
-        const height=40*clamp((temperature-40)/60);
-        fill.setAttribute('y',48-height);
-        fill.setAttribute('height',height+6);
+        fill.style.height=(100*clamp((temperature-40)/60))+'%';
       }
     }
     if(index===0){
