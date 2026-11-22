@@ -2,6 +2,7 @@ const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const types = {simulation:'Interactive Simulation',inquiry:'Inquiry Activity',design:'Molecular Design Studio',resource:'Learning Resource',external:'External Activity'};
 const previews = {
   'mitochondria-lab':['RESPIRATION ASSAY','호흡 분석 개념도'],
+  'mitochondria-lab-active':['RESPIRATION ASSAY','응급실 · 검체 분석','/assets/activities/cell-energy-active/ward.webp','응급실 침상에서 인계를 기다리는 세 환자'],
   'protein-lab':['STRUCTURE COMPARISON','서열·구조 비교 개념도'],
   'bbb-lab':['BLOOD–BRAIN BARRIER','장벽 통과 개념도'],
   'neuron-lab':['NEURAL CIRCUIT','신경 신호 개념도'],
