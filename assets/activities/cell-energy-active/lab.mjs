@@ -1,8 +1,10 @@
+import {roomMarkup,mountRoom,initialPoint} from './ward.mjs';
+import {examScene,workstation,newKit,transfer,setPiston,attachHandling} from './equipment.mjs';
 import {signals,names,mechanisms,ids,colors,value,direction,chart,membrane} from './signals.mjs';
 const root=document.querySelector('#er-lab');
 const asset='/assets/activities/cell-energy-active/';
-const key='atll.cell-energy-active.v1';
-const fresh=()=>({stage:0,seen:[],examined:[],bed:0,tests:[],metric:'oxygen',loaded:[],patient:0,probe:10,reads:{},choices:{},evidence:{},notes:{},review:0});
+const key='atll.cell-energy-active.ward.v1';
+const fresh=()=>({stage:0,arrived:false,position:initialPoint(),atBed:false,kit:newKit(),seen:[],examined:[],bed:0,tests:[],metric:'oxygen',loaded:[],patient:0,probe:10,reads:{},choices:{},evidence:{},notes:{},review:0});
 let s=fresh(),message='',storageOK=true;
 try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&[0,1,2,3,4].includes(saved.stage))s={...s,...saved};}catch{}
 const save=()=>{try{localStorage.setItem(key,JSON.stringify(s));}catch{storageOK=false;}};
@@ -13,13 +15,10 @@ const selected=v=>'aria-pressed="'+Boolean(v)+'"';
 const options=(arr,v)=>arr.map(([k,label])=>'<option value="'+esc(k)+'" '+(String(v)===String(k)?'selected':'')+'>'+esc(label)+'</option>').join('');
 const area=(title,body)=>'<section class="box"><h3>'+title+'</h3>'+body+'</section>';
 const phases=['응급실 인계','검사 준비','결과 판독','최종 판정','내막 모형'];
-const handoff=['“같은 작업대에 있던 두 사람도 함께 왔어요.”','“정신을 차려 보니 응급실이었어요.”','“사고 직전의 일은 잘 기억나지 않아요.”'];
 function ward(){
-  return '<h2>응급실 인계</h2><p>연구실 사고로 세 사람이 이송되었습니다. 침상을 선택해 각 환자의 검체를 인계받으세요.</p><div class="deck">'+ids.map((id,i)=>btn('<img src="'+asset+'patient-'+i+'.webp" alt=""><span>환자 '+id+(s.seen.includes(i)?' · 인계 완료':'')+'</span>','bed',i,'class="bed" '+selected(i===s.bed))).join('')+'</div>'+
-    area('환자 '+ids[s.bed],(s.examined.includes(s.bed)?'<p class="reply">'+handoff[s.bed]+'</p>':'<div>'+btn('환자에게 말 걸기 · 의식 확인','examine')+'</div>')+'<p class="sub">간호사 인계 · 환자 '+ids[s.bed]+'의 대사 상태를 재현한 미토콘드리아 시료입니다.</p><div>'+btn(s.seen.includes(s.bed)?'검체 인계 완료':'검체 인계받기','collect','',s.seen.includes(s.bed)||!s.examined.includes(s.bed)?'disabled':'')+'</div>')+
-    '<div>'+main('검사대로 이동', 'bench',s.seen.length===3)+'</div>';
+  if(s.atBed)return '<h2>환자 '+ids[s.bed]+' 진찰</h2>'+examScene(s)+'<p class="feedback" role="status">'+esc(message)+'</p><div>'+btn('응급실로 돌아가기','return')+'</div>';
+  return '<h2>응급실</h2>'+(!s.arrived?'<div class="row" data-intro-text><b>구급대 인계 · 환자 3명 이송 중</b><button type="button" data-skip>건너뛰기</button></div>':'')+roomMarkup(s)+'<p>바닥을 눌러 이동하세요. 침상이나 검사대를 누르면 캐릭터가 그곳까지 걸어갑니다. PC에서는 방향키와 Enter도 사용할 수 있습니다.</p><div class="row"><button type="button" data-near></button>'+btn('이송 장면 다시 보기','replay')+'<b>검체 '+s.seen.length+' / 3</b></div><p class="feedback" role="status">'+esc(message)+'</p>';
 }
-const sampleNames=['대조군','환자 A','환자 B','환자 C'];
 function reference(){
   return '<details><summary>현장 물질과 검사 조건</summary><p>세 환자는 각각 서로 다른 물질에 노출되었습니다. 후보는 전자 전달의 마지막 단계를 막는 시안화 이온, H⁺가 내막을 우회해 이동하게 하는 짝풀림제, ATP 합성 효소의 H⁺ 통로를 막는 올리고마이신입니다.</p><p>기질·산소·ADP·무기 인산이 충분한 교육용 모형입니다. 수치는 상대적 경향을 보여 주는 임의 단위이며, 전기화학적 기울기는 크기로 나타냅니다.</p></details>';
 }
@@ -29,9 +28,8 @@ function records(){
 }
 function bench(){
   const remaining=Object.entries(signals).filter(([k])=>!s.tests.some(t=>t.metric===k));
-  return '<h2>'+ (s.tests.length+1)+'차 검사</h2><p>두 종류의 검사를 시행할 수 있습니다. 측정할 지표를 고른 뒤 네 시료를 차례로 눌러 장비에 장착하세요.</p><div class="tabs">'+remaining.map(([k,m])=>btn(m.name,'metric',k,selected(k===s.metric))).join('')+'</div>'+
-    '<div class="rack">'+sampleNames.map((n,i)=>btn('<i aria-hidden="true"></i>'+n,'load',i,'class="tube '+(s.loaded.includes(i)?'loaded':'')+'" '+selected(s.loaded.includes(i)))).join('')+'</div>'+
-    '<div class="row">'+main('측정 시작','measure',s.loaded.length===4)+'<span>시료 '+s.loaded.length+' / 4 장착</span></div>'+records()+reference();
+  return '<h2>'+ (s.tests.length+1)+'차 검사</h2><div class="tabs">'+remaining.map(([k,m])=>btn(m.name,'metric',k,selected(k===s.metric))).join('')+'</div>'+workstation(s)+'<p class="feedback" role="status">'+esc(message)+'</p>'+records()+reference();
+
 }
 function probe(){
   const line=root.querySelector('#er-probe');if(!line)return;
@@ -58,16 +56,30 @@ function review(){
   const i=s.review,c=s.choices[i],t=s.tests.find(t=>t.metric===s.evidence[i]);
   return '<h2>미토콘드리아 내막 비교</h2><div class="tabs">'+ids.map((id,j)=>btn('환자 '+id,'review',j,selected(i===j))).join('')+'</div>'+
     area('환자 '+ids[i]+' · '+names[i],'<p>나의 판정 · '+(c==='hold'?'판정 보류':names[Number(c)])+'</p><p class="record">'+esc(signals[t.metric].name+' '+t.reads[i])+'<br>'+esc(s.notes[i])+'</p><p>'+mechanisms[i]+'</p>')+
-    '<div class="box"><h3>정상 대조군</h3>'+membrane(-1)+'<h3>환자 '+ids[i]+'</h3>'+membrane(i)+'<p class="sub">점은 H⁺의 상대적 분포를, 움직이는 표지는 이동 경로를 나타냅니다. 입자 수와 속도는 정성 모형입니다.</p><div>'+btn('모션 재생 / 정지','motion')+'</div></div>'+records()+'<div>'+btn('처음부터 다시 하기','restart')+'</div>';
+    '<div class="box"><h3>정상 대조군</h3>'+membrane(-1)+'<h3>환자 '+ids[i]+'</h3>'+membrane(i)+'<p class="sub">점은 H⁺의 상대적 분포를, 움직이는 표지는 이동 경로를 나타냅니다. 입자 수와 속도는 정성 모형입니다.</p><div>'+btn('모션 재생 / 정지','motion')+'</div></div>'+records()+'<div>'+btn('응급실에서 다시 시작','restart')+'</div>';
 }
 function render(){
   root.innerHTML='<div class="bar"><b>'+phases[s.stage]+'</b><span>'+ (storageOK?'이 기기에 자동 저장':'이 기기의 저장 공간을 사용할 수 없습니다')+'</span></div><div class="room">'+[ward,bench,reading,verdict,review][s.stage]()+'</div>';
+  if(s.stage===0&&!s.atBed)mountRoom(root,s,z=>{
+    if(z===3){if(s.seen.length===3)stage(1);else message='세 환자의 검체를 먼저 운반대에 실으세요.';}
+    else{s.bed=z;s.atBed=true;message='';}
+    save();render();
+  },save,p=>{s.position={...p};save();});
+  attachHandling(root,(from,to)=>{message=transfer(s,from,to);save();render();});
   probe();if(matchMedia('(prefers-reduced-motion: reduce)').matches)root.querySelectorAll('.model').forEach(el=>{el.setCurrentTime(0.55);el.pauseAnimations();});
 }
 function stage(n){s.stage=n;message='';}
 root.addEventListener('input',e=>{
+  if(e.target.matches('[data-piston]')){e.target.closest('label').querySelector('output').textContent=e.target.value+' µL';}
+
   if(e.target.id==='er-slider'){s.probe=Number(e.target.value);probe();save();}
   if(e.target.dataset.field){s[e.target.dataset.field][e.target.dataset.i]=e.target.value;save();}
+});
+root.addEventListener('change',e=>{
+  if(!e.target.matches('[data-piston]'))return;
+  const complete=setPiston(s,Number(e.target.value));save();
+  if(complete){message=s.kit.source===null?'분주 완료 · 새 팁으로 교체하세요.':'50 µL 흡입 완료';render();}
+  else{const msg=root.querySelector('.feedback');if(msg)msg.textContent=s.kit.source===null?'동일한 시료량 50 µL에 맞추세요.':'피스톤을 0 µL까지 미세요.';}
 });
 root.addEventListener('click',e=>{
   const graph=e.target.closest('.graph');
@@ -79,20 +91,16 @@ root.addEventListener('click',e=>{
   const b=e.target.closest('button[data-act]');if(!b)return;
   const before=s.stage,n=b.dataset.n,i=Number(n);
   switch(b.dataset.act){
-    case 'bed':s.bed=i;break;
-    case 'examine':if(!s.examined.includes(s.bed))s.examined.push(s.bed);break;
-    case 'collect':if(!s.seen.includes(s.bed))s.seen.push(s.bed);break;
-    case 'bench':if(s.seen.length===3)stage(1);break;
-    case 'metric':s.metric=n;break;
-    case 'load':if(!s.loaded.includes(i))s.loaded.push(i);break;
-    case 'measure':if(s.loaded.length===4){s.patient=0;s.probe=10;stage(2);}break;
+    case 'return':s.atBed=false;message='';break;
+    case 'replay':s.arrived=false;s.atBed=false;message='';break;
+    case 'metric':s.metric=n;message='';break;
     case 'patient':s.patient=i;message='';break;
     case 'interpret':
       if(direction(s.metric,s.patient)===n){s.reads[s.patient]=n;message='환자 '+ids[s.patient]+'의 판독을 기록했습니다.';}
       else{delete s.reads[s.patient];message=signals[s.metric].note+' 두 곡선을 다시 확인하세요.';}break;
     case 'record':
       if(Object.keys(s.reads).length!==3)return;
-      s.tests.push({metric:s.metric,reads:{...s.reads}});s.reads={};s.loaded=[];
+      s.tests.push({metric:s.metric,reads:{...s.reads}});s.reads={};s.loaded=[];s.kit=newKit();
       if(s.tests.length===2)stage(3);
       else{s.metric=Object.keys(signals).find(k=>k!==s.tests[0].metric);stage(1);}break;
     case 'submit':

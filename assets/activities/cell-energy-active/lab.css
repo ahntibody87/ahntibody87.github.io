@@ -38,3 +38,39 @@
 @media(prefers-reduced-motion:reduce){#er-lab *,#er-lab *::before{animation:none!important;transition:none!important}}
 #er-lab .compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:.6rem;margin-top:.5rem}
 #er-lab .reply{animation:er-load .35s ease-out;border-left:3px solid #6ba79e;padding-left:.75rem}
+#er-lab .er-world-scroll{border-radius:12px;overflow:hidden;background:#d9e6e2}
+#er-lab .er-world{width:100%;display:block;touch-action:manipulation}
+#er-lab .er-world [data-zone],#er-lab .er-world{cursor:pointer}
+#er-lab .er-world text{font-size:16px;font-weight:650}
+#er-lab .moving .walker{animation:er-step .28s ease-in-out infinite alternate}
+@keyframes er-step{to{transform:translateY(-3px) rotate(2deg)}}
+#er-lab .exam-room{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-radius:12px;overflow:hidden;background:#e4eeeb;align-items:center}
+#er-lab .exam-patient{position:relative;max-width:320px;margin:auto}
+#er-lab .exam-patient img{width:100%;display:block;max-height:380px;object-fit:cover;object-position:center 30%}
+#er-lab .chest{position:absolute;top:45%;left:48%;border-radius:50%;background:#f8fffaad;border:2px dashed #276368;font-size:1.3rem;font-weight:bold}
+#er-lab .exam-cart{padding:clamp(.5rem,2vw,1.2rem);display:grid;justify-items:start;gap:.5rem}
+#er-lab .exam-tray,#er-lab .tools{display:flex;gap:.5rem;align-items:end;justify-content:center;flex-wrap:wrap}
+#er-lab .apparatus{border:1px solid #abc3c1;border-radius:12px;overflow:hidden}
+#er-lab .instrument-bar{background:#375963;color:white;padding:.65rem 1rem;display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+#er-lab .tabletop{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,.34fr);grid-template-rows:auto auto;background:linear-gradient(145deg,#eef3ef,#dce8e6);padding:1rem;gap:.7rem}
+#er-lab .equip-row{grid-column:1;display:grid;gap:.3rem;font-size:.92rem}
+#er-lab .four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.35rem;background:#d0dedb;padding:.3rem;border-radius:7px;border-bottom:4px solid #9fbab4}
+#er-lab .tools{grid-column:2;grid-row:1 / 3;align-content:center;border-left:1px solid #bad1cc;padding-left:.5rem}
+#er-lab .eq{display:grid;justify-items:center;background:transparent;border:1px solid transparent;padding:.1rem;user-select:none;-webkit-user-select:none}
+#er-lab .eq svg{width:clamp(42px,7vw,74px);max-width:100%;height:auto;pointer-events:none;filter:drop-shadow(0px 2px 2px #30525032)}
+#er-lab .eq span{font-size:.86rem;font-weight:650;pointer-events:none}
+#er-lab .eq[data-drag]{touch-action:none;cursor:grab}
+#er-lab .held,#er-lab .aim{outline:3px solid #217c72;background:#def3e6}
+.er-prop{position:fixed;width:76px;height:74px;pointer-events:none;transform:translate(-50%,-83%);z-index:10000;filter:drop-shadow(2px 5px 4px #30525055)}
+#er-lab .instruction,#er-lab .piston{padding:.75rem 1rem}
+#er-lab .piston{background:#eef4f1;grid-template-columns:1fr auto}
+#er-lab .piston span{grid-column:1 / 3;display:flex;gap:.6rem;align-items:center;white-space:nowrap}
+#er-lab .piston output{grid-column:2;grid-row:1}
+@media(max-width:600px){#er-lab .tabletop{padding:.55rem;grid-template-columns:1fr}#er-lab .tools{grid-column:1;grid-row:auto;border-left:0;border-top:1px solid #aac4be}#er-lab .er-world text{font-size:19px}#er-lab .exam-cart{font-size:.88rem}#er-lab .exam-tray{gap:.1rem}#er-lab .eq span{font-size:.8rem}}
+#er-lab .station-slot{position:relative;display:grid}
+#er-lab .docked-tool{position:absolute;top:-26%;left:44%;width:57%;transform:rotate(-18deg);pointer-events:none}
+#er-lab .docked-tool svg{width:100%;display:block}
+#er-lab .breaths{display:flex;align-items:center;gap:3px;height:24px}
+#er-lab .breaths i{width:17px;height:8px;border-top:3px solid #317f78;border-radius:50%;animation:er-breath 2s ease-in-out infinite}
+#er-lab .breaths i:nth-child(2){animation-delay:.3s}#er-lab .breaths i:nth-child(3){animation-delay:.6s}
+@keyframes er-breath{50%{transform:scaleY(2.3);opacity:.55}}
