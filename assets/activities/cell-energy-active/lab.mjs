@@ -1,10 +1,10 @@
-import {roomMarkup,mountRoom,initialPoint} from './ward.mjs';
-import {examScene,workstation,newKit,transfer,setPiston,attachHandling} from './equipment.mjs';
+import {roomMarkup,mountRoom,initialPoint} from './ward.mjs?v=3';
+import {examScene,workstation,transfer,attachHandling} from './equipment.mjs?v=3';
 import {signals,names,mechanisms,ids,colors,value,direction,chart,membrane} from './signals.mjs';
 const root=document.querySelector('#er-lab');
 const asset='/assets/activities/cell-energy-active/';
 const key='atll.cell-energy-active.ward.v1';
-const fresh=()=>({stage:0,arrived:false,position:initialPoint(),atBed:false,kit:newKit(),seen:[],examined:[],bed:0,tests:[],metric:'oxygen',loaded:[],patient:0,probe:10,reads:{},choices:{},evidence:{},notes:{},review:0});
+const fresh=()=>({stage:0,arrived:false,position:initialPoint(),atBed:false,seen:[],examined:[],bed:0,tests:[],metric:'oxygen',loaded:[],patient:0,probe:10,reads:{},choices:{},evidence:{},notes:{},review:0});
 let s=fresh(),message='',storageOK=true;
 try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&[0,1,2,3,4].includes(saved.stage))s={...s,...saved};}catch{}
 const save=()=>{try{localStorage.setItem(key,JSON.stringify(s));}catch{storageOK=false;}};
@@ -70,16 +70,8 @@ function render(){
 }
 function stage(n){s.stage=n;message='';}
 root.addEventListener('input',e=>{
-  if(e.target.matches('[data-piston]')){e.target.closest('label').querySelector('output').textContent=e.target.value+' µL';}
-
   if(e.target.id==='er-slider'){s.probe=Number(e.target.value);probe();save();}
   if(e.target.dataset.field){s[e.target.dataset.field][e.target.dataset.i]=e.target.value;save();}
-});
-root.addEventListener('change',e=>{
-  if(!e.target.matches('[data-piston]'))return;
-  const complete=setPiston(s,Number(e.target.value));save();
-  if(complete){message=s.kit.source===null?'분주 완료 · 새 팁으로 교체하세요.':'50 µL 흡입 완료';render();}
-  else{const msg=root.querySelector('.feedback');if(msg)msg.textContent=s.kit.source===null?'동일한 시료량 50 µL에 맞추세요.':'피스톤을 0 µL까지 미세요.';}
 });
 root.addEventListener('click',e=>{
   const graph=e.target.closest('.graph');
@@ -93,6 +85,7 @@ root.addEventListener('click',e=>{
   switch(b.dataset.act){
     case 'return':s.atBed=false;message='';break;
     case 'replay':s.arrived=false;s.atBed=false;message='';break;
+    case 'measure':if(s.loaded.length===4){s.patient=0;s.probe=10;stage(2);}break;
     case 'metric':s.metric=n;message='';break;
     case 'patient':s.patient=i;message='';break;
     case 'interpret':
@@ -100,7 +93,7 @@ root.addEventListener('click',e=>{
       else{delete s.reads[s.patient];message=signals[s.metric].note+' 두 곡선을 다시 확인하세요.';}break;
     case 'record':
       if(Object.keys(s.reads).length!==3)return;
-      s.tests.push({metric:s.metric,reads:{...s.reads}});s.reads={};s.loaded=[];s.kit=newKit();
+      s.tests.push({metric:s.metric,reads:{...s.reads}});s.reads={};s.loaded=[];
       if(s.tests.length===2)stage(3);
       else{s.metric=Object.keys(signals).find(k=>k!==s.tests[0].metric);stage(1);}break;
     case 'submit':

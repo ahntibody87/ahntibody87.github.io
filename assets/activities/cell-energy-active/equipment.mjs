@@ -15,41 +15,24 @@ function item(key,label,icon,type='drop',style=''){
 }
 export function examScene(s){
   const i=s.bed,id='ABC'[i],exam=s.examined.includes(i),collected=s.seen.includes(i);
-  return '<div class="exam-room"><div class="exam-patient"><img alt="침상에 누운 환자 '+id+'" src="/assets/activities/cell-energy-active/patient-'+i+'.webp"><button type="button" class="chest" data-drop="chest" aria-label="청진 위치">＋</button></div><div class="exam-cart"><h3>침상 '+id+'</h3><p>'+(exam?'호흡음 확인 · 환자가 부름에 반응합니다.':'청진기를 환자의 가슴 표시로 옮기세요.')+'</p>'+item('scope','청진기','scope','drag')+
+  return '<div class="exam-room"><div class="exam-patient"><img alt="침상에 누운 환자 '+id+'" src="/assets/activities/cell-energy-active/patient-'+i+'.webp"><button type="button" class="chest" data-drop="chest" aria-label="청진 위치">＋</button></div><div class="exam-cart"><h3>침상 '+id+'</h3><p>'+(exam?'호흡음을 확인했습니다.':'청진기를 환자의 가슴 표시로 옮기세요.')+'</p>'+item('scope','청진기','scope','drag')+
   (exam?'<div class="breaths" aria-label="호흡음 확인"><i></i><i></i><i></i></div><div class="exam-tray">'+(collected?'<b>검체 인계 완료</b>':item('vial','검체 '+id,'vial','drag')+item('carrier','운반대','rack'))+'</div>':'')+'</div></div>';
 }
-export const newKit=()=>({tip:'none',source:null,dock:null,volume:0});
 export function workstation(s){
-  const k=s.kit,count=s.loaded.length,dock=k.dock,asp=dock?.startsWith('v'),disp=dock?.startsWith('c');
-  const colour=k.source===null?'#cededc':liquid[k.source];
-  const slot=(key,label,icon,tint)=>'<div class="station-slot">'+item(key,label,icon,'drop','--fluid:'+tint)+(dock===key?'<div class="docked-tool" aria-hidden="true">'+illustration('pipette')+'</div>':'')+'</div>';
-  const cue=count===4?'시료 카트리지를 분석기의 투입구로 끌어 넣으세요.':asp?'피스톤을 움직여 시료 50 µL를 흡입하세요.':disp?'피스톤을 0 µL까지 밀어 시료를 분주하세요.':k.tip==='none'||k.tip==='used'?'피펫을 팁 랙에 가져가 새 팁을 장착하세요.':k.source===null?'피펫 끝을 검사할 시료 튜브에 가져가세요.':'피펫을 같은 이름의 측정 셀로 옮기세요.';
-  return '<div class="apparatus"><div class="instrument-bar"><b>미토콘드리아 분석대</b><span>'+count+' / 4 셀 준비</span></div><div class="tabletop"><div class="equip-row"><b>시료 튜브</b><div class="four">'+labels.map((n,i)=>slot('v'+i,n,'vial',liquid[i])).join('')+'</div></div><div class="equip-row"><b>측정 셀</b><div class="four">'+labels.map((n,i)=>slot('c'+i,n+(s.loaded.includes(i)?' ✓':''),'cell',s.loaded.includes(i)?liquid[i]:'#e4edeb')).join('')+'</div></div><div class="tools">'+
-  (count===4?item('cartridge','시료 카트리지','rack','drag')+item('reader','분석기 투입구','reader'):item('pipette','피펫 · '+k.volume+' µL','pipette','drag','--fluid:'+colour)+item('tips',k.tip==='used'?'팁 교체':'팁 랙','tips'))+
-  '</div></div><p class="instruction" role="status">'+cue+'</p>'+
-  (dock?'<label class="piston"><b>피펫 피스톤 · '+labels[Number(dock.slice(1))]+'</b><span>0 µL <input type="range" data-piston min="0" max="100" step="5" value="'+k.volume+'" aria-label="피펫 부피"> 100 µL</span><output>'+k.volume+' µL</output></label>':'')+'</div>';
+  const ready=s.loaded.length===4;
+  return '<div class="apparatus"><div class="instrument-bar"><b>미토콘드리아 분석기</b><span>'+s.loaded.length+' / 4 시료</span></div><div class="tabletop"><div class="four">'+labels.map((name,i)=>s.loaded.includes(i)?'<b>'+name+' ✓</b>':item('sample'+i,name,'vial','drag','--fluid:'+liquid[i])).join('')+'</div>'+item('reader','분석기','reader')+'</div><p class="instruction">'+(ready?'네 시료가 준비되었습니다.':'검체를 분석기로 옮기세요. 대조군과 세 환자를 같은 조건에서 측정합니다.')+'</p>'+(ready?'<button type="button" data-act="measure">측정하고 그래프 비교</button>':'')+'</div>';
 }
 export function transfer(s,from,to){
-  const k=s.kit;
   if(s.stage===0){
     if(from==='scope'&&to==='chest'){if(!s.examined.includes(s.bed))s.examined.push(s.bed);return '호흡음을 확인했습니다. 검체를 운반대로 옮기세요.';}
     if(from==='vial'&&to==='carrier'&&s.examined.includes(s.bed)){if(!s.seen.includes(s.bed))s.seen.push(s.bed);return '검체를 운반대에 실었습니다.';}
     return '도구를 사용할 위치를 확인하세요.';
   }
-  if(from==='cartridge'&&to==='reader'&&s.loaded.length===4){s.patient=0;s.probe=10;s.stage=2;return '';}
-  if(from!=='pipette')return '시료 카트리지를 분석기 투입구에 넣으세요.';
-  if(to==='tips'&&k.source===null){Object.assign(k,newKit(),{tip:'clean'});return '새 팁을 장착했습니다.';}
-  if(k.tip==='none'||k.tip==='used')return '새 팁을 먼저 장착하세요.';
-  const idx=Number(to.slice(1));
-  if(to.startsWith('v')&&k.source===null&&!s.loaded.includes(idx)){k.dock=to;k.volume=0;return '피펫 끝이 시료에 잠겼습니다.';}
-  if(to.startsWith('c')&&k.source===idx&&k.volume===50){k.dock=to;return '측정 셀에 피펫을 놓았습니다.';}
-  return s.loaded.includes(idx)?'이미 준비한 시료입니다.':'시료 이름과 측정 셀의 이름을 확인하세요.';
-}
-export function setPiston(s,n){
-  const k=s.kit;if(!k.dock)return false;
-  k.volume=n;const i=Number(k.dock.slice(1));
-  if(k.dock.startsWith('v')&&n===50){k.source=i;k.dock=null;return true;}
-  if(k.dock.startsWith('c')&&n===0){s.loaded.push(i);Object.assign(k,newKit(),{tip:'used'});return true;}return false;
+  if(to==='reader'&&/^sample[0-3]$/.test(from)){
+    const i=Number(from.slice(-1));if(!s.loaded.includes(i))s.loaded.push(i);
+    return labels[i]+' 시료를 장착했습니다.';
+  }
+  return '검체를 분석기로 옮기세요.';
 }
 // Pointer capture keeps a physical prop under the finger. Tap-pair and keyboard share the same transfer rules.
 export function attachHandling(room,apply){
