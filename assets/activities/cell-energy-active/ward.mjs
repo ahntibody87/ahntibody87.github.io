@@ -38,7 +38,8 @@ export function mountRoom(root,s,open,finishIntro,remember){
     if(intro){
       if(!started)started=now;
       g.forEach((el,i)=>{
-        const f=clamp(((now-started)/1000-i*1.6)/3.2,0,1),u=Math.min(1,f/.73),v=Math.max(0,(f-.73)/.27);
+        const elapsed=reduced()?Math.floor((now-started)/650)*650:now-started;
+        const f=clamp((elapsed/1000-i*1.6)/3.2,0,1),u=Math.min(1,f/.73),v=Math.max(0,(f-.73)/.27);
         el.setAttribute('transform','translate('+(-85+(beds[i]+85)*u)+' '+(283-85*v)+')');el.querySelector('.porter').style.opacity=String(1-v);
       });
       if(now-started>6550)finish();
@@ -67,5 +68,5 @@ export function mountRoom(root,s,open,finishIntro,remember){
   svg.onkeydown=e=>{if(intro)return;if(e.key.startsWith('Arrow')){e.preventDefault();keys.add(e.key);start();}else if(e.key==='Enter'||e.key===' '){e.preventDefault();const z=e.target.closest('[data-zone]');if(z)go(Number(z.dataset.zone));else act();}};
   svg.onkeyup=e=>{keys.delete(e.key);remember(p);};svg.onblur=()=>{keys.clear();};
   if(stop)stop.onclick=finish;
-  if(!intro||reduced())finish();else{draw();start();}
+  if(!intro)finish();else{g.forEach(el=>el.setAttribute('transform','translate(-90 283)'));draw();if(s.playing)start();}
 }

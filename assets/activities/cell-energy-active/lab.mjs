@@ -1,4 +1,4 @@
-import {roomMarkup,mountRoom,initialPoint} from './ward.mjs?v=3';
+import {roomMarkup,mountRoom,initialPoint} from './ward.mjs?v=4';
 import {examScene,workstation,transfer,attachHandling} from './equipment.mjs?v=3';
 import {signals,names,mechanisms,ids,colors,value,direction,chart,membrane} from './signals.mjs';
 const root=document.querySelector('#er-lab');
@@ -7,6 +7,8 @@ const key='atll.cell-energy-active.ward.v1';
 const fresh=()=>({stage:0,arrived:false,position:initialPoint(),atBed:false,seen:[],examined:[],bed:0,tests:[],metric:'oxygen',loaded:[],patient:0,probe:10,reads:{},choices:{},evidence:{},notes:{},review:0});
 let s=fresh(),message='',storageOK=true;
 try{const saved=JSON.parse(localStorage.getItem(key));if(saved&&[0,1,2,3,4].includes(saved.stage))s={...s,...saved};}catch{}
+if(s.stage>0)s.resumeStage=s.stage;
+Object.assign(s,{stage:0,atBed:false,arrived:false,playing:false,position:initialPoint()});
 const save=()=>{try{localStorage.setItem(key,JSON.stringify(s));}catch{storageOK=false;}};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const btn=(label,action,n='',opts='')=>'<button type="button" data-act="'+action+'" data-n="'+n+'" '+opts+'>'+label+'</button>';
@@ -17,7 +19,7 @@ const area=(title,body)=>'<section class="box"><h3>'+title+'</h3>'+body+'</secti
 const phases=['응급실 인계','검사 준비','결과 판독','최종 판정','내막 모형'];
 function ward(){
   if(s.atBed)return '<h2>환자 '+ids[s.bed]+' 진찰</h2>'+examScene(s)+'<p class="feedback" role="status">'+esc(message)+'</p><div>'+btn('응급실로 돌아가기','return')+'</div>';
-  return '<h2>응급실</h2>'+(!s.arrived?'<div class="row" data-intro-text><b>구급대 인계 · 환자 3명 이송 중</b><button type="button" data-skip>건너뛰기</button></div>':'')+roomMarkup(s)+'<p>바닥을 눌러 이동하세요. 침상이나 검사대를 누르면 캐릭터가 그곳까지 걸어갑니다. PC에서는 방향키와 Enter도 사용할 수 있습니다.</p><div class="row"><button type="button" data-near></button>'+btn('이송 장면 다시 보기','replay')+'<b>검체 '+s.seen.length+' / 3</b></div><p class="feedback" role="status">'+esc(message)+'</p>';
+  return '<h2>응급실</h2>'+(!s.arrived?(s.playing?'<div class="row" data-intro-text><b>구급대 인계 · 환자 3명 이송 중</b></div>':'<div class="row"><b>구급대 도착 · 이송 환자 3명</b>'+main('환자 이송 시작','arrivals')+'</div>'):'')+roomMarkup(s)+'<p>바닥을 눌러 이동하세요. 침상이나 검사대를 누르면 캐릭터가 그곳까지 걸어갑니다. PC에서는 방향키와 Enter도 사용할 수 있습니다.</p><div class="row"><button type="button" data-near></button>'+btn('이송 장면 다시 보기','replay')+'<b>검체 '+s.seen.length+' / 3</b></div><p class="feedback" role="status">'+esc(message)+'</p>';
 }
 function reference(){
   return '<details><summary>현장 물질과 검사 조건</summary><p>세 환자는 각각 서로 다른 물질에 노출되었습니다. 후보는 전자 전달의 마지막 단계를 막는 시안화 이온, H⁺가 내막을 우회해 이동하게 하는 짝풀림제, ATP 합성 효소의 H⁺ 통로를 막는 올리고마이신입니다.</p><p>기질·산소·ADP·무기 인산이 충분한 교육용 모형입니다. 수치는 상대적 경향을 보여 주는 임의 단위이며, 전기화학적 기울기는 크기로 나타냅니다.</p></details>';
@@ -59,9 +61,9 @@ function review(){
     '<div class="box"><h3>정상 대조군</h3>'+membrane(-1)+'<h3>환자 '+ids[i]+'</h3>'+membrane(i)+'<p class="sub">점은 H⁺의 상대적 분포를, 움직이는 표지는 이동 경로를 나타냅니다. 입자 수와 속도는 정성 모형입니다.</p><div>'+btn('모션 재생 / 정지','motion')+'</div></div>'+records()+'<div>'+btn('응급실에서 다시 시작','restart')+'</div>';
 }
 function render(){
-  root.innerHTML='<div class="bar"><b>'+phases[s.stage]+'</b><span>'+ (storageOK?'이 기기에 자동 저장':'이 기기의 저장 공간을 사용할 수 없습니다')+'</span></div><div class="room">'+[ward,bench,reading,verdict,review][s.stage]()+'</div>';
+  root.innerHTML='<div class="bar"><b>'+phases[s.stage]+'</b>'+(s.stage?btn('응급실로 돌아가기','world'):'')+'<span>'+ (storageOK?'이 기기에 자동 저장':'이 기기의 저장 공간을 사용할 수 없습니다')+'</span></div><div class="room">'+[ward,bench,reading,verdict,review][s.stage]()+'</div>';
   if(s.stage===0&&!s.atBed)mountRoom(root,s,z=>{
-    if(z===3){if(s.seen.length===3)stage(1);else message='세 환자의 검체를 먼저 운반대에 실으세요.';}
+    if(z===3){if(s.seen.length===3){stage(s.resumeStage||1);s.resumeStage=0;}else message='세 환자의 검체를 먼저 운반대에 실으세요.';}
     else{s.bed=z;s.atBed=true;message='';}
     save();render();
   },save,p=>{s.position={...p};save();});
@@ -84,7 +86,9 @@ root.addEventListener('click',e=>{
   const before=s.stage,n=b.dataset.n,i=Number(n);
   switch(b.dataset.act){
     case 'return':s.atBed=false;message='';break;
-    case 'replay':s.arrived=false;s.atBed=false;message='';break;
+    case 'arrivals':s.playing=true;break;
+    case 'world':s.resumeStage=s.stage;stage(0);s.atBed=false;break;
+    case 'replay':s.playing=true;s.arrived=false;s.atBed=false;message='';break;
     case 'measure':if(s.loaded.length===4){s.patient=0;s.probe=10;stage(2);}break;
     case 'metric':s.metric=n;message='';break;
     case 'patient':s.patient=i;message='';break;
