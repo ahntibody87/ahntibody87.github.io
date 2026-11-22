@@ -1,6 +1,7 @@
 const labels=['대조군','A','B','C'];
 const liquid=['#7799a2','#cf897a','#70aca0','#a091bb'];
 const art={
+ collector:'<g transform="rotate(36 45 40)"><rect x="35" y="21" width="19" height="37" rx="3" fill="#e9f3f2" stroke="#56727a" stroke-width="3"/><path d="M45 21V9m-9 0h18M30 22h29M45 59v16" stroke="#56727a" stroke-width="3"/></g>',
  scope:'<path d="M24 12v10q0 23 16 23t16-23V12M40 46v7q0 16 15 16 16 0 16-17" fill="none" stroke="#466773" stroke-width="5"/><circle cx="71" cy="48" r="8" fill="#bbcfcd" stroke="#496d79" stroke-width="4"/><circle cx="24" cy="12" r="4"/><circle cx="56" cy="12" r="4"/>',
  vial:'<rect x="30" y="9" width="30" height="10" rx="3" fill="#478486"/><path d="M33 20h24v40q-1 13-12 15-11-2-12-15z" fill="#eff7f6" stroke="#688991" stroke-width="2"/><path d="M35 46h20v14q-1 10-10 13-9-3-10-13z" fill="var(--fluid,#81b6ad)"/>',
  pipette:'<g transform="rotate(22 46 40)"><path d="M41 4h12v7H41zM44 11h6v8h-6z" fill="#34747b"/><rect x="35" y="17" width="22" height="36" rx="7" fill="#e7eeed" stroke="#657b83" stroke-width="2"/><rect x="40" y="26" width="12" height="9" rx="2" fill="#375965"/><path d="M39 51h14l-3 14h-8z" fill="#44818b"/><path d="M43 65h6l-3 14z" fill="var(--fluid,#c6d8d7)" stroke="#718a90"/></g>',
@@ -13,10 +14,30 @@ function illustration(name){return '<svg aria-hidden="true" viewBox="0 0 90 82">
 function item(key,label,icon,type='drop',style=''){
   return '<button type="button" class="eq '+type+'" data-'+type+'="'+key+'" style="'+style+'">'+illustration(icon)+'<span>'+label+'</span></button>';
 }
+const sites={right:'오른쪽 폐',left:'왼쪽 폐',heart:'심장'};
+let audio;
+function listen(site){
+  try{
+    const ctx=audio??=new AudioContext();ctx.resume().catch(()=>{});
+    const start=ctx.currentTime+.03;
+    if(site==='heart'){
+      for(const offset of [0,.19,.84,1.03,1.68,1.87]){
+        const tone=ctx.createOscillator(),gain=ctx.createGain(),t=start+offset;
+        tone.frequency.value=66;gain.gain.setValueAtTime(.001,t);gain.gain.exponentialRampToValueAtTime(.32,t+.018);gain.gain.exponentialRampToValueAtTime(.001,t+.13);
+        tone.connect(gain).connect(ctx.destination);tone.start(t);tone.stop(t+.14);
+      }
+    }else{
+      const buffer=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate),data=buffer.getChannelData(0);
+      for(let i=0;i<data.length;i++){const t=i/ctx.sampleRate;data[i]=(Math.random()*2-1)*Math.max(0,Math.sin(t<1.3?Math.PI*t/1.3:Math.PI*(t-1.3)/1.7))*(t<1.3?.36:.17);}
+      const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter();src.buffer=buffer;filter.type='lowpass';filter.frequency.value=720;src.connect(filter).connect(ctx.destination);src.start();
+    }
+  }catch{}
+}
 export function examScene(s){
-  const i=s.bed,id='ABC'[i],exam=s.examined.includes(i),collected=s.seen.includes(i);
-  return '<div class="exam-room"><div class="exam-patient"><img alt="침상에 누운 환자 '+id+'" src="/assets/activities/cell-energy-active/patient-'+i+'.webp"><button type="button" class="chest" data-drop="chest" aria-label="청진 위치">＋</button></div><div class="exam-cart"><h3>침상 '+id+'</h3><p>'+(exam?'호흡음을 확인했습니다.':'청진기를 환자의 가슴 표시로 옮기세요.')+'</p>'+item('scope','청진기','scope','drag')+
-  (exam?'<div class="breaths" aria-label="호흡음 확인"><i></i><i></i><i></i></div><div class="exam-tray">'+(collected?'<b>검체 인계 완료</b>':item('vial','검체 '+id,'vial','drag')+item('carrier','운반대','rack'))+'</div>':'')+'</div></div>';
+  const i=s.bed,id='ABC'[i],exam=s.examined.includes(i),collected=s.seen.includes(i),drawn=s.drawn?.includes(i),attached=s.arm===i,last=s.listening?.[i];
+  const points=Object.entries(sites).map(([k,v])=>'<button type="button" class="listen-point '+k+'" data-drop="'+k+'" aria-label="'+v+' 청진">'+(last===k?'◉':'＋')+'</button>').join('');
+  return '<div class="exam-room"><div class="exam-patient"><img alt="산소마스크를 쓴 환자 '+id+'" src="/assets/activities/cell-energy-active/patient-'+i+'.webp">'+points+'</div><div class="exam-cart"><h3>침상 '+id+'</h3><p>청진기의 원판을 가슴에 대고 심음과 호흡음을 비교하세요.</p>'+item('scope','청진기','scope','drag')+(last?'<p>'+sites[last]+' · '+(last==='heart'?'두 번씩 반복되는 심음':'들숨과 날숨의 호흡음')+'</p>':'')+'</div>'+
+  (exam?'<section class="draw-station"><h3>환자 '+id+' · 혈액 검체</h3>'+(collected?'<p>검체 인계 완료</p>':drawn?'<div class="exam-tray">'+item('vial','혈액 검체 '+id,'vial','drag','--fluid:#953d49')+item('carrier','운반대','rack')+'</div>':'<div class="arm-view" data-drop="arm" tabindex="0" role="button" aria-label="채혈기 연결 위치"><svg viewBox="0 0 340 90" aria-hidden="true"><path d="M0 21Q64 11 124 30Q171 43 226 36L279 25Q302 23 323 39L331 50Q332 59 310 56L285 52Q253 58 225 64Q164 76 108 65L0 73Z" fill="#e9c1a5" stroke="#aa8976" stroke-width="2"/><path d="m125 44 15 9 18-4" fill="none" stroke="#bc9885"/><circle cx="144" cy="51" r="13" fill="none" stroke="#457873" stroke-dasharray="3 3"/></svg></div>'+(attached?'<label>채혈기 손잡이를 당기세요<input type="range" min="0" max="100" value="0" data-draw aria-label="채혈기 손잡이"></label><div class="blood-tube"><i></i></div>':item('collector','채혈기','collector','drag')+'<p>팔 그림의 표시 위에 채혈기를 놓으세요.</p>'))+'</section>':'')+'</div>';
 }
 export function workstation(s){
   const ready=s.loaded.length===4;
@@ -24,8 +45,9 @@ export function workstation(s){
 }
 export function transfer(s,from,to){
   if(s.stage===0){
-    if(from==='scope'&&to==='chest'){if(!s.examined.includes(s.bed))s.examined.push(s.bed);return '호흡음을 확인했습니다. 검체를 운반대로 옮기세요.';}
-    if(from==='vial'&&to==='carrier'&&s.examined.includes(s.bed)){if(!s.seen.includes(s.bed))s.seen.push(s.bed);return '검체를 운반대에 실었습니다.';}
+    if(from==='scope'&&Object.hasOwn(sites,to)){listen(to);(s.listening??={})[s.bed]=to;if(!s.examined.includes(s.bed))s.examined.push(s.bed);return sites[to]+' 청진 중';}
+    if(from==='collector'&&to==='arm'&&s.examined.includes(s.bed)){s.arm=s.bed;return '채혈기를 연결했습니다.';}
+    if(from==='vial'&&to==='carrier'&&s.drawn?.includes(s.bed)){if(!s.seen.includes(s.bed))s.seen.push(s.bed);return '검체를 운반대에 실었습니다.';}
     return '도구를 사용할 위치를 확인하세요.';
   }
   if(to==='reader'&&/^sample[0-3]$/.test(from)){

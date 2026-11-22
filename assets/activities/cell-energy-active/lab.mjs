@@ -1,5 +1,5 @@
 import {roomMarkup,mountRoom,initialPoint} from './ward.mjs?v=4';
-import {examScene,workstation,transfer,attachHandling} from './equipment.mjs?v=3';
+import {examScene,workstation,transfer,attachHandling} from './equipment.mjs?v=5';
 import {signals,names,mechanisms,ids,colors,value,direction,chart,membrane} from './signals.mjs';
 const root=document.querySelector('#er-lab');
 const asset='/assets/activities/cell-energy-active/';
@@ -72,6 +72,11 @@ function render(){
 }
 function stage(n){s.stage=n;message='';}
 root.addEventListener('input',e=>{
+  if(e.target.matches('[data-draw]')&&s.arm===s.bed){
+    const volume=Number(e.target.value);root.querySelector('.blood-tube i').style.width=volume+'%';
+    if(volume===100){(s.drawn??=[]).push(s.bed);s.arm=null;message='채혈 완료 · 혈액 검체를 운반대로 옮기세요.';save();render();}
+    return;
+  }
   if(e.target.id==='er-slider'){s.probe=Number(e.target.value);probe();save();}
   if(e.target.dataset.field){s[e.target.dataset.field][e.target.dataset.i]=e.target.value;save();}
 });

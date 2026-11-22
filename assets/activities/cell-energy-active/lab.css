@@ -74,3 +74,8 @@
 #er-lab .breaths i{width:17px;height:8px;border-top:3px solid #317f78;border-radius:50%;animation:er-breath 2s ease-in-out infinite}
 #er-lab .breaths i:nth-child(2){animation-delay:.3s}#er-lab .breaths i:nth-child(3){animation-delay:.6s}
 @keyframes er-breath{50%{transform:scaleY(2.3);opacity:.55}}
+#er-lab .listen-point{position:absolute;border-radius:50%;padding:.2em;min-width:32px;min-height:32px;background:#edf7f0bc;border:1px dashed #467775;transform:translate(-50%,-50%)}
+#er-lab .listen-point.right{left:34%;top:61%}#er-lab .listen-point.left{left:67%;top:61%}#er-lab .listen-point.heart{left:59%;top:75%}
+#er-lab .draw-station{grid-column:1/-1;background:#f3f6f3;padding:1rem;display:grid;gap:.5rem;justify-items:start}
+#er-lab .arm-view{width:min(100%,380px);background:#e0eae8;border-radius:8px;cursor:pointer}#er-lab .arm-view svg{width:100%;display:block}
+#er-lab .blood-tube{width:180px;height:18px;border:2px solid #769699;border-radius:9px;overflow:hidden}#er-lab .blood-tube i{display:block;width:0;height:100%;background:#994451}
