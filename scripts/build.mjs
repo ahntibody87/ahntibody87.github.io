@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import { homePage } from './home.mjs';
 import { accessHead, accessContent } from './course-access.mjs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
@@ -24,6 +25,12 @@ const homeVersion = homeHash.digest('hex').slice(0, 12);
 const advancedVersion = createHash('sha256').update(['assets/advanced-course.css','assets/advanced-course.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('').replace(/\r+\n/g, '\n')).digest('hex').slice(0, 12);
 const workspaceVersion = createHash('sha256').update(['assets/advanced-workspace.css','assets/advanced-workspace.js'].map(f => fs.readFileSync(path.join(root,f),'utf8').replace(/\r+\n/g,'\n')).join('')).digest('hex').slice(0,12);
 const site = JSON.parse(fs.readFileSync(path.join(root, 'data/site.json'), 'utf8'));
+const preview = process.argv.includes('--preview-maintenance');
+const outputRoot = preview ? fs.mkdtempSync(path.join(os.tmpdir(), 'atll-preview-')) : root;
+if (preview) {
+  fs.symlinkSync(path.join(root, 'assets'), path.join(outputRoot, 'assets'), 'junction');
+  fs.copyFileSync(path.join(root, 'favicon.ico'), path.join(outputRoot, 'favicon.ico'));
+}
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const types = { simulation: 'INTERACTIVE SIMULATION', inquiry: 'INQUIRY ACTIVITY', design: 'MOLECULAR DESIGN STUDIO', resource: 'LEARNING RESOURCE', external: 'EXTERNAL ACTIVITY' };
 const slug = value => { if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) throw new Error(`잘못된 id: ${value}`); };
@@ -68,7 +75,8 @@ for (const course of site.courses) {
     unique(unit.activities);
     const unitPath = unitUrl(course, unit);
     const unitCrumbs = [...crumbs, { title: unit.title, url: unitPath }];
-    const activities = unit.activities.map((activity, i) => {
+    const activities = unit.activities.map((configuredActivity, i) => {
+      const activity = preview ? {...configuredActivity, maintenance:false} : configuredActivity;
       if (!types[activity.type]) throw new Error(`지원하지 않는 활동 형식: ${activity.type}`);
       if (!!activity.url === !!activity.content) throw new Error(`${activity.id}: url 또는 content 중 하나를 지정하세요.`);
       let destination = activity.url;
@@ -81,14 +89,14 @@ for (const course of site.courses) {
       if (!(destination.startsWith('/') && !destination.startsWith('//') && !/[\\\s]/.test(destination)) && !/^https:\/\/[^\s]+$/.test(destination)) throw new Error(`안전하지 않은 활동 URL: ${destination}`);
       return advanced ? workspaceCard(course,unit,activity,destination) : card({ url: destination, index: i, english: types[activity.type], title: activity.title, description: activity.description, label: '활동 열기', external: destination.startsWith('https://') });
     });
-    add({ url: unitPath, title: unit.title, description: `${course.title} ${index + 1}단원 · ${unit.title} 학습 자료와 탐구 활동`, crumbs: unitCrumbs, course, unit, content: advanced ? unitWorkspace(course,unit,index,activities) : `<section class="hero compact"><p class="eyebrow">${esc(course.title)} · UNIT ${number(index)}</p><h1>${esc(unit.title)}</h1><p class="lab-name">${esc(unit.english)}</p><p class="intro">이 단원의 학습 자료와 탐구 활동을 모아 보는 공간입니다.</p>${art}</section>${section('activities', 'LEARNING & EXPLORATION', '학습 자료와 탐구 활동', activities.length ? `<div class="card-grid activities">${activities.join('')}</div>` : notice('등록된 활동이 없습니다', '수업에서 사용할 자료와 탐구 활동이 등록되면 이곳에서 확인할 수 있습니다.'), `${activities.length}개 활동`)}<a class="back-link" href="${url}">← ${esc(course.title)} 단원 목록</a>` });
+    add({ url: unitPath, title: unit.title, description: `${course.title} ${index + 1}단원 · ${unit.title} 학습 자료와 탐구 활동`, crumbs: unitCrumbs, course, unit, content: advanced ? unitWorkspace(course,preview ? {...unit, activities:unit.activities.map(a=>({...a,maintenance:false}))} : unit,index,activities) : `<section class="hero compact"><p class="eyebrow">${esc(course.title)} · UNIT ${number(index)}</p><h1>${esc(unit.title)}</h1><p class="lab-name">${esc(unit.english)}</p><p class="intro">이 단원의 학습 자료와 탐구 활동을 모아 보는 공간입니다.</p>${art}</section>${section('activities', 'LEARNING & EXPLORATION', '학습 자료와 탐구 활동', activities.length ? `<div class="card-grid activities">${activities.join('')}</div>` : notice('등록된 활동이 없습니다', '수업에서 사용할 자료와 탐구 활동이 등록되면 이곳에서 확인할 수 있습니다.'), `${activities.length}개 활동`)}<a class="back-link" href="${url}">← ${esc(course.title)} 단원 목록</a>` });
   }
 }
 
 // Validate the entire configuration before writing. Existing, unrelated files are never removed.
 let differences = 0;
 for (const [file, html] of pages) {
-  const target = path.join(root, file);
+  const target = path.join(outputRoot, file);
   if (process.argv.includes('--check')) {
     if (!fs.existsSync(target) || fs.readFileSync(target, 'utf8') !== html) { console.error(`재생성 필요: ${file}`); differences++; }
   } else {
@@ -96,7 +104,8 @@ for (const [file, html] of pages) {
     fs.writeFileSync(target, html);
   }
 }
-if (differences) process.exitCode = 1;
+if (preview) console.log(outputRoot);
+else if (differences) process.exitCode = 1;
 else console.log(`${pages.size}개 페이지 ${process.argv.includes('--check') ? '최신 상태 확인' : '생성 완료'}`);
 
 

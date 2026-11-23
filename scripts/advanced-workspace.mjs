@@ -22,7 +22,14 @@ export function workspaceCard(course, unit, activity, destination) {
 export function unitWorkspace(course,unit,index,cards) {
   const filters=[...new Set(unit.activities.map(a=>a.type))];
   const maintenanceNotice = unit.activities.some(a=>a.maintenance)
-    ? '<script>document.querySelectorAll("[data-maintenance]").forEach(card=>card.addEventListener("click",event=>{if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();window.alert("점검 중인 도구입니다.");}));</script>'
+    ? `<dialog id="maintenance-notice" aria-labelledby="maintenance-message" style="border:1px solid #d4dedc;border-radius:14px;padding:1.6rem;width:min(24rem,calc(100% - 2rem));color:#182d35;background:#fff;box-shadow:0 16px 60px #152e4055"><p id="maintenance-message" style="margin:0 0 1rem;font-weight:700">점검 중인 도구입니다.</p><form method="dialog" style="text-align:right"><button class="button" autofocus>확인</button></form></dialog><script>
+    const maintenanceDialog = document.getElementById("maintenance-notice");
+    document.querySelectorAll("[data-maintenance]").forEach(card => card.addEventListener("click", event => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !maintenanceDialog.showModal) return;
+      event.preventDefault();
+      maintenanceDialog.showModal();
+    }));
+    </script>`
     : '';
 
   return `${unitNavigation(course,unit)}<section class="workspace-heading"><p class="workspace-eyebrow" lang="en">UNIT ${String(index+1).padStart(2,'0')} / ${esc(unit.english)}</p><h1>${esc(unit.title)}</h1></section><section class="workspace-tools" aria-labelledby="workspace-tools-title"><div class="workspace-toolbar"><h2 id="workspace-tools-title">자료와 탐구 도구 <span class="workspace-count" aria-live="polite">${cards.length} tools</span></h2>${cards.length?'<label class="workspace-search"><span class="workspace-sr-only">도구 검색</span><input type="search" placeholder="도구 이름, 키워드 검색" aria-label="도구 검색"></label>':''}</div>${cards.length?`<div class="workspace-filters" role="group" aria-label="도구 유형" hidden><button type="button" data-filter="all" aria-pressed="true" lang="en">All tools</button>${filters.map(t=>`<button type="button" data-filter="${esc(t)}" aria-pressed="false" lang="en">${esc(types[t])}</button>`).join('')}</div><div class="workspace-card-grid${cards.length<3?' workspace-few':''}">${cards.join('')}</div><p class="workspace-no-results" role="status" hidden>검색 결과가 없습니다. 다른 키워드를 입력해 보세요.</p>`:'<div class="workspace-empty"><p class="workspace-eyebrow" lang="en">IN PREPARATION</p><h3>자료와 탐구 도구를 준비하고 있습니다.</h3><p>새로운 활동이 등록되면 이곳에서 바로 열 수 있습니다.</p><a href="/advanced-life-science/">다른 탐구 주제 살펴보기 <span aria-hidden="true">→</span></a></div>'}</section>${maintenanceNotice}`;
