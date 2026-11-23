@@ -75,7 +75,7 @@ for (const course of site.courses) {
       if (activity.content) {
         if (!/^content\/[a-zA-Z0-9/_-]+\.html$/.test(activity.content)) throw new Error('content는 content/ 안의 HTML 파일이어야 합니다.');
         destination = `${unitPath}${activity.id}/`;
-        const body = fs.readFileSync(path.join(root, activity.content), 'utf8');
+        const body = activity.maintenance ? '<p role="status">점검 중인 도구입니다.</p>' : fs.readFileSync(path.join(root, activity.content), 'utf8');
         add({ url: destination, title: activity.title, description: activity.description || activity.title, course, unit, crumbs: [...unitCrumbs, { title: activity.title, url: destination }], content: advanced ? activityWorkspace(course,unit,activity,body) : `<section class="hero compact"><p class="eyebrow">${esc(types[activity.type])}</p><h1>${esc(activity.title)}</h1><p class="intro">${esc(activity.description || '')}</p></section><section class="section activity-content" aria-label="활동 본문">${body}</section><a class="back-link" href="${unitPath}">← ${esc(unit.title)}</a>` });
       }
       if (!(destination.startsWith('/') && !destination.startsWith('//') && !/[\\\s]/.test(destination)) && !/^https:\/\/[^\s]+$/.test(destination)) throw new Error(`안전하지 않은 활동 URL: ${destination}`);
